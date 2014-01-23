@@ -1,0 +1,5 @@
+<?xml version="1.0" standalone="yes" ?>
+<Hokuyo>
+    <Laser port="/dev/ttyACM0" baud="115200" />
+</Hokuyo>
+

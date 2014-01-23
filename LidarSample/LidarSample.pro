@@ -15,5 +15,5 @@ INCLUDEPATH += /usr/local/include/urg_c \
 HEADERS += \
     hokuyo.h
 
-SOURCES += main.cpp \
-    hokuyo.cpp
+SOURCES += hokuyo.cpp \
+           hokuyoexample.cpp
