@@ -1,35 +1,60 @@
+////////////////////////////////////////////////////////////////////////////////
+/// \file hokuyo.cpp
+/// \brief Interface for connecting to Hokuyo sensors.
+/// Author: Andrew Watson
+/// Created: 1/22/13
+/// Email: watsontandrew@gmail.com
+////////////////////////////////////////////////////////////////////////////////
 #include "hokuyo.h"
 
 using namespace Sensor;
+
 
 Hokuyo::Hokuyo()
 {
     mpDevice = new ::urg_t();
     mConnectedFlag = false;
     mCaptureThreadFlag = false;
-    mpDocument = NULL;
-    mpDevice = NULL;
+    mpDevice = new ::urg_t();
     mpHokuyoScan = NULL;
     mHokuyoScanLength = mHokuyoMinStep = mHokuyoMaxStep = 0;
     mBaudRate = 115200;
     mSerialPort = "/dev/ttyACM0";
+    mpDocument = new TiXmlDocument();
 }
+
 
 Hokuyo::~Hokuyo()
 {
-    StopCaptureThread();
+    Shutdown();
 }
 
-bool Hokuyo::LoadSettings(const std::string &settings)
+
+bool Hokuyo::LoadSettings(const std::string& settings)
 {
     if(mpDocument->LoadFile(settings))
     {
-
+        TiXmlElement* root = mpDocument->FirstChildElement();
+        if(root)
+        {
+            for(TiXmlElement* elem = root->FirstChildElement();
+                elem != NULL;
+                elem = elem->NextSiblingElement())
+            {
+                std::string elemName = elem->Value();
+                if(elemName == "Laser")
+                {
+                    mSerialPort = elem->Attribute("port");
+                    mBaudRate = atoi(elem->Attribute("baud"));
+                }
+            }
+        }
         return true;
     }
 
     return false;
 }
+
 
 bool Hokuyo::Initialize()
 {
@@ -58,6 +83,7 @@ bool Hokuyo::Initialize()
     return true;
 }
 
+
 void Hokuyo::Shutdown()
 {
     StopCaptureThread();
@@ -68,6 +94,7 @@ void Hokuyo::Shutdown()
         mConnectedFlag = false;
     }
 }
+
 
 bool Hokuyo::StartCaptureThread()
 {
@@ -85,6 +112,7 @@ bool Hokuyo::StartCaptureThread()
     return false;
 }
 
+
 void Hokuyo::StopCaptureThread()
 {
     mCaptureThreadFlag = false;
@@ -92,11 +120,13 @@ void Hokuyo::StopCaptureThread()
     mCaptureThread.detach();
 }
 
-bool Hokuyo::GrabRangeData()
+
+bool Hokuyo::GrabRangeData(std::vector<CvPoint3D32f>& scan)
 {
     urg_t* urg = (urg_t*)mpDevice;
     if(IsConnected())
     {
+        CvPoint3D32f point;
         long timestamp = 0;
         int index = 0;
         int scanCount = urg_get_distance(urg,
@@ -113,7 +143,18 @@ bool Hokuyo::GrabRangeData()
         {
             if(mpHokuyoScan[index] >= 20)
             {
-                //Convert to cartesian/meters and store in data structure.
+                //Convert to meteres and check bounds.
+                point.x = mpHokuyoScan[index]/1000.0;
+                point.z = -1 * urg_step2rad(urg, i);
+                if(point.z >= mMinBearing &&
+                   point.z <= mMaxBearing &&
+                   point.x >= mMinDistance &&
+                   point.x <= mMaxDistance)
+                {
+                    //Save result
+                    scan.push_back(point);
+                    mRangeScan.push_back(point);
+                }
             }
             index++;
         }
@@ -122,9 +163,25 @@ bool Hokuyo::GrabRangeData()
     return false;
 }
 
+
+bool Hokuyo::DoUpdate()
+{
+    if(GrabRangeData(mRangeScan))
+    {
+        //Trigger Callback
+        return true;
+    }
+    return false;
+}
+
+
 void Hokuyo::CaptureThread()
 {
-
+    while(mCaptureThreadFlag)
+    {
+        DoUpdate();
+        boost::this_thread::sleep(boost::posix_time::millisec(1));
+    }
 }
 
 /* End of File */
