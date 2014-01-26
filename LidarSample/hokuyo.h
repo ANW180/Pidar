@@ -1,9 +1,11 @@
 ////////////////////////////////////////////////////////////////////////////////
+///
 /// \file hokuyo.h
 /// \brief Interface for connecting to Hokuyo sensors.
 /// Author: Andrew Watson
 /// Created: 1/22/13
 /// Email: watsontandrew@gmail.com
+///
 ////////////////////////////////////////////////////////////////////////////////
 #ifndef HOKUYO_H
 #define HOKUYO_H
@@ -15,17 +17,38 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <set>
+#include <time.h>
 
-namespace Sensor
+namespace Laser
 {
-    /**
-      \class Hokuyo
-      \brief Hokuyo is an interface class used to wrap
-             the urg helper library available on sourceforge
-             at sourceforge.net/projects/urgwidget. It can
-             connect to Hokuyo LIDARS and generate callbacks
-             for each scan.
-    */
+    ////////////////////////////////////////////////////////////////////////////////
+    ///
+    /// \class Callback
+    /// \brief Used to generate callbacks for subscribers to laser data. Overload
+    ///        this callback and functions to recieve updated laser scans.
+    ///
+    ////////////////////////////////////////////////////////////////////////////////
+    class Callback
+    {
+    public:
+        Callback();
+        virtual ~Callback() {}
+        typedef std::set<Callback*> Set;
+        /** Function called when new data becomes available from the laser,
+            \param[in] Scan data in polar coordinates.
+            \param[in] Time stamp in UTC since Jan 1, 1970. */
+        virtual void ProcessLaserData(const std::vector<CvPoint3D32f> scan,
+                                      const time_t timestamp) = 0;
+    };
+    ////////////////////////////////////////////////////////////////////////////////
+    ///
+    /// \class Hokuyo
+    /// \brief Hokuyo is an interface class used to wrap the urg helper
+    ///        library available on sourceforge. It can connect to
+    ///        Hokuyo LIDARS and generate callbacks for each scan.
+    ///
+    ////////////////////////////////////////////////////////////////////////////////
     class Hokuyo
     {
     public:
@@ -51,7 +74,6 @@ namespace Sensor
             \param[out] function writes to scan.
             \returns true on success, false on failure. */
         virtual bool GrabRangeData(std::vector<CvPoint3D32f>& scan);
-        virtual bool DoUpdate();
         void CaptureThread();
 
         bool mConnectedFlag;
@@ -62,14 +84,11 @@ namespace Sensor
         int mHokuyoScanLength;
         int mHokuyoMinStep;
         int mHokuyoMaxStep;
-        int mMinBearing;
-        int mMaxBearing;
-        int mMinDistance;
-        int mMaxDistance;
         std::string mSerialPort;
         TiXmlDocument* mpDocument;
         boost::thread mCaptureThread;
         std::vector<CvPoint3D32f> mRangeScan;
+        Callback::Set mCallbacks;
     };
 }
 
