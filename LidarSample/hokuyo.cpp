@@ -76,6 +76,7 @@ bool Hokuyo::Initialize()
         delete[] mpHokuyoScan;
         mpHokuyoScan = NULL;
     }
+    mHokuyoScanLength = urg_max_data_size(urg);
     mpHokuyoScan = new long[mHokuyoScanLength];
     urg_step_min_max(urg, &mHokuyoMinStep, &mHokuyoMaxStep);
     urg_start_measurement(urg,

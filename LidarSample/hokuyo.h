@@ -19,6 +19,7 @@
 #include <vector>
 #include <set>
 #include <time.h>
+#include <wiringPi.h>
 
 namespace Laser
 {
