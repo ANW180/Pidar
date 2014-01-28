@@ -15,7 +15,9 @@ INCLUDEPATH += /usr/local/include/urg_c \
                /usr/local/include/opencv2
 
 HEADERS += \
-    hokuyo.h
+    hokuyo.h \
+    dynamixel.h
 
 SOURCES += hokuyo.cpp \
+           dynamixel.cpp \
            hokuyoexample.cpp
