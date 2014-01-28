@@ -17,9 +17,8 @@ Hokuyo::Hokuyo()
     mpDevice = new ::urg_t();
     mConnectedFlag = false;
     mCaptureThreadFlag = false;
-    mpDevice = new ::urg_t();
     mpHokuyoScan = NULL;
-    mHokuyoScanLength = mHokuyoMinStep = mHokuyoMaxStep = 0;
+    mHokuyoMinStep = mHokuyoMaxStep = 0;
     mBaudRate = 115200;
     mSerialPort = "/dev/ttyACM0";
     mpDocument = new TiXmlDocument();
@@ -76,8 +75,7 @@ bool Hokuyo::Initialize()
         delete[] mpHokuyoScan;
         mpHokuyoScan = NULL;
     }
-    mHokuyoScanLength = urg_max_data_size(urg);
-    mpHokuyoScan = new long[mHokuyoScanLength];
+    mpHokuyoScan = new long[urg_max_data_size(urg)];
     urg_step_min_max(urg, &mHokuyoMinStep, &mHokuyoMaxStep);
     urg_start_measurement(urg,
                           URG_DISTANCE,
@@ -108,7 +106,8 @@ bool Hokuyo::StartCaptureThread()
     if(IsConnected())
     {
         mCaptureThreadFlag = true;
-        mCaptureThread = boost::thread(boost::bind(&Hokuyo::CaptureThread, this));
+        mCaptureThread = boost::thread(
+                                    boost::bind(&Hokuyo::CaptureThread, this));
         return true;
     }
 
@@ -124,7 +123,7 @@ void Hokuyo::StopCaptureThread()
 }
 
 
-bool Hokuyo::GrabRangeData(std::vector<CvPoint3D64f>& scan)
+bool Hokuyo::GrabRangeData()
 {
     urg_t* urg = (urg_t*)mpDevice;
     if(IsConnected())
@@ -139,20 +138,19 @@ bool Hokuyo::GrabRangeData(std::vector<CvPoint3D64f>& scan)
         {
             std::cout << "Scanning Error: " << urg_error(urg) << std::endl;
         }
-
+        // Iterate over all steps in the scan (1080).
         for(int i = mHokuyoMinStep;
             i <= mHokuyoMaxStep;
             i++)
         {
-            // Verify points are within specification of the laser
+            // Verify points are within distance specifications of the laser
             if(mpHokuyoScan[index] >= urg->min_distance &&
                mpHokuyoScan[index] <= urg->max_distance)
             {
-                //std::cout << mpHokuyoScan[index] << std::endl;
-                //Convert to meteres/radians.
+                // Convert to meteres/radians. Save into appropriate data
+                // structure.
                 point.x = mpHokuyoScan[index]/1000.0;
                 point.z = -1 * urg_step2rad(urg, i);
-                //Save result
                 mRangeScan.push_back(point);
             }
             index++;
@@ -167,7 +165,7 @@ void Hokuyo::CaptureThread()
 {
     while(mCaptureThreadFlag)
     {
-        if(GrabRangeData(mRangeScan))
+        if(GrabRangeData())
         {
             //Trigger Callback
         }

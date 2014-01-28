@@ -23,13 +23,14 @@
 
 namespace Laser
 {
-    ////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////
     ///
     /// \class Callback
-    /// \brief Used to generate callbacks for subscribers to laser data. Overload
-    ///        this callback and functions to recieve updated laser scans.
+    /// \brief Used to generate callbacks for subscribers to laser data.
+    ///        Overload this callback and functions to recieve updated laser
+    ///        scans.
     ///
-    ////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////
     class Callback
     {
     public:
@@ -39,17 +40,17 @@ namespace Laser
         /** Function called when new data becomes available from the laser,
             \param[in] Scan data in polar coordinates.
             \param[in] Time stamp in UTC since Jan 1, 1970. */
-        virtual void ProcessLaserData(const std::vector<CvPoint3D32f> scan,
+        virtual void ProcessLaserData(const std::vector<CvPoint3D64f> scan,
                                       const time_t timestamp) = 0;
     };
-    ////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////
     ///
     /// \class Hokuyo
     /// \brief Hokuyo is an interface class used to wrap the urg helper
     ///        library available on sourceforge. It can connect to
     ///        Hokuyo LIDARS and generate callbacks for each scan.
     ///
-    ////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////
     class Hokuyo
     {
     public:
@@ -74,7 +75,7 @@ namespace Laser
             updated the scans
             \param[out] function writes to scan.
             \returns true on success, false on failure. */
-        virtual bool GrabRangeData(std::vector<CvPoint3D64f>& scan);
+        virtual bool GrabRangeData();
         void CaptureThread();
 
         bool mConnectedFlag;
@@ -82,7 +83,6 @@ namespace Laser
         int mBaudRate;
         void* mpDevice;
         long* mpHokuyoScan;
-        int mHokuyoScanLength;
         int mHokuyoMinStep;
         int mHokuyoMaxStep;
         std::string mSerialPort;
