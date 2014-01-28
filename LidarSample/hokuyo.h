@@ -74,7 +74,7 @@ namespace Laser
             updated the scans
             \param[out] function writes to scan.
             \returns true on success, false on failure. */
-        virtual bool GrabRangeData(std::vector<CvPoint3D32f>& scan);
+        virtual bool GrabRangeData(std::vector<CvPoint3D64f>& scan);
         void CaptureThread();
 
         bool mConnectedFlag;
@@ -88,7 +88,7 @@ namespace Laser
         std::string mSerialPort;
         TiXmlDocument* mpDocument;
         boost::thread mCaptureThread;
-        std::vector<CvPoint3D32f> mRangeScan;
+        std::vector<CvPoint3D64f> mRangeScan;
         Callback::Set mCallbacks;
     };
 }

@@ -124,12 +124,12 @@ void Hokuyo::StopCaptureThread()
 }
 
 
-bool Hokuyo::GrabRangeData(std::vector<CvPoint3D32f>& scan)
+bool Hokuyo::GrabRangeData(std::vector<CvPoint3D64f>& scan)
 {
     urg_t* urg = (urg_t*)mpDevice;
     if(IsConnected())
     {
-        CvPoint3D32f point;
+        CvPoint3D64f point;
         long timestamp = 0;
         int index = 0;
         int scanCount = urg_get_distance(urg,
@@ -144,13 +144,15 @@ bool Hokuyo::GrabRangeData(std::vector<CvPoint3D32f>& scan)
             i <= mHokuyoMaxStep;
             i++)
         {
-            if(mpHokuyoScan[index] >= 20)
+            // Verify points are within specification of the laser
+            if(mpHokuyoScan[index] >= urg->min_distance &&
+               mpHokuyoScan[index] <= urg->max_distance)
             {
+                //std::cout << mpHokuyoScan[index] << std::endl;
                 //Convert to meteres/radians.
                 point.x = mpHokuyoScan[index]/1000.0;
                 point.z = -1 * urg_step2rad(urg, i);
                 //Save result
-                scan.push_back(point);
                 mRangeScan.push_back(point);
             }
             index++;

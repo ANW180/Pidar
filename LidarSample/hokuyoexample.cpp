@@ -12,7 +12,7 @@
 int main()
 {
     Laser::Hokuyo laser;
-    if(laser.LoadSettings("/home/pi/software/Group27/LidarSample/hokuyo.xml"))
+    if(laser.LoadSettings("/home/developer/software/Group27/LidarSample/hokuyo.xml"))
     {
         if(laser.Initialize())
         {
