@@ -9,9 +9,9 @@
 ////////////////////////////////////////////////////////////////////////////////
 #include "dynamixel.h"
 
-using namespace Laser;
+using namespace Motor;
 
-Dynamixel::~Dynamixel()
+Dynamixel::Dynamixel()
 {
 
 }

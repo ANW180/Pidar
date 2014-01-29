@@ -9,18 +9,46 @@
 ////////////////////////////////////////////////////////////////////////////////
 #include <hokuyo.h>
 
+class ExampleLaserCallback : public Laser::Callback
+{
+public:
+    ExampleLaserCallback(){}
+    ~ExampleLaserCallback(){}
+    virtual void ProcessLaserData(const std::vector<CvPoint3D64f>& scan,
+                                  const time_t& timestamp)
+    {
+        mLaserScan = scan;
+    }
+    std::vector<CvPoint3D64f> mLaserScan;
+};
+
+double MiddleScanDistanceInches (const std::vector<CvPoint3D64f>& scan)
+{
+    if(scan.size() > 0)
+        return scan.at(scan.size() / 2.).x * 1000. / 25.4;
+    else
+        return 0;
+}
+
 int main()
 {
-    Laser::Hokuyo laser;
-    if(laser.LoadSettings("/home/developer/software/Group27/LidarSample/hokuyo.xml"))
+    Laser::Hokuyo* laser = new Laser::Hokuyo();
+    ExampleLaserCallback callback;
+    laser->RegisterCallback(&callback);
+    if(laser->LoadSettings("/home/andrew/software/Group27/LidarSample/hokuyo.xml"))
     {
-        if(laser.Initialize())
+        if(laser->Initialize())
         {
-            if(laser.StartCaptureThread())
+            if(laser->StartCaptureThread())
             {
                 while (1)
                 {
+                    std::cout << MiddleScanDistanceInches(callback.mLaserScan)
+                              << std::endl;
+                    boost::this_thread::sleep(boost::posix_time::millisec(10));
                 }
+                laser->Shutdown();
+                delete laser;
             }
         }
     }

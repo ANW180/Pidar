@@ -36,7 +36,8 @@ namespace Motor
     class Dynamixel
     {
     public:
-
+        Dynamixel();
+        ~Dynamixel();
 
     protected:
 

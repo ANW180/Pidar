@@ -123,54 +123,53 @@ void Hokuyo::StopCaptureThread()
 }
 
 
-bool Hokuyo::GrabRangeData()
-{
-    urg_t* urg = (urg_t*)mpDevice;
-    if(IsConnected())
-    {
-        CvPoint3D64f point;
-        long timestamp = 0;
-        int index = 0;
-        int scanCount = urg_get_distance(urg,
-                                         mpHokuyoScan,
-                                         &timestamp);
-        if(scanCount <= 0)
-        {
-            std::cout << "Scanning Error: " << urg_error(urg) << std::endl;
-        }
-        // Iterate over all steps in the scan (1080).
-        for(int i = mHokuyoMinStep;
-            i <= mHokuyoMaxStep;
-            i++)
-        {
-            // Verify points are within distance specifications of the laser
-            if(mpHokuyoScan[index] >= urg->min_distance &&
-               mpHokuyoScan[index] <= urg->max_distance)
-            {
-                // Convert to meteres/radians. Save into appropriate data
-                // structure.
-                point.x = mpHokuyoScan[index]/1000.0;
-                point.z = -1 * urg_step2rad(urg, i);
-                mRangeScan.push_back(point);
-            }
-            index++;
-        }
-        return true;
-    }
-    return false;
-}
-
-
 void Hokuyo::CaptureThread()
 {
+    urg_t* urg = (urg_t*)mpDevice;
     while(mCaptureThreadFlag)
     {
-        if(GrabRangeData())
+        if(IsConnected())
         {
-            //Trigger Callback
+            CvPoint3D64f point;
+            long timestamp = 0;
+            int index = 0;
+            std::vector<CvPoint3D64f> scan;
+            int scanCount = urg_get_distance(urg,
+                                             mpHokuyoScan,
+                                             &timestamp);
+            if(scanCount <= 0)
+            {
+                std::cout << "Scanning Error: " << urg_error(urg) << std::endl;
+            }
+            // Iterate over all steps in the scan (1080).
+            for(int i = mHokuyoMinStep;
+                i <= mHokuyoMaxStep;
+                i++)
+            {
+                // Verify points are within distance specifications of the laser
+                if(mpHokuyoScan[index] >= urg->min_distance &&
+                   mpHokuyoScan[index] <= urg->max_distance)
+                {
+                    // Convert to meteres/radians. Save into appropriate data
+                    // structure.
+                    point.x = mpHokuyoScan[index]/1000.0;
+                    point.z = -1 * urg_step2rad(urg, i);
+                    scan.push_back(point);
+                }
+                index++;
+            }
+            //TODO add mutex lock
+            mLaserScan = scan;
+            //Trigger Callbacks
+            Callback::Set::iterator iter;
+            for(iter = mCallbacks.begin();
+                iter != mCallbacks.end();
+                iter++)
+            {
+                (*iter)->ProcessLaserData(mLaserScan, timestamp);
+            }
         }
         boost::this_thread::sleep(boost::posix_time::millisec(1));
     }
 }
-
 /* End of File */

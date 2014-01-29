@@ -11,6 +11,7 @@
 #define HOKUYO_H
 #include <boost/thread.hpp>
 #include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
 #include <tinyxml.h>
 #include <urg_utils.h>
 #include <urg_sensor.h>
@@ -34,14 +35,14 @@ namespace Laser
     class Callback
     {
     public:
-        Callback();
+        Callback() {}
         virtual ~Callback() {}
         typedef std::set<Callback*> Set;
         /** Function called when new data becomes available from the laser,
             \param[in] Scan data in polar coordinates.
-            \param[in] Time stamp in UTC since Jan 1, 1970. */
-        virtual void ProcessLaserData(const std::vector<CvPoint3D64f> scan,
-                                      const time_t timestamp) = 0;
+            \param[in] Time stamp in UTC */
+        virtual void ProcessLaserData(const std::vector<CvPoint3D64f>& scan,
+                                      const time_t& timestamp) = 0;
     };
     ////////////////////////////////////////////////////////////////////////////
     ///
@@ -69,14 +70,35 @@ namespace Laser
         virtual bool StartCaptureThread();
         /** Stops the thread for continuous capturing of sensor data. */
         virtual void StopCaptureThread();
+        /** Method to register callbacks */
+        virtual bool RegisterCallback(Callback* cb)
+        {
+            //TODO add mutex lock
+            mCallbacks.insert(cb);
+            return true;
+        }
+        /** Method to remove callbacks */
+        virtual bool RemoveCallback(Callback* cb)
+        {
+            //TODO add mutex lock
+            Callback::Set::iterator iter;
+            iter = mCallbacks.find(cb);
+            if(iter != mCallbacks.end())
+            {
+                mCallbacks.erase(cb);
+                return true;
+            }
+            return false;
+        }
+        /** Method to clear callbacks */
+        void ClearCallbacks()
+        {
+            //TODO add mutex lock
+            mCallbacks.clear();
+        }
 
     protected:
-        /** This function should be called in a thread to continuously
-            updated the scans
-            \param[out] function writes to scan.
-            \returns true on success, false on failure. */
-        virtual bool GrabRangeData();
-        void CaptureThread();
+        virtual void CaptureThread();
 
         bool mConnectedFlag;
         bool mCaptureThreadFlag;
@@ -88,7 +110,7 @@ namespace Laser
         std::string mSerialPort;
         TiXmlDocument* mpDocument;
         boost::thread mCaptureThread;
-        std::vector<CvPoint3D64f> mRangeScan;
+        std::vector<CvPoint3D64f> mLaserScan;
         Callback::Set mCallbacks;
     };
 }
