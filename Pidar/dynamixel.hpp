@@ -1,20 +1,15 @@
 ////////////////////////////////////////////////////////////////////////////////
 ///
-/// \file dynamixel.h
+/// \file dynamixel.hpp
 /// \brief Interface for connecting to Dynamixel Motors.
 /// Author: Jonathan Ulrich
 /// Created: 1/28/13
 /// Email: jongulrich@gmail.com
 ///
 ////////////////////////////////////////////////////////////////////////////////
+#ifndef DYNAMIXEL_HPP
+#define DYNAMIXEL_HPP
 #include <boost/thread.hpp>
-#include <boost/asio.hpp>
-#include <boost/asio/serial_port.hpp>
-#include <boost/system/error_code.hpp>
-#include <boost/system/system_error.hpp>
-#include <boost/bind.hpp>
-#include <boost/thread.hpp>
-#include <opencv2/core/core.hpp>
 #include <tinyxml.h>
 #include <iostream>
 #include <string>
@@ -27,7 +22,24 @@
 
 namespace Motor
 {
-
+    ////////////////////////////////////////////////////////////////////////////
+    ///
+    /// \class Callback
+    /// \brief Used to generate callbacks for subscribers to servo data.
+    ///        Overload this callback and functions to recieve updated laser
+    ///        scans.
+    ///
+    ////////////////////////////////////////////////////////////////////////////
+    class Callback
+    {
+    public:
+        Callback() {}
+        virtual ~Callback() {}
+        typedef std::set<Callback*> Set;
+        /** Function called when new data becomes available from the laser,
+            \param[in] Position data. */
+        virtual void ProcessServoData(const double pos) = 0;
+    };
     ////////////////////////////////////////////////////////////////////////////
     ///
     /// \class Dynamixel
@@ -46,6 +58,5 @@ namespace Motor
     };
 }
 
-
-
+#endif // DYNAMIXEL_HPP
 /* End of File */

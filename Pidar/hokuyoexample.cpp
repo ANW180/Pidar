@@ -18,8 +18,10 @@ public:
                                   const time_t& timestamp)
     {
         mLaserScan = scan;
+        mTimeStamp = timestamp;
     }
     std::vector<CvPoint3D64f> mLaserScan;
+    time_t mTimeStamp;
 };
 
 double MiddleScanDistanceInches (const std::vector<CvPoint3D64f>& scan)

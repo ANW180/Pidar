@@ -1,17 +1,16 @@
 ////////////////////////////////////////////////////////////////////////////////
 ///
-/// \file hokuyo.h
+/// \file hokuyo.hpp
 /// \brief Interface for connecting to Hokuyo sensors.
 /// Author: Andrew Watson
 /// Created: 1/22/13
 /// Email: watsontandrew@gmail.com
 ///
 ////////////////////////////////////////////////////////////////////////////////
-#ifndef HOKUYO_H
-#define HOKUYO_H
+#ifndef HOKUYO_HPP
+#define HOKUYO_HPP
 #include <boost/thread.hpp>
 #include <opencv2/core/core.hpp>
-#include <opencv2/highgui/highgui.hpp>
 #include <tinyxml.h>
 #include <urg_utils.h>
 #include <urg_sensor.h>
@@ -116,5 +115,5 @@ namespace Laser
 }
 
 
-#endif // HOKUYO_H
+#endif // HOKUYO_HPP
 /* End of File */
