@@ -7,7 +7,7 @@
 /// Email: jongulrich@gmail.com
 ///
 ////////////////////////////////////////////////////////////////////////////////
-#include "dynamixel.h"
+#include "dynamixel.hpp"
 
 using namespace Motor;
 

@@ -7,7 +7,7 @@
 /// Email: watsontandrew@gmail.com
 ///
 ////////////////////////////////////////////////////////////////////////////////
-#include <hokuyo.h>
+#include <hokuyo.hpp>
 
 class ExampleLaserCallback : public Laser::Callback
 {
@@ -35,21 +35,18 @@ int main()
     Laser::Hokuyo* laser = new Laser::Hokuyo();
     ExampleLaserCallback callback;
     laser->RegisterCallback(&callback);
-    if(laser->LoadSettings("/home/andrew/software/Group27/LidarSample/hokuyo.xml"))
+    if(laser->Initialize())
     {
-        if(laser->Initialize())
+        if(laser->StartCaptureThread())
         {
-            if(laser->StartCaptureThread())
+            while (1)
             {
-                while (1)
-                {
-                    std::cout << MiddleScanDistanceInches(callback.mLaserScan)
-                              << std::endl;
-                    boost::this_thread::sleep(boost::posix_time::millisec(10));
-                }
-                laser->Shutdown();
-                delete laser;
+                std::cout << MiddleScanDistanceInches(callback.mLaserScan)
+                          << std::endl;
+                boost::this_thread::sleep(boost::posix_time::millisec(10));
             }
+            laser->Shutdown();
+            delete laser;
         }
     }
 

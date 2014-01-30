@@ -7,7 +7,7 @@
 /// Email: watsontandrew@gmail.com
 ///
 ////////////////////////////////////////////////////////////////////////////////
-#include "hokuyo.h"
+#include "hokuyo.hpp"
 
 using namespace Laser;
 
