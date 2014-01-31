@@ -16,7 +16,7 @@ Hokuyo::Hokuyo()
 {
     mpDevice = new ::urg_t();
     mConnectedFlag = false;
-    mCaptureThreadFlag = false;
+    mProcessingThreadFlag = false;
     mpHokuyoScan = NULL;
     mHokuyoMinStep = mHokuyoMaxStep = 0;
     mBaudRate = 115200;
@@ -99,15 +99,15 @@ void Hokuyo::Shutdown()
 
 bool Hokuyo::StartCaptureThread()
 {
-    mCaptureThreadFlag = false;
-    mCaptureThread.join();
-    mCaptureThread.detach();
+    mProcessingThreadFlag = false;
+    mProcessingThread.join();
+    mProcessingThread.detach();
 
     if(IsConnected())
     {
-        mCaptureThreadFlag = true;
-        mCaptureThread = boost::thread(
-                                    boost::bind(&Hokuyo::CaptureThread, this));
+        mProcessingThreadFlag = true;
+        mProcessingThread = boost::thread(
+                                    boost::bind(&Hokuyo::ProcessingThread, this));
         return true;
     }
 
@@ -117,16 +117,16 @@ bool Hokuyo::StartCaptureThread()
 
 void Hokuyo::StopCaptureThread()
 {
-    mCaptureThreadFlag = false;
-    mCaptureThread.join();
-    mCaptureThread.detach();
+    mProcessingThreadFlag = false;
+    mProcessingThread.join();
+    mProcessingThread.detach();
 }
 
 
-void Hokuyo::CaptureThread()
+void Hokuyo::ProcessingThread()
 {
     urg_t* urg = (urg_t*)mpDevice;
-    while(mCaptureThreadFlag)
+    while(mProcessingThreadFlag)
     {
         if(IsConnected())
         {

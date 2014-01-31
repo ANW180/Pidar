@@ -97,10 +97,10 @@ namespace Laser
         }
 
     protected:
-        virtual void CaptureThread();
+        virtual void ProcessingThread();
 
         bool mConnectedFlag;
-        bool mCaptureThreadFlag;
+        bool mProcessingThreadFlag;
         int mBaudRate;
         void* mpDevice;
         long* mpHokuyoScan;
@@ -108,7 +108,7 @@ namespace Laser
         int mHokuyoMaxStep;
         std::string mSerialPort;
         TiXmlDocument* mpDocument;
-        boost::thread mCaptureThread;
+        boost::thread mProcessingThread;
         std::vector<CvPoint3D64f> mLaserScan;
         Callback::Set mCallbacks;
     };
