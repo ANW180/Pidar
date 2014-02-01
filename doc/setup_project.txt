@@ -30,5 +30,8 @@ Open QtCreator and go to tools>options>Environment>General and set Terminal:[] t
 2. set: kernel.yama.ptrace_scope = 0
 3. close gedit, and run this command in terminal: echo 0 | sudo tee /proc/sys/kernel/yama/ptrace_scope 
 
+7. Install TinyXML
+sudo apt-get install libtinyxml-dev
+
 You are now ready to open and build/compile the Pidar project. Simply go to file open project in
 Qt Creator and select the Pidar .pro file and select your build paths.
