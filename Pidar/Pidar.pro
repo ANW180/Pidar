@@ -24,4 +24,4 @@ HEADERS += \
 
 SOURCES += hokuyo.cpp \
            dynamixel.cpp \
-           hokuyoexample.cpp
+           main.cpp
