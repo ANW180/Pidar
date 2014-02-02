@@ -10,6 +10,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 #include <hokuyo.hpp>
 #include <time.h>
+#include <wiringPi.h>
 
 //#define TESTHOKUYO
 #ifdef TESTHOKUYO
@@ -65,13 +66,26 @@ int main()
 #ifdef TESTDYNAMIXEL
 int main()
 {
-    return 0;
+    int x = 1234;
+
+    char bytes[sizeof x];
+    std::copy(static_cast<const char*>(static_cast<const void*>(&x)),
+              static_cast<const char*>(static_cast<const void*>(&x)) + sizeof x,
+              bytes);
+
+    char a = bytes[0];
+    char b = bytes[1];
+
+
+
+
+   return 0;
 }
 #endif
 
 
 
-#define TESTTIMING
+//#define TESTTIMING
 #ifdef TESTTIMING
 timespec diff(timespec start, timespec end);
 int main()
@@ -139,6 +153,42 @@ timespec diff(timespec start, timespec end)
 int main()
 {
     return 0;
+}
+
+#endif
+
+
+
+#define TESTISR
+#ifdef TESTISR
+
+#define BUTTON_PIN 0
+volatile int eventCounter = 0;
+void myInterrupt(void) {eventCounter++;}
+
+int main()
+{
+
+    if (wiringPiSetup () < 0) {
+          fprintf (stderr, "Unable to setup wiringPi: %s\n", strerror (errno));
+          return 1;
+      }
+
+      // set Pin 17/0 generate an interrupt on high-to-low transitions
+      // and attach myInterrupt() to the interrupt
+      if ( wiringPiISR (BUTTON_PIN, INT_EDGE_FALLING, &myInterrupt) < 0 ) {
+          fprintf (stderr, "Unable to setup ISR: %s\n", strerror (errno));
+          return 1;
+      }
+
+      // display counter value every second.
+      while ( 1 ) {
+        printf( "%d\n", eventCounter );
+        eventCounter = 0;
+        delay( 1000 ); // wait 1 second
+      }
+
+      return 0;
 }
 
 #endif
