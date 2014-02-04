@@ -107,7 +107,7 @@ bool Hokuyo::StartCaptureThread()
     {
         mProcessingThreadFlag = true;
         mProcessingThread = boost::thread(
-                                    boost::bind(&Hokuyo::ProcessingThread, this));
+                            boost::bind(&Hokuyo::ProcessingThread, this));
         return true;
     }
 

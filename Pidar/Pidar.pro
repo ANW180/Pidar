@@ -11,6 +11,7 @@ LIBS += -L/usr/local/lib -lurg_c \
         -L/usr/local/lib -lopencv_highgui \
         -L/usr/local/lib -lwiringPi \
         -L/usr/local/lib -ldxl \
+        -L/usr/local/lib -lrt
 
 INCLUDEPATH += /usr/local/include/urg_c \
                /usr/include/boost \
