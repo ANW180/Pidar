@@ -73,6 +73,7 @@ int main()
 
 #define TESTTIMING
 #ifdef TESTTIMING
+timespec diff(timespec start, timespec end);
 int main()
 {
 //    clockid_t types[] = {CLOCK_REALTIME, CLOCK_MONOTONIC,
@@ -91,23 +92,42 @@ int main()
 //                      << " Nanos: " << spec.tv_nsec << std::endl;
 //        }
 //    }
-    timespec ts;
-    long prevtime;
-    long currtime;
-    clock_gettime(CLOCK_MONOTONIC, &ts);
-    prevtime = currtime = ts.tv_nsec;
-    while (1)
+    timespec t1, t2;
+    clock_gettime(CLOCK_THREAD_CPUTIME_ID, &t1);
+    clock_gettime(CLOCK_THREAD_CPUTIME_ID, &t2);
+    while(1)
     {
-        if (currtime - prevtime >= 100000000)
+        if(diff(t1, t2).tv_nsec > 2000000)
         {
-            std::cout << "1 Second Passed" << std::endl;
-            prevtime = currtime;
+            std::cout << "1 Sec Elapsed" << std::endl;
+            clock_gettime(CLOCK_THREAD_CPUTIME_ID, &t1);
+            clock_gettime(CLOCK_THREAD_CPUTIME_ID, &t2);
         }
-        clock_gettime(CLOCK_MONOTONIC, &ts);
-        std::cout << ctime(&ts.tv_nsec) << std::endl;
+        else
+        {
+            clock_gettime(CLOCK_THREAD_CPUTIME_ID, &t2);
+        }
+        std::cout << diff(t1, t2).tv_nsec << std::endl;
+        nanosleep((struct timespec[]){{0, 100000000}}, NULL);
     }
     return 0;
 }
+timespec diff(timespec start, timespec end)
+{
+    timespec temp;
+    if((end.tv_nsec-start.tv_nsec)<0)
+    {
+        temp.tv_sec = end.tv_sec - start.tv_sec - 1;
+        temp.tv_nsec = 1000000000 + end.tv_nsec - start.tv_nsec;
+    }
+    else
+    {
+        temp.tv_sec = end.tv_sec - start.tv_sec;
+        temp.tv_nsec = end.tv_nsec - start.tv_nsec;
+    }
+    return temp;
+}
+
 #endif
 
 
