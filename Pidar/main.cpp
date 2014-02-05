@@ -10,7 +10,14 @@
 ////////////////////////////////////////////////////////////////////////////////
 #include <hokuyo.hpp>
 #include <time.h>
-#include <wiringPi.h>
+#include <wiringPi.h> //wiringpi testing
+
+//Webserver testing
+#include <ctime>
+#include <iostream>
+#include <string>
+#include <boost/asio.hpp>
+//end webserver testing
 
 //#define TESTHOKUYO
 #ifdef TESTHOKUYO
@@ -148,18 +155,46 @@ timespec diff(timespec start, timespec end)
 
 
 
-//#define TESTSERVER
+#define TESTSERVER
 #ifdef TESTSERVER
+//Requires SUDO to run in order to bind to port
+using boost::asio::ip::tcp;
+std::string make_daytime_string()
+{
+  using namespace std; // For time_t, time and ctime;
+  time_t now = time(0);
+  return ctime(&now);
+}
+
 int main()
 {
-    return 0;
+  try
+  {
+    boost::asio::io_service io_service;
+
+    tcp::endpoint endpoint(tcp::v4(), 13);
+    tcp::acceptor acceptor(io_service, endpoint);
+
+    for (;;)
+    {
+      tcp::iostream stream;
+      acceptor.accept(*stream.rdbuf());
+      stream << make_daytime_string();
+    }
+  }
+  catch (std::exception& e)
+  {
+    std::cerr << e.what() << std::endl;
+  }
+
+  return 0;
 }
 
 #endif
 
 
 
-#define TESTISR
+//#define TESTISR
 #ifdef TESTISR
 
 #define BUTTON_PIN 0
