@@ -97,32 +97,16 @@ int main()
 timespec diff(timespec start, timespec end);
 int main()
 {
-//    clockid_t types[] = {CLOCK_REALTIME, CLOCK_MONOTONIC,
-//                         CLOCK_PROCESS_CPUTIME_ID, CLOCK_THREAD_CPUTIME_ID,
-//                         (clockid_t) - 1};
-//    struct timespec spec;
-//    for (int i = 0; types[i] != (clockid_t) - 1; i++)
-//    {
-//        if(clock_getres(types[i], &spec) != 0)
-//        {
-//            std::cout << "Timer " << types[i] << " not supported" << std::endl;
-//        }
-//        else
-//        {
-//            std::cout << "Timer: " << i << " Seconds: " << spec.tv_sec
-//                      << " Nanos: " << spec.tv_nsec << std::endl;
-//        }
-//    }
     timespec t1, t2;
     clock_gettime(CLOCK_THREAD_CPUTIME_ID, &t1);
     clock_gettime(CLOCK_THREAD_CPUTIME_ID, &t2);
     unsigned int i = 0;
     while(1)
     {
-        if(diff(t1, t2).tv_nsec > 1000000000L)
+        if(diff(t1, t2).tv_sec >= 1)
         {
             i++;
-            std::cout << i <<" Sec Elapsed" << std::endl;
+            std::cout << diff(t1, t2).tv_nsec <<" Sec Elapsed" << std::endl;
             clock_gettime(CLOCK_THREAD_CPUTIME_ID, &t1);
             clock_gettime(CLOCK_THREAD_CPUTIME_ID, &t2);
         }
@@ -130,8 +114,6 @@ int main()
         {
             clock_gettime(CLOCK_THREAD_CPUTIME_ID, &t2);
         }
-//        std::cout << diff(t1, t2).tv_nsec << std::endl;
-//        nanosleep((struct timespec[]){{0, 100000000}}, NULL);
     }
     return 0;
 }
