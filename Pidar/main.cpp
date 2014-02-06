@@ -92,7 +92,7 @@ int main()
 
 
 
-//#define TESTTIMING
+#define TESTTIMING
 #ifdef TESTTIMING
 timespec diff(timespec start, timespec end);
 int main()
@@ -116,11 +116,13 @@ int main()
     timespec t1, t2;
     clock_gettime(CLOCK_THREAD_CPUTIME_ID, &t1);
     clock_gettime(CLOCK_THREAD_CPUTIME_ID, &t2);
+    unsigned int i = 0;
     while(1)
     {
-        if(diff(t1, t2).tv_nsec > 2000000)
+        if(diff(t1, t2).tv_nsec > 1000000000L)
         {
-            std::cout << "1 Sec Elapsed" << std::endl;
+            i++;
+            std::cout << i <<" Sec Elapsed" << std::endl;
             clock_gettime(CLOCK_THREAD_CPUTIME_ID, &t1);
             clock_gettime(CLOCK_THREAD_CPUTIME_ID, &t2);
         }
@@ -128,8 +130,8 @@ int main()
         {
             clock_gettime(CLOCK_THREAD_CPUTIME_ID, &t2);
         }
-        std::cout << diff(t1, t2).tv_nsec << std::endl;
-        nanosleep((struct timespec[]){{0, 100000000}}, NULL);
+//        std::cout << diff(t1, t2).tv_nsec << std::endl;
+//        nanosleep((struct timespec[]){{0, 100000000}}, NULL);
     }
     return 0;
 }
@@ -139,7 +141,7 @@ timespec diff(timespec start, timespec end)
     if((end.tv_nsec-start.tv_nsec)<0)
     {
         temp.tv_sec = end.tv_sec - start.tv_sec - 1;
-        temp.tv_nsec = 1000000000 + end.tv_nsec - start.tv_nsec;
+        temp.tv_nsec = 1000000000L + end.tv_nsec - start.tv_nsec;
     }
     else
     {
@@ -155,7 +157,7 @@ timespec diff(timespec start, timespec end)
 
 
 
-#define TESTSERVER
+//#define TESTSERVER
 #ifdef TESTSERVER
 //Requires SUDO to run in order to bind to port
 using boost::asio::ip::tcp;
