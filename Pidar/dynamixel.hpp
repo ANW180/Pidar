@@ -76,6 +76,12 @@ namespace Motor
         virtual void SetTorque(const int val = 1023);
         /** Get current position of servo (0 to 4095 for 0.088 deg resolution)
             using RAM address 36 & 37 */
+
+        virtual bool dxl_get_lowbyte(int word);
+        virtual bool dxl_get_highbyte(int word);
+        virtual bool dxl_makeword(int lowbyte, int highbyte);
+
+
         virtual double GetPresentPosition();
         /** Method to register callbacks */
         virtual bool RegisterCallback(Callback* cb)

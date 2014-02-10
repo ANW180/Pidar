@@ -111,31 +111,37 @@ void Dynamixel::SetPosition(const double val)
     //31 (0X1F)Goal Position(H) Highest byte of Goal Position RW
 
     //dxl_write_word((int id, int address, int value)
-    int8_t firstbyte = (int)val & 0xFF;
-    int8_t secondbyte = (int)val >> 8;
 
-    dxl_write_word(mID, 0x1E, firstbyte ); //low
-    dxl_write_word(mID, 0x1F, secondbyte ); //high
+    int word = (int)val;//translation?
+    int lowbyte = dxl_get_lowbyte(word);
+    int highbyte = dxl_get_highbyte(word);
+    dxl_write_word(mID, 30, lowbyte ); //low
+    dxl_write_word(mID, 31, highbyte ); //high
 }
 
 
 /** Set speed of motor speed (RPM) using RAM address 32 & 33 */
 void Dynamixel::SetSpeed(const double rpm)
 {
-    int8_t firstbyte = (int)rpm & 0xFF;
-    int8_t secondbyte = (int)rpm >> 8;
-    dxl_write_word(mID, 0x20, firstbyte ); //low
-    dxl_write_word(mID, 0x21, secondbyte ); //high
+    int word = (int)rpm;//translation?
+    int lowbyte = dxl_get_lowbyte(word);
+    int highbyte = dxl_get_highbyte(word);
+
+
+    dxl_write_word(mID, 32, lowbyte ); //low
+    dxl_write_word(mID, 33, highbyte ); //high
 }
 
 
 /** Set torque of motor (0 to 1023) using RAM address 34 & 35 */
 void Dynamixel::SetTorque(const int val)
 {
-    int8_t firstbyte = (int)val & 0xFF;
-    int8_t secondbyte = (int)val >> 8;
-    dxl_write_word(mID, 0x22, firstbyte ); //low
-    dxl_write_word(mID, 0x23, secondbyte ); //high
+    int word = (int)val;//translation?
+    int lowbyte = dxl_get_lowbyte(word);
+    int highbyte = dxl_get_highbyte(word);
+
+    dxl_write_word(mID, 34, lowbyte ); //low
+    dxl_write_word(mID, 35, highbyte ); //high
 
 }
 
@@ -145,11 +151,10 @@ void Dynamixel::SetTorque(const int val)
 double Dynamixel::GetPresentPosition()
 {
     double val = 0.0;
-    int8_t firstbyte = dxl_read_word( mID, 0x24 );
-    int8_t secondbyte = dxl_read_word( mID, 0x25 );
-
-    val = (secondbyte << 8)  | firstbyte;
-
+    int lowbyte = dxl_read_word( mID, 0x24 );
+    int highbyte = dxl_read_word( mID, 0x25 );
+    int intval = dxl_makeword(lowbyte, highbyte);
+    val = (double)intval; //translation?
     return val;
 }
 
@@ -158,4 +163,9 @@ void Dynamixel::ProcessingThread()
 {
 
 }
+
+bool Dynamixel::dxl_get_lowbyte(int word){return true;}
+bool Dynamixel::dxl_get_highbyte(int word){return true;}
+bool Dynamixel::dxl_makeword(int lowbyte, int highbyte){return true;}
+
 /* End of File */

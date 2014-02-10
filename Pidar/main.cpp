@@ -9,6 +9,7 @@
 ///
 ////////////////////////////////////////////////////////////////////////////////
 #include <hokuyo.hpp>
+#include <dynamixel.hpp>
 #include <time.h>
 #include <wiringPi.h> //wiringpi testing
 
@@ -69,22 +70,17 @@ int main()
 #endif
 
 
-//#define TESTDYNAMIXEL
+#define TESTDYNAMIXEL
 #ifdef TESTDYNAMIXEL
+
 int main()
 {
-    int x = 1234;
+    double val = -1000;
 
-    char bytes[sizeof x];
-    std::copy(static_cast<const char*>(static_cast<const void*>(&x)),
-              static_cast<const char*>(static_cast<const void*>(&x)) + sizeof x,
-              bytes);
-
-    char a = bytes[0];
-    char b = bytes[1];
-
-
-
+    int word = (int)val;//translation?
+    int lowbyte = dxl_get_lowbyte(word);
+    int highbyte = dxl_get_highbyte(word);
+    int intval = dxl_makeword(lowbyte, highbyte);
 
    return 0;
 }
@@ -92,7 +88,7 @@ int main()
 
 
 
-#define TESTTIMING
+//#define TESTTIMING
 #ifdef TESTTIMING
 timespec diff(timespec start, timespec end);
 int main()
@@ -141,6 +137,7 @@ timespec diff(timespec start, timespec end)
 
 //#define TESTSERVER
 #ifdef TESTSERVER
+//http://www.boost.org/doc/libs/1_45_0/doc/html/boost_asio/example/iostreams/
 //Requires SUDO to run in order to bind to port
 using boost::asio::ip::tcp;
 std::string make_daytime_string()
@@ -211,4 +208,14 @@ int main()
 }
 
 #endif
+
+//#define TESTIMAGEGENERATION
+#ifdef TESTIMAGEGENERATION
+int main()
+{
+
+   return 0;
+}
+#endif
+
 /** End of File */
