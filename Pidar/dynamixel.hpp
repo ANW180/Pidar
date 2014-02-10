@@ -110,6 +110,8 @@ namespace Motor
             mCallbacks.clear();
         }
 
+        std::string GetSerialPort();
+
     protected:
         virtual void ProcessingThread();
 

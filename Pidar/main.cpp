@@ -3,9 +3,9 @@
 /// \file main.cpp
 /// \brief Main file for testing different system classes
 ///        and functionality.
-/// Author: Andrew Watson
+/// Author: Andrew Watson, Jonathan Ulrich
 /// Created: 1/22/13
-/// Email: watsontandrew@gmail.com
+/// Email: watsontandrew@gmail.com, JonGUlrich@gmail.com
 ///
 ////////////////////////////////////////////////////////////////////////////////
 #include <hokuyo.hpp>
@@ -75,12 +75,19 @@ int main()
 
 int main()
 {
-    double val = -1000;
 
-    int word = (int)val;//translation?
-    int lowbyte = dxl_get_lowbyte(word);
-    int highbyte = dxl_get_highbyte(word);
-    int intval = dxl_makeword(lowbyte, highbyte);
+    Motor::Dynamixel *motor = new Motor::Dynamixel();
+    double rpm = 10;
+    double position = 123;
+
+    motor->Initialize(motor->GetSerialPort());
+    motor->SetSpeed(rpm);
+    motor->SetPosition(position);
+
+    std::cout<<motor->GetSerialPort()<<std::endl;
+
+
+
 
    return 0;
 }

@@ -30,6 +30,9 @@ Dynamixel::~Dynamixel()
     Shutdown();
 }
 
+std::string Dynamixel::GetSerialPort(){
+    return mSerialPort;
+}
 
 /** Allows for loading of connection settings for a Dynamixel servo. */
 bool Dynamixel::LoadSettings(const std::string& settings)
@@ -154,6 +157,9 @@ double Dynamixel::GetPresentPosition()
     int lowbyte = dxl_read_word( mID, 0x24 );
     int highbyte = dxl_read_word( mID, 0x25 );
     int intval = dxl_makeword(lowbyte, highbyte);
+
+        std::cout<<intval<<std::endl; //dev-only
+
     val = (double)intval; //translation?
     return val;
 }
