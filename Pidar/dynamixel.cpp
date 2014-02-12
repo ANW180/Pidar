@@ -22,6 +22,8 @@ Dynamixel::Dynamixel()
     mID = 0;
     mSerialPort = "/dev/ttyUSB0";
     mpDocument = new TiXmlDocument();
+    mServoCommand.clear();
+    mServoFeedback.clear();
 }
 
 
@@ -30,9 +32,6 @@ Dynamixel::~Dynamixel()
     Shutdown();
 }
 
-std::string Dynamixel::GetSerialPort(){
-    return mSerialPort;
-}
 
 /** Allows for loading of connection settings for a Dynamixel servo. */
 bool Dynamixel::LoadSettings(const std::string& settings)
@@ -62,8 +61,29 @@ bool Dynamixel::LoadSettings(const std::string& settings)
 
 
 /** Initializes a connection (serial) to a dynamixel servo. */
-bool Dynamixel::Initialize(const std::string& port)
+bool Dynamixel::Initialize()
 {
+    int deviceIndex;
+    if(sscanf(mSerialPort.c_str(), "/dev/ttyUSB%d", &deviceIndex) <= 0)
+    {
+        std::cout << "Must use /dev/ttyUSB# for enumeration" << std::endl;
+        return false;
+    }
+
+    if(dxl_initialize(deviceIndex, mBaudRate) != 0)
+    {
+        std::cout << "Connected to Dynamixel Successfully" << std::endl;
+        mConnectedFlag = true;
+    }
+    else
+    {
+        std::cout << "Failed to connect to Dynamixel" << std::endl;
+        return false;
+    }
+    if(!StartCaptureThread())
+    {
+        return false;
+    }
     return true;
 }
 
@@ -91,7 +111,7 @@ bool Dynamixel::StartCaptureThread()
     {
         mProcessingThreadFlag = true;
         mProcessingThread = boost::thread(
-                    boost::bind(&Dynamixel::ProcessingThread, this));
+                            boost::bind(&Dynamixel::ProcessingThread, this));
         return true;
     }
     return false;
@@ -101,66 +121,42 @@ bool Dynamixel::StartCaptureThread()
 /** Stops the thread for continuous capturing of sensor data. */
 void Dynamixel::StopCaptureThread()
 {
-
+    mProcessingThreadFlag = false;
+    mProcessingThread.join();
+    mProcessingThread.detach();
 }
 
 
-/** Set goal position (0 to 4095 for 0.088 deg resolution)
-    using RAM address 30 & 31 */
-void Dynamixel::SetPosition(const double val)
+/** Set speed of motor speed (RPM) */
+void Dynamixel::SetSpeedRpm(const double rpm)
 {
-    //16 bit address (8 + 8)
-    //30 (0X1E)Goal Position(L) Lowest byte of Goal Position RW
-    //31 (0X1F)Goal Position(H) Highest byte of Goal Position RW
-
-    //dxl_write_word((int id, int address, int value)
-
-    int word = (int)val;//translation?
-    int lowbyte = dxl_get_lowbyte(word);
-    int highbyte = dxl_get_highbyte(word);
-    dxl_write_word(mID, 30, lowbyte ); //low
-    dxl_write_word(mID, 31, highbyte ); //high
+    int word = (int)(rpm / 0.053);
+    dxl_write_word(mID, P_MOVING_SPEED_L, word );
 }
 
 
-/** Set speed of motor speed (RPM) using RAM address 32 & 33 */
-void Dynamixel::SetSpeed(const double rpm)
+/** Set torque of motor (0 to 1023) */
+void Dynamixel::SetTorqueLimit(const int val)
 {
-    int word = (int)rpm;//translation?
-    int lowbyte = dxl_get_lowbyte(word);
-    int highbyte = dxl_get_highbyte(word);
-
-
-    dxl_write_word(mID, 32, lowbyte ); //low
-    dxl_write_word(mID, 33, highbyte ); //high
+    dxl_write_word(mID, P_TORQUE_LIMIT_L, val );
 }
 
 
-/** Set torque of motor (0 to 1023) using RAM address 34 & 35 */
-void Dynamixel::SetTorque(const int val)
-{
-    int word = (int)val;//translation?
-    int lowbyte = dxl_get_lowbyte(word);
-    int highbyte = dxl_get_highbyte(word);
-
-    dxl_write_word(mID, 34, lowbyte ); //low
-    dxl_write_word(mID, 35, highbyte ); //high
-
-}
-
-
-/** Get current position of servo (0 to 4095 for 0.088 deg resolution)
-    using RAM address 36 & 37 */
-double Dynamixel::GetPresentPosition()
+/** Get current position of servo [-100,100]% */
+double Dynamixel::GetPositionPercent()
 {
     double val = 0.0;
-    int lowbyte = dxl_read_word( mID, 0x24 );
-    int highbyte = dxl_read_word( mID, 0x25 );
-    int intval = dxl_makeword(lowbyte, highbyte);
-
-        std::cout<<intval<<std::endl; //dev-only
-
-    val = (double)intval; //translation?
+    int pos = dxl_read_word(mID, P_PRESENT_POSITION_L );
+    // 0 to 4095 for 0.088 deg resolution
+    val = (pos - 2048) / 2048 * 100;
+    if(val > 100.0)
+    {
+        val = 100.0;
+    }
+    if(val < -100.0)
+    {
+        val = -100.0;
+    }
     return val;
 }
 
@@ -168,10 +164,76 @@ double Dynamixel::GetPresentPosition()
 void Dynamixel::ProcessingThread()
 {
 
+    while(mProcessingThreadFlag)
+    {
+        if(IsConnected())
+        {
+
+        }
+        boost::this_thread::sleep(boost::posix_time::millisec(1));
+    }
 }
 
-bool Dynamixel::dxl_get_lowbyte(int word){return true;}
-bool Dynamixel::dxl_get_highbyte(int word){return true;}
-bool Dynamixel::dxl_makeword(int lowbyte, int highbyte){return true;}
+
+void Dynamixel::PrintErrorCode()
+{
+    if(dxl_get_rxpacket_error(ERRBIT_VOLTAGE) == 1)
+    {
+        std::cout << "Input voltage error" << std::endl;
+    }
+    if(dxl_get_rxpacket_error(ERRBIT_ANGLE) == 1)
+    {
+        std::cout << "Input voltage error" << std::endl;
+    }
+    if(dxl_get_rxpacket_error(ERRBIT_OVERHEAT) == 1)
+    {
+        std::cout << "Input voltage error" << std::endl;
+    }
+    if(dxl_get_rxpacket_error(ERRBIT_RANGE) == 1)
+    {
+        std::cout << "Input voltage error" << std::endl;
+    }
+    if(dxl_get_rxpacket_error(ERRBIT_CHECKSUM) == 1)
+    {
+        std::cout << "Input voltage error" << std::endl;
+    }
+    if(dxl_get_rxpacket_error(ERRBIT_OVERLOAD) == 1)
+    {
+        std::cout << "Input voltage error" << std::endl;
+    }
+    if(dxl_get_rxpacket_error(ERRBIT_INSTRUCTION) == 1)
+    {
+        std::cout << "Input voltage error" << std::endl;
+    }
+}
+
+
+void Dynamixel::PrintCommStatus(int CommStatus)
+{
+    switch(CommStatus)
+    {
+    case COMM_TXFAIL:
+        std::cout << "COMM_TXFAIL: TX packet failed" << std::endl;
+        break;
+    case COMM_TXERROR:
+        std::cout << "COMM_TXERROR: Incorrect instruction packet" << std::endl;
+        break;
+    case COMM_RXFAIL:
+        std::cout << "COMM_RXFAIL: RX packet failed" << std::endl;
+        break;
+    case COMM_RXWAITING:
+        std::cout << "COMM_RXWAITING: Recieving status packet now" << std::endl;
+        break;
+    case COMM_RXTIMEOUT:
+        std::cout << "COMM_RXTIMEOUT: No status packet" << std::endl;
+        break;
+    case COMM_RXCORRUPT:
+        std::cout << "COMM_RXCORRUPT: Incorrect status packet" << std::endl;
+        break;
+    default:
+        std::cout << "Unknown Error" << std::endl;
+        break;
+    }
+}
 
 /* End of File */

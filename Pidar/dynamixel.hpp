@@ -18,9 +18,19 @@
 #include <vector>
 #include <set>
 #include <time.h>
-#include <wiringPi.h>
 #include <dxl_hal.h>
 #include <dynamixel.h>
+
+// 8 Bit RAM Addresses
+#define P_GOAL_POSITION_L       30
+#define P_GOAL_POSITION_H       31
+#define P_PRESENT_POSITION_L    36
+#define P_PRESENT_POSITION_H    37
+#define P_MOVING                46
+#define P_MOVING_SPEED_L        32
+#define P_MOVING_SPEED_H        33
+#define P_TORQUE_LIMIT_L        34
+#define P_TORQUE_LIMIT_H        35
 
 namespace Motor
 {
@@ -57,7 +67,7 @@ namespace Motor
         /** Allows for loading of connection settings for a Dynamixel servo. */
         virtual bool LoadSettings(const std::string& settings);
         /** Initializes a connection (serial) to a dynamixel servo. */
-        virtual bool Initialize(const std::string& port);
+        virtual bool Initialize();
         /** Shuts down connection to the servo (terminates thread). */
         virtual void Shutdown();
         /** Checks if connection to sensor is established
@@ -70,19 +80,16 @@ namespace Motor
         /** Set goal position (0 to 4095 for 0.088 deg resolution)
             using RAM address 30 & 31 */
         virtual void SetPosition(const double val);
-        /** Set speed of motor speed (RPM) using RAM address 32 & 33 */
-        virtual void SetSpeed(const double rpm = 10);
-        /** Set torque of motor (0 to 1023) using RAM address 34 & 35 */
-        virtual void SetTorque(const int val = 1023);
-        /** Get current position of servo (0 to 4095 for 0.088 deg resolution)
-            using RAM address 36 & 37 */
-
-        virtual bool dxl_get_lowbyte(int word);
-        virtual bool dxl_get_highbyte(int word);
-        virtual bool dxl_makeword(int lowbyte, int highbyte);
+        /** Set speed of motor speed (RPM) */
+        virtual void SetSpeedRpm(const double rpm = 10);
+        /** Set torque of motor (0 to 1023) */
+        virtual void SetTorqueLimit(const int val = 1023);
+        /** Get current position of servo [-100,100]% */
+        virtual double GetPositionPercent();
+        static void PrintErrorCode();
+        static void PrintCommStatus(int CommStatus);
 
 
-        virtual double GetPresentPosition();
         /** Method to register callbacks */
         virtual bool RegisterCallback(Callback* cb)
         {
@@ -110,7 +117,6 @@ namespace Motor
             mCallbacks.clear();
         }
 
-        std::string GetSerialPort();
 
     protected:
         virtual void ProcessingThread();
@@ -123,6 +129,9 @@ namespace Motor
         TiXmlDocument* mpDocument;
         boost::thread mProcessingThread;
         Callback::Set mCallbacks;
+
+        std::map<int, double> mServoCommand;
+        std::map<int, double> mServoFeedback;
     };
 }
 

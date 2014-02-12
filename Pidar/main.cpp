@@ -76,18 +76,19 @@ int main()
 int main()
 {
 
-    Motor::Dynamixel *motor = new Motor::Dynamixel();
+    Motor::Dynamixel* motor = new Motor::Dynamixel();
     double rpm = 10;
-    double position = 123;
 
-    motor->Initialize(motor->GetSerialPort());
-    motor->SetSpeed(rpm);
-    motor->SetPosition(position);
-
-    std::cout<<motor->GetSerialPort()<<std::endl;
-
-
-
+    if(motor->Initialize())
+    {
+        motor->SetSpeedRpm(rpm);
+        //sleep(1);
+        while (1)
+        {
+            std::cout << motor->GetPositionPercent() << std::endl;
+            //sleep(1);
+        }
+    }
 
    return 0;
 }
