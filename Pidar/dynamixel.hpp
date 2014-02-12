@@ -17,9 +17,8 @@
 #include <string>
 #include <vector>
 #include <set>
-#include <time.h>
-#include <dxl_hal.h>
-#include <dynamixel.h>
+#include "dxl/dxl_hal.h"
+#include "dxl/dynamixel.h"
 
 // 8 Bit RAM Addresses
 #define P_GOAL_POSITION_L       30
@@ -77,9 +76,6 @@ namespace Motor
         virtual bool StartCaptureThread();
         /** Stops the thread for continuous capturing of sensor data. */
         virtual void StopCaptureThread();
-        /** Set goal position (0 to 4095 for 0.088 deg resolution)
-            using RAM address 30 & 31 */
-        virtual void SetPosition(const double val);
         /** Set speed of motor speed (RPM) */
         virtual void SetSpeedRpm(const double rpm = 10);
         /** Set torque of motor (0 to 1023) */

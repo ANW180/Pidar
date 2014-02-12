@@ -8,8 +8,8 @@
 /// Email: watsontandrew@gmail.com, JonGUlrich@gmail.com
 ///
 ////////////////////////////////////////////////////////////////////////////////
-#include <hokuyo.hpp>
-#include <dynamixel.hpp>
+#include "hokuyo.hpp"
+#include "dynamixel.hpp"
 #include <time.h>
 #include <wiringPi.h> //wiringpi testing
 
