@@ -201,31 +201,67 @@ int main()
 
 //#define TESTSERVER
 #ifdef TESTSERVER
-//http://www.boost.org/doc/libs/1_45_0/doc/html/boost_asio/example/iostreams/
-//Requires SUDO to run in order to bind to port
+/**
+ *  http://julien.boucaron.free.fr/wordpress/?p=178
+ */
+
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <boost/asio.hpp>
+
 using boost::asio::ip::tcp;
-std::string make_daytime_string()
-{
-  using namespace std; // For time_t, time and ctime;
-  time_t now = time(0);
-  return ctime(&now);
-}
+
 
 int main()
 {
   try
   {
-    boost::asio::io_service io_service;
+        //double xyz[] = {-1000,45,987};
+        int size = 16384;
+        //create random data
+        double *xyz= new double[size];
+        for(int i = 0;i<size;i++)
+            xyz[i] = i;
 
-    tcp::endpoint endpoint(tcp::v4(), 13);
-    tcp::acceptor acceptor(io_service, endpoint);
+    const unsigned int port = 10000; //port the server listen
+    const unsigned int buff_size = 16384; //size of the send buffer
 
-    for (;;)
-    {
-      tcp::iostream stream;
-      acceptor.accept(*stream.rdbuf());
-      stream << make_daytime_string();
+    boost::asio::io_service io_service; //main asio object
+    tcp::endpoint endpoint(tcp::v4(), port); //endpoint
+    tcp::acceptor acceptor(io_service, endpoint);  //we accept connection there
+
+    //server loop
+    while(1) {
+        std::cout<<"Server Listening"<<std::endl;
+      tcp::socket socket(io_service);  //create a socket
+      acceptor.accept(socket); //attach to the acceptor
+      //we have got a new connection !
+      std::cout<<"Got a connection!"<<std::endl;
+      std::cout << " Remote @:port  " << socket.remote_endpoint().address() << " : "
+        << socket.remote_endpoint().port() << std::endl;
+
+      char* buff = new char[buff_size]; //creating the buffer
+      unsigned int count = 0; //counter
+      std::cout << "Sending" << std::endl;
+
+     for(int i = 0;i<1;i++){
+        //memset(buff,0,buff_size); //cleanup the buffer
+
+       // const char * px = reinterpret_cast<const char*>(&xyz);
+          const char * px = reinterpret_cast<const char*>(xyz);
+        boost::system::error_code ignored_error;
+        unsigned int len = sizeof(xyz);
+        boost::asio::write(socket, boost::asio::buffer(px,sizeof(double)*size),
+                   boost::asio::transfer_all(), ignored_error); //send
+        count+=len; //increment counter
+     }
+
+      delete(buff);  //delete buffer
+      std::cout << "Finished" << std::endl;
+      std::cout << "Sent "  << count << " bytes" << std::endl;
     }
+
   }
   catch (std::exception& e)
   {
@@ -233,8 +269,6 @@ int main()
   }
 
   return 0;
-}
-
 #endif
 
 
