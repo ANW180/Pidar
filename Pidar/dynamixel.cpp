@@ -18,12 +18,12 @@ using namespace Motor;
 
 Dynamixel::Dynamixel()
 {
-    mConnectedFlag = mProcessingThreadFlag = false;
-    mID = 0;
+    mConnectedFlag = mProcessingThreadFlag = mCommandSpeedFlag = false;
+    mID = 1;
     mSerialPort = "/dev/ttyUSB0";
     mpDocument = new TiXmlDocument();
-    mServoCommand.clear();
-    mServoFeedback.clear();
+    mCommandSpeed = mPresentPosition = 0.0;
+    mBaudRate = 34; // 34 ~ 57142.9 for 57600 connection
 }
 
 
@@ -127,87 +127,39 @@ void Dynamixel::StopCaptureThread()
 }
 
 
-/** Set speed of motor speed (RPM) */
-void Dynamixel::SetSpeedRpm(const double rpm)
+/** Sets speed of motor in RPM given a direction
+    \param[in] RPM to set (RX-24: 0~114 RPM, MX-28: 0~54 RPM)
+    \param[in] true to move CW, false to move CCW*/
+void Dynamixel::SetSpeedRpm(const double rpm, const bool clockwise)
 {
-    int word = (int)(rpm / 0.053);
-    dxl_write_word(mID, P_MOVING_SPEED_L, word );
+    double val = rpm / RX24_RPM_PER_UNIT;
+    if(val > 1023.0)
+    {
+        val = 1023.0;
+    }
+    if (clockwise)
+    {
+        val += 1024.0;
+    }
+    mMutex.lock();
+    mCommandSpeed = val;
+    mCommandSpeedFlag = true;
+    mMutex.unlock();
 }
 
 
-/** Set torque of motor (0 to 1023) */
-void Dynamixel::SetTorqueLimit(const int val)
+/** Get current position of servo
+    \returns Position of motor in degrees*/
+double Dynamixel::GetPositionDegrees()
 {
-    dxl_write_word(mID, P_TORQUE_LIMIT_L, val );
+    mMutex.lock();
+    double pos = mPresentPosition;
+    mMutex.unlock();
+    return pos * RX24_DEG_PER_UNIT;
 }
 
 
-/** Get current position of servo [-100,100]% */
-double Dynamixel::GetPositionPercent()
-{
-    double val = 0.0;
-    int pos = dxl_read_word(mID, P_PRESENT_POSITION_L );
-    // 0 to 4095 for 0.088 deg resolution
-    val = (pos - 2048) / 2048 * 100;
-    if(val > 100.0)
-    {
-        val = 100.0;
-    }
-    if(val < -100.0)
-    {
-        val = -100.0;
-    }
-    return val;
-}
-
-
-void Dynamixel::ProcessingThread()
-{
-
-    while(mProcessingThreadFlag)
-    {
-        if(IsConnected())
-        {
-
-        }
-        boost::this_thread::sleep(boost::posix_time::millisec(1));
-    }
-}
-
-
-void Dynamixel::PrintErrorCode()
-{
-    if(dxl_get_rxpacket_error(ERRBIT_VOLTAGE) == 1)
-    {
-        std::cout << "Input voltage error" << std::endl;
-    }
-    if(dxl_get_rxpacket_error(ERRBIT_ANGLE) == 1)
-    {
-        std::cout << "Input voltage error" << std::endl;
-    }
-    if(dxl_get_rxpacket_error(ERRBIT_OVERHEAT) == 1)
-    {
-        std::cout << "Input voltage error" << std::endl;
-    }
-    if(dxl_get_rxpacket_error(ERRBIT_RANGE) == 1)
-    {
-        std::cout << "Input voltage error" << std::endl;
-    }
-    if(dxl_get_rxpacket_error(ERRBIT_CHECKSUM) == 1)
-    {
-        std::cout << "Input voltage error" << std::endl;
-    }
-    if(dxl_get_rxpacket_error(ERRBIT_OVERLOAD) == 1)
-    {
-        std::cout << "Input voltage error" << std::endl;
-    }
-    if(dxl_get_rxpacket_error(ERRBIT_INSTRUCTION) == 1)
-    {
-        std::cout << "Input voltage error" << std::endl;
-    }
-}
-
-
+/** Prints to screen the result of a wirte/read to the dynamixel */
 void Dynamixel::PrintCommStatus(int CommStatus)
 {
     switch(CommStatus)
@@ -233,6 +185,63 @@ void Dynamixel::PrintCommStatus(int CommStatus)
     default:
         std::cout << "Unknown Error" << std::endl;
         break;
+    }
+}
+
+
+void Dynamixel::ProcessingThread()
+{
+    while(mProcessingThreadFlag)
+    {
+        if(IsConnected())
+        {
+            int CommStatus;
+            // Write target speed (if there is a new speed)
+            mMutex.lock();
+            if(mCommandSpeedFlag)
+            {
+                dxl_write_word(mID, P_MOVING_SPEED_L, mCommandSpeed);
+                CommStatus = dxl_get_result();
+                if(CommStatus != COMM_RXSUCCESS)
+                {
+                    PrintCommStatus(CommStatus);
+                }
+            }
+            mMutex.unlock();
+            // Read present position
+            bool read = false;
+            int recv = dxl_read_word(mID, P_PRESENT_POSITION_L );
+            CommStatus = dxl_get_result();
+            if( CommStatus == COMM_RXSUCCESS )
+            {
+                mMutex.lock();
+                mPresentPosition = recv;
+                mMutex.unlock();
+                read = true;
+            }
+            else
+            {
+                PrintCommStatus(CommStatus);
+            }
+            // Trigger callbacks (if there is a read)
+            if(read)
+            {
+                Callback::Set::iterator callback;
+                mMutex.lock();
+                for(callback = mCallbacks.begin();
+                    callback != mCallbacks.end();
+                    callback++)
+                {
+                    (*callback)->ProcessServoData(mPresentPosition);
+                }
+                mMutex.unlock();
+            }
+        }
+//        timespec sleep, remaining;
+//        sleep.tv_sec = remaining.tv_sec = 0;
+//        sleep.tv_nsec = 25000L; //25 microseconds
+//        nanosleep(&sleep, &remaining);
+
     }
 }
 

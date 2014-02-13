@@ -11,15 +11,13 @@
 #include "hokuyo.hpp"
 #include "dynamixel.hpp"
 #include <time.h>
-#include <wiringPi.h> //wiringpi testing
-
-//Webserver testing
+#include <wiringPi.h>
 #include <ctime>
 #include <iostream>
 #include <string>
 #include <boost/asio.hpp>
-//end webserver testing
-
+using namespace std;
+timespec diff(timespec start, timespec end);
 //#define TESTHOKUYO
 #ifdef TESTHOKUYO
 class ExampleLaserCallback : public Laser::Callback
@@ -70,35 +68,108 @@ int main()
 #endif
 
 
-#define TESTDYNAMIXEL
-#ifdef TESTDYNAMIXEL
+//#define TESTDYNAMIXELSPEED
+#ifdef TESTDYNAMIXELSPEED
 
 int main()
 {
-
     Motor::Dynamixel* motor = new Motor::Dynamixel();
-    double rpm = 10;
-
+    double rpm = 0.0;
+    int dir;
+    bool clockwise = true;
     if(motor->Initialize())
     {
-        motor->SetSpeedRpm(rpm);
-        //sleep(1);
+        motor->SetSpeedRpm(rpm, clockwise);
         while (1)
         {
-            std::cout << motor->GetPositionPercent() << std::endl;
-            //sleep(1);
+            cout << "Input Speed in RPM (0-114): " << endl;
+            cin >> rpm;
+            cout << "Input direction (0 = CCW, 1 = CW): " << endl;
+            cin >> dir;
+            if(dir)
+                clockwise = true;
+            else
+                clockwise = false;
+            motor->SetSpeedRpm(rpm, clockwise);
         }
     }
-
    return 0;
 }
 #endif
 
 
+//#define TESTDYNAMIXELFEEDBACK
+#ifdef TESTDYNAMIXELFEEDBACK
+
+int main()
+{
+    Motor::Dynamixel* motor = new Motor::Dynamixel();
+    double rpm = 10.0;
+    if(motor->Initialize())
+    {
+        motor->SetSpeedRpm(rpm, true);
+        while (1)
+        {
+            cout << motor->GetPositionDegrees() << endl;
+            usleep(10000);
+        }
+    }
+   return 0;
+}
+#endif
+
+
+/** This test tells the motor to move at 10 RPM and sets a timer at the
+    start of the sequence, upon 1 revolution it will print the time
+    elapsed. Theoretically it should be 6 seconds exactly given 10 RPM.*/
+#define TESTDYNAMIXELSPEEDACCURACY
+#ifdef TESTDYNAMIXELSPEEDACCURACY
+
+int main()
+{
+    Motor::Dynamixel* motor = new Motor::Dynamixel();
+    double rpm = 10.0; // 10 RPM / 60 = .16667 Hz ^ -1 = 6 secs
+    double degrees = 0;
+    double lowthres = 0;
+    double hghthres = 0;
+    double difseconds = 0;
+    double curpos = 0;
+    timespec t1, t2, dif;
+    if(motor->Initialize())
+    {
+        delayMicroseconds(250000);
+        motor->SetSpeedRpm(0, true);
+        delayMicroseconds(750000);
+        degrees = motor->GetPositionDegrees();
+        lowthres = degrees - 0.3;
+        hghthres = degrees + 0.3;
+        motor->SetSpeedRpm(rpm, true);
+        delayMicroseconds(40000);
+        clock_gettime(CLOCK_MONOTONIC, &t1);
+        while (1)
+        {
+            curpos = motor->GetPositionDegrees();
+            if(curpos >= lowthres && curpos <= hghthres)
+            {
+                clock_gettime(CLOCK_MONOTONIC, &t2);
+                dif = diff(t1, t2);
+                double decimalsecs = (double) dif.tv_nsec;
+                decimalsecs /= 1000000000.;
+                difseconds = dif.tv_sec + decimalsecs;
+                cout << setprecision(7) << difseconds << endl;
+                motor->SetSpeedRpm(0, true);
+                delayMicroseconds(250000);
+                break;
+            }
+        }
+    }
+   return 0;
+}
+#endif
+
 
 //#define TESTTIMING
 #ifdef TESTTIMING
-timespec diff(timespec start, timespec end);
 int main()
 {
     timespec t1, t2;
@@ -120,21 +191,6 @@ int main()
         }
     }
     return 0;
-}
-timespec diff(timespec start, timespec end)
-{
-    timespec temp;
-    if((end.tv_nsec-start.tv_nsec)<0)
-    {
-        temp.tv_sec = end.tv_sec - start.tv_sec - 1;
-        temp.tv_nsec = 1000000000L + end.tv_nsec - start.tv_nsec;
-    }
-    else
-    {
-        temp.tv_sec = end.tv_sec - start.tv_sec;
-        temp.tv_nsec = end.tv_nsec - start.tv_nsec;
-    }
-    return temp;
 }
 
 #endif
@@ -225,5 +281,21 @@ int main()
    return 0;
 }
 #endif
+
+timespec diff(timespec start, timespec end)
+{
+    timespec temp;
+    if((end.tv_nsec - start.tv_nsec) < 0)
+    {
+        temp.tv_sec = end.tv_sec - start.tv_sec - 1;
+        temp.tv_nsec = 1000000000L + end.tv_nsec - start.tv_nsec;
+    }
+    else
+    {
+        temp.tv_sec = end.tv_sec - start.tv_sec;
+        temp.tv_nsec = end.tv_nsec - start.tv_nsec;
+    }
+    return temp;
+}
 
 /** End of File */

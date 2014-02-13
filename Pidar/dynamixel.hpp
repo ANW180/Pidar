@@ -12,6 +12,7 @@
 #ifndef DYNAMIXEL_HPP
 #define DYNAMIXEL_HPP
 #include <boost/thread.hpp>
+#include <boost/bind.hpp>
 #include <tinyxml.h>
 #include <iostream>
 #include <string>
@@ -21,6 +22,10 @@
 #include "dxl/dynamixel.h"
 
 // 8 Bit RAM Addresses
+#define P_CW_ANGLE_LIMIT_L      6
+#define P_CW_ANGLE_LIMIT_H      7
+#define P_CCW_ANGLE_LIMIT_L     8
+#define P_CCW_ANGLE_LIMIT_H     9
 #define P_GOAL_POSITION_L       30
 #define P_GOAL_POSITION_H       31
 #define P_PRESENT_POSITION_L    36
@@ -30,6 +35,10 @@
 #define P_MOVING_SPEED_H        33
 #define P_TORQUE_LIMIT_L        34
 #define P_TORQUE_LIMIT_H        35
+#define RX24_RPM_PER_UNIT       0.111
+#define MX28_RPM_PER_UNIT       0.053
+#define RX24_DEG_PER_UNIT       0.29
+#define MX28_DEG_PER_UNIT       0.088
 
 namespace Motor
 {
@@ -37,8 +46,8 @@ namespace Motor
     ///
     /// \class Callback
     /// \brief Used to generate callbacks for subscribers to servo data.
-    ///        Overload this callback and functions to recieve updated laser
-    ///        scans.
+    ///        Overload this callback and functions to recieve updated motor
+    ///        position values.
     ///
     ////////////////////////////////////////////////////////////////////////////
     class Callback
@@ -76,13 +85,14 @@ namespace Motor
         virtual bool StartCaptureThread();
         /** Stops the thread for continuous capturing of sensor data. */
         virtual void StopCaptureThread();
-        /** Set speed of motor speed (RPM) */
-        virtual void SetSpeedRpm(const double rpm = 10);
-        /** Set torque of motor (0 to 1023) */
-        virtual void SetTorqueLimit(const int val = 1023);
-        /** Get current position of servo [-100,100]% */
-        virtual double GetPositionPercent();
-        static void PrintErrorCode();
+        /** Sets speed of motor in RPM given a direction
+            \param[in] RPM to set (RX-24: 0~114 RPM, MX-28: 0~54 RPM)
+            \param[in] true to move CW, false to move CCW*/
+        virtual void SetSpeedRpm(const double rpm, const bool clockwise);
+        /** Get current position of servo
+            \returns Position of motor in degrees*/
+        virtual double GetPositionDegrees();
+        /** Prints to screen the result of a wirte/read to the dynamixel */
         static void PrintCommStatus(int CommStatus);
 
 
@@ -125,9 +135,10 @@ namespace Motor
         TiXmlDocument* mpDocument;
         boost::thread mProcessingThread;
         Callback::Set mCallbacks;
-
-        std::map<int, double> mServoCommand;
-        std::map<int, double> mServoFeedback;
+        boost::mutex mMutex;
+        int mCommandSpeed;
+        int mPresentPosition;
+        bool mCommandSpeedFlag;
     };
 }
 
