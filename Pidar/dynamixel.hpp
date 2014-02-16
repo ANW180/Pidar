@@ -58,7 +58,8 @@ namespace Motor
         typedef std::set<Callback*> Set;
         /** Function called when new data becomes available from the laser,
             \param[in] Position data. */
-        virtual void ProcessServoData(const double pos) = 0;
+        virtual void ProcessServoData(const double& pos,
+                                      const timespec& timestamp) = 0;
     };
     ////////////////////////////////////////////////////////////////////////////
     ///
@@ -136,9 +137,12 @@ namespace Motor
         boost::thread mProcessingThread;
         Callback::Set mCallbacks;
         boost::mutex mMutex;
-        int mCommandSpeed;
-        int mPresentPosition;
+        int mCommandSpeedRpm;
+        double mPresentPositionDegrees;
         bool mCommandSpeedFlag;
+        bool mFirstMotorReadFlag;
+        timespec mPrevReadTimeStamp;
+        timespec mCurrReadTimeStamp;
     };
 }
 

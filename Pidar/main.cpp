@@ -17,9 +17,38 @@
 #include <string>
 #include <boost/asio.hpp>
 using namespace std;
-timespec diff(timespec start, timespec end);
-//#define TESTHOKUYO
-#ifdef TESTHOKUYO
+
+
+timespec diff(timespec start, timespec end)
+{
+    timespec temp;
+    if((end.tv_nsec - start.tv_nsec) < 0)
+    {
+        temp.tv_sec = end.tv_sec - start.tv_sec - 1;
+        temp.tv_nsec = 1000000000L + end.tv_nsec - start.tv_nsec;
+    }
+    else
+    {
+        temp.tv_sec = end.tv_sec - start.tv_sec;
+        temp.tv_nsec = end.tv_nsec - start.tv_nsec;
+    }
+    return temp;
+}
+
+
+double MiddleScanDistanceInches (const std::vector<CvPoint3D64f>& scan)
+{
+    if(scan.size() > 0)
+    {
+        return scan.at(scan.size() / 2.).x * 1000. / 25.4;
+    }
+    else
+    {
+        return 0;
+    }
+}
+
+
 class ExampleLaserCallback : public Laser::Callback
 {
 public:
@@ -29,20 +58,35 @@ public:
                                   const time_t& timestamp)
     {
         mLaserScan = scan;
+        cout.precision(8);
+        //cout << MiddleScanDistanceInches(mLaserScan) << endl;
         mTimeStamp = timestamp;
     }
     std::vector<CvPoint3D64f> mLaserScan;
     time_t mTimeStamp;
 };
 
-double MiddleScanDistanceInches (const std::vector<CvPoint3D64f>& scan)
-{
-    if(scan.size() > 0)
-        return scan.at(scan.size() / 2.).x * 1000. / 25.4;
-    else
-        return 0;
-}
 
+class ExampleDynamixelCallback : public Motor::Callback
+{
+public:
+    ExampleDynamixelCallback(){}
+    ~ExampleDynamixelCallback(){}
+    virtual void ProcessServoData(const double& pos,
+                                  const timespec& timestamp)
+    {
+        mMotorAngle = pos;
+        cout.precision(8);
+        //cout << mMotorAngle << endl;
+        mTimeStamp = timestamp;
+    }
+    double mMotorAngle;
+    timespec mTimeStamp;
+};
+
+
+//#define TESTHOKUYO
+#ifdef TESTHOKUYO
 int main()
 {
     Laser::Hokuyo* laser = new Laser::Hokuyo();
@@ -50,20 +94,64 @@ int main()
     laser->RegisterCallback(&callback);
     if(laser->Initialize())
     {
-        if(laser->StartCaptureThread())
+        while (1)
         {
-            while (1)
-            {
-                std::cout << MiddleScanDistanceInches(callback.mLaserScan)
-                          << std::endl;
-                boost::this_thread::sleep(boost::posix_time::millisec(10));
-            }
-            laser->Shutdown();
-            delete laser;
+            boost::this_thread::sleep(
+                        boost::posix_time::millisec(10000000));
         }
-    }
+        laser->Shutdown();
+        delete laser;
+}
 
     return 0;
+}
+#endif
+
+
+//#define TESTDYNAMIXELFEEDBACK
+#ifdef TESTDYNAMIXELFEEDBACK
+int main()
+{
+    Motor::Dynamixel* motor = new Motor::Dynamixel();
+    ExampleDynamixelCallback callback;
+    motor->RegisterCallback(&callback);
+    double rpm = 10.0;
+    if(motor->Initialize())
+    {
+        motor->SetSpeedRpm(rpm, true);
+        while (1)
+        {
+            boost::this_thread::sleep(
+                        boost::posix_time::millisec(10000000));
+        }
+    }
+   return 0;
+}
+#endif
+
+
+#define TESTMOTORLASER
+#ifdef TESTMOTORLASER
+int main()
+{
+    Laser::Hokuyo* laser = new Laser::Hokuyo();
+    ExampleLaserCallback lcallback;
+    laser->RegisterCallback(&lcallback);
+    Motor::Dynamixel* motor = new Motor::Dynamixel();
+    ExampleDynamixelCallback mcallback;
+    motor->RegisterCallback(&mcallback);
+    if(motor->Initialize())
+    {
+        motor->SetSpeedRpm(0, true);
+        if(laser->Initialize())
+        {
+            while(1)
+            {
+                boost::this_thread::sleep(
+                            boost::posix_time::millisec(10000000));
+            }
+        }
+    }
 }
 #endif
 
@@ -98,31 +186,10 @@ int main()
 #endif
 
 
-//#define TESTDYNAMIXELFEEDBACK
-#ifdef TESTDYNAMIXELFEEDBACK
-
-int main()
-{
-    Motor::Dynamixel* motor = new Motor::Dynamixel();
-    double rpm = 10.0;
-    if(motor->Initialize())
-    {
-        motor->SetSpeedRpm(rpm, true);
-        while (1)
-        {
-            cout << motor->GetPositionDegrees() << endl;
-            usleep(10000);
-        }
-    }
-   return 0;
-}
-#endif
-
-
 /** This test tells the motor to move at 10 RPM and sets a timer at the
     start of the sequence, upon 1 revolution it will print the time
     elapsed. Theoretically it should be 6 seconds exactly given 10 RPM.*/
-#define TESTDYNAMIXELSPEEDACCURACY
+//#define TESTDYNAMIXELSPEEDACCURACY
 #ifdef TESTDYNAMIXELSPEEDACCURACY
 
 int main()
@@ -315,21 +382,5 @@ int main()
    return 0;
 }
 #endif
-
-timespec diff(timespec start, timespec end)
-{
-    timespec temp;
-    if((end.tv_nsec - start.tv_nsec) < 0)
-    {
-        temp.tv_sec = end.tv_sec - start.tv_sec - 1;
-        temp.tv_nsec = 1000000000L + end.tv_nsec - start.tv_nsec;
-    }
-    else
-    {
-        temp.tv_sec = end.tv_sec - start.tv_sec;
-        temp.tv_nsec = end.tv_nsec - start.tv_nsec;
-    }
-    return temp;
-}
 
 /** End of File */

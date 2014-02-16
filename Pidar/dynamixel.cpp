@@ -18,11 +18,12 @@ using namespace Motor;
 
 Dynamixel::Dynamixel()
 {
-    mConnectedFlag = mProcessingThreadFlag = mCommandSpeedFlag = false;
+    mConnectedFlag = mProcessingThreadFlag = mCommandSpeedFlag =
+    mFirstMotorReadFlag = false;
     mID = 1;
     mSerialPort = "/dev/ttyUSB0";
     mpDocument = new TiXmlDocument();
-    mCommandSpeed = mPresentPosition = 0.0;
+    mCommandSpeedRpm = mPresentPositionDegrees = 0.0;
     mBaudRate = 34; // 34 ~ 57142.9 for 57600 connection
 }
 
@@ -72,7 +73,6 @@ bool Dynamixel::Initialize()
 
     if(dxl_initialize(deviceIndex, mBaudRate) != 0)
     {
-        std::cout << "Connected to Dynamixel Successfully" << std::endl;
         mConnectedFlag = true;
     }
     else
@@ -82,8 +82,10 @@ bool Dynamixel::Initialize()
     }
     if(!StartCaptureThread())
     {
+        std::cout << "Failed to start capture thread" << std::endl;
         return false;
     }
+    std::cout << "Connected to Dynamixel Successfully" << std::endl;
     return true;
 }
 
@@ -142,7 +144,7 @@ void Dynamixel::SetSpeedRpm(const double rpm, const bool clockwise)
         val += 1024.0;
     }
     mMutex.lock();
-    mCommandSpeed = val;
+    mCommandSpeedRpm = val;
     mCommandSpeedFlag = true;
     mMutex.unlock();
 }
@@ -152,10 +154,8 @@ void Dynamixel::SetSpeedRpm(const double rpm, const bool clockwise)
     \returns Position of motor in degrees*/
 double Dynamixel::GetPositionDegrees()
 {
-    mMutex.lock();
-    double pos = mPresentPosition;
-    mMutex.unlock();
-    return pos * RX24_DEG_PER_UNIT;
+    boost::mutex::scoped_lock scopedLock(mMutex);
+    return mPresentPositionDegrees;
 }
 
 
@@ -200,7 +200,7 @@ void Dynamixel::ProcessingThread()
             mMutex.lock();
             if(mCommandSpeedFlag)
             {
-                dxl_write_word(mID, P_MOVING_SPEED_L, mCommandSpeed);
+                dxl_write_word(mID, P_MOVING_SPEED_L, mCommandSpeedRpm);
                 CommStatus = dxl_get_result();
                 if(CommStatus != COMM_RXSUCCESS)
                 {
@@ -215,7 +215,7 @@ void Dynamixel::ProcessingThread()
             if( CommStatus == COMM_RXSUCCESS )
             {
                 mMutex.lock();
-                mPresentPosition = recv;
+                mPresentPositionDegrees = recv * RX24_DEG_PER_UNIT;
                 mMutex.unlock();
                 read = true;
             }
@@ -226,21 +226,33 @@ void Dynamixel::ProcessingThread()
             // Trigger callbacks (if there is a read)
             if(read)
             {
+                if(!mFirstMotorReadFlag)
+                {
+                    mFirstMotorReadFlag = true;
+                    clock_gettime(CLOCK_MONOTONIC, &mPrevReadTimeStamp);
+                    clock_gettime(CLOCK_MONOTONIC, &mCurrReadTimeStamp);
+                }
                 Callback::Set::iterator callback;
                 mMutex.lock();
                 for(callback = mCallbacks.begin();
                     callback != mCallbacks.end();
                     callback++)
                 {
-                    (*callback)->ProcessServoData(mPresentPosition);
+                    (*callback)->ProcessServoData(mPresentPositionDegrees,
+                                                  mCurrReadTimeStamp);
                 }
                 mMutex.unlock();
+            }
+            else
+            {
+                std::cout << "No Read" << std::endl;
             }
         }
 //        timespec sleep, remaining;
 //        sleep.tv_sec = remaining.tv_sec = 0;
 //        sleep.tv_nsec = 25000L; //25 microseconds
 //        nanosleep(&sleep, &remaining);
+        boost::this_thread::sleep(boost::posix_time::millisec(5));
 
     }
 }

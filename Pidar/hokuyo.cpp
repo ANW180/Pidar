@@ -81,6 +81,12 @@ bool Hokuyo::Initialize()
                           URG_DISTANCE,
                           URG_SCAN_INFINITY,
                           0);
+    if(!StartCaptureThread())
+    {
+        std::cout << "Failed to start capture thread" << std::endl;
+        return false;
+    }
+    std::cout << "Connected to Hokuyo Successfully" << std::endl;
     return true;
 }
 
@@ -121,7 +127,12 @@ void Hokuyo::StopCaptureThread()
     mProcessingThread.join();
     mProcessingThread.detach();
 }
-
+template <typename T, size_t N>
+inline
+size_t SizeOfArray( const T(&)[ N ] )
+{
+  return N;
+}
 
 void Hokuyo::ProcessingThread()
 {
@@ -146,18 +157,18 @@ void Hokuyo::ProcessingThread()
                 i <= mHokuyoMaxStep;
                 i++)
             {
+                /** Add in all data, do filtering of bad points on client side
                 // Verify points are within distance specifications of the laser
                 if(mpHokuyoScan[index] >= urg->min_distance &&
-                   mpHokuyoScan[index] <= urg->max_distance)
-                {
-                    // Convert to meteres/radians. Save into appropriate data
-                    // structure.
-                    point.x = mpHokuyoScan[index]/1000.0;
-                    point.z = -1 * urg_step2rad(urg, i);
-                    scan.push_back(point);
-                }
+                   mpHokuyoScan[index] <= urg->max_distance) */
+                // Convert to meteres/radians. Save into appropriate data
+                // structure.
+                point.x = mpHokuyoScan[index]/1000.0;
+                point.z = -1 * urg_step2rad(urg, i);
+                scan.push_back(point);
                 index++;
             }
+            // Size of a full scan in 3D data structure is 553472 bytes.
             //TODO add mutex lock
             mLaserScan = scan;
             //Trigger Callbacks
@@ -169,7 +180,7 @@ void Hokuyo::ProcessingThread()
                 (*iter)->ProcessLaserData(mLaserScan, timestamp);
             }
         }
-        boost::this_thread::sleep(boost::posix_time::millisec(1));
+//        boost::this_thread::sleep(boost::posix_time::millisec(50));
     }
 }
 /* End of File */
