@@ -16,7 +16,30 @@
 #include <iostream>
 #include <string>
 #include <boost/asio.hpp>
+#include <boost/thread/thread.hpp>
+#include <pcl/visualization/pcl_visualizer.h>
+#include <pcl/common/common_headers.h>
+
 using namespace std;
+
+boost::shared_ptr<pcl::visualization::PCLVisualizer> rgbVis
+(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr cloud)
+{
+  // --------------------------------------------
+  // -----Open 3D viewer and add point cloud-----
+  // --------------------------------------------
+  boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer
+          (new pcl::visualization::PCLVisualizer("3D Viewer"));
+  viewer->setBackgroundColor (0, 0, 0);
+  pcl::visualization::PointCloudColorHandlerRGBField
+          <pcl::PointXYZRGB> rgb(cloud);
+  viewer->addPointCloud<pcl::PointXYZRGB>(cloud, rgb, "sample cloud");
+  viewer->setPointCloudRenderingProperties
+          (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 3, "sample cloud");
+  viewer->addCoordinateSystem(1.0);
+  viewer->initCameraParameters();
+  return (viewer);
+}
 
 
 timespec diff(timespec start, timespec end)
@@ -58,7 +81,6 @@ public:
                                   const time_t& timestamp)
     {
         mLaserScan = scan;
-        cout.precision(8);
         //cout << MiddleScanDistanceInches(mLaserScan) << endl;
         mTimeStamp = timestamp;
     }
@@ -76,13 +98,32 @@ public:
                                   const timespec& timestamp)
     {
         mMotorAngle = pos;
-        cout.precision(8);
         //cout << mMotorAngle << endl;
         mTimeStamp = timestamp;
     }
     double mMotorAngle;
     timespec mTimeStamp;
 };
+
+
+#define TESTPCL
+#ifdef TESTPCL
+int main()
+{
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr point_cloud_ptr
+            (new pcl::PointCloud<pcl::PointXYZRGB>);
+    point_cloud_ptr->width = (int) point_cloud_ptr->points.size ();
+    point_cloud_ptr->height = 1;
+    boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer;
+    viewer = rgbVis(point_cloud_ptr);
+    while (!viewer->wasStopped ())
+    {
+        viewer->spinOnce (100);
+        boost::this_thread::sleep (boost::posix_time::microseconds (100000));
+    }
+    return 0;
+}
+#endif
 
 
 //#define TESTHOKUYO
@@ -130,7 +171,7 @@ int main()
 #endif
 
 
-#define TESTMOTORLASER
+//#define TESTMOTORLASER
 #ifdef TESTMOTORLASER
 int main()
 {
@@ -263,9 +304,6 @@ int main()
 #endif
 
 
-
-
-
 //#define TESTSERVER
 #ifdef TESTSERVER
 /**
@@ -339,7 +377,6 @@ int main()
 #endif
 
 
-
 //#define TESTISR
 #ifdef TESTISR
 
@@ -373,6 +410,7 @@ int main()
 }
 
 #endif
+
 
 //#define TESTIMAGEGENERATION
 #ifdef TESTIMAGEGENERATION

@@ -226,12 +226,6 @@ void Dynamixel::ProcessingThread()
             // Trigger callbacks (if there is a read)
             if(read)
             {
-                if(!mFirstMotorReadFlag)
-                {
-                    mFirstMotorReadFlag = true;
-                    clock_gettime(CLOCK_MONOTONIC, &mPrevReadTimeStamp);
-                    clock_gettime(CLOCK_MONOTONIC, &mCurrReadTimeStamp);
-                }
                 Callback::Set::iterator callback;
                 mMutex.lock();
                 for(callback = mCallbacks.begin();

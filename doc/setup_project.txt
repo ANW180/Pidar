@@ -4,7 +4,7 @@ Check out this repository to your home/software directory using the following co
 git clone https://github.com/ANW180/Group27 ~/software
 
 1. Copy and paste the following install line in terminal.
-sudo apt-get install ssh subversion build-essential htop git git-core cmake-gui cmake libboost-all-dev libqt4-dev qtcreator libusb-1.0-0-dev libtinyxml-dev
+sudo apt-get install ssh subversion build-essential htop git git-core cmake-gui cmake libboost-all-dev libqt4-dev qtcreator libusb-1.0-0-dev libtinyxml-dev libpcl-all-dev libeigen3-dev libvtk5.8-dev libflann-dev
 
 2. Download and install the latest version of OpenCV
 Go to http://opencv.willowgarage.com/wiki/ and get the Unix version
