@@ -106,7 +106,7 @@ public:
 };
 
 
-#define TESTPCL
+//#define TESTPCL
 #ifdef TESTPCL
 int main()
 {
@@ -304,69 +304,119 @@ int main()
 #endif
 
 
-//#define TESTSERVER
-#ifdef TESTSERVER
-/**
- *  http://julien.boucaron.free.fr/wordpress/?p=178
- */
+#define TESTSERIALSERVER
+#ifdef TESTSERIALSERVER
 
-#include <iostream>
-#include <fstream>
-#include <string>
+
 #include <boost/asio.hpp>
+#include <boost/bind.hpp>
+#include <boost/lexical_cast.hpp>
+#include <iostream>
+#include <vector>
+#include "connection.hpp" // Must come before boost/serialization headers.
+#include <boost/serialization/vector.hpp>
+#include "pointcloud.hpp"
 
-using boost::asio::ip::tcp;
+namespace pointcloud_connection {
+
+void fillarray(double *arr, int size){
+    for(int i = 0;i<size;i++)
+    {
+        arr[i]=i;
+    }
+
+}
+
+/// Serves stock quote information to any client that connects to it.
+class server
+{
+public:
+  /// Constructor opens the acceptor and starts waiting for the first incoming
+  /// connection.
+  server(boost::asio::io_service& io_service, unsigned short port)
+    : acceptor_(io_service,
+        boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), port))
+  {
+    // Create the data to be sent to each client.
+    pcl_data s;
+    s.id = 0;
+    fillarray(s.x,1080);
+    fillarray(s.y,1080);
+    fillarray(s.z,1080);
 
 
-int main()
+    clouds_.push_back(s);
+
+//    s.id=1;
+//    fillarray(s.x,1080);
+//    fillarray(s.y,1080);
+//    fillarray(s.z,1080);
+
+
+//    clouds_.push_back(s);
+
+
+    // Start an accept operation for a new connection.
+    connection_ptr new_conn(new connection(acceptor_.get_io_service()));
+    acceptor_.async_accept(new_conn->socket(),
+        boost::bind(&server::handle_accept, this,
+          boost::asio::placeholders::error, new_conn));
+  }
+
+  /// Handle completion of a accept operation.
+  void handle_accept(const boost::system::error_code& e, connection_ptr conn)
+  {
+    if (!e)
+    {
+      // Successfully accepted a new connection. Send the list of stocks to the
+      // client. The connection::async_write() function will automatically
+      // serialize the data structure for us.
+      conn->async_write(clouds_,
+          boost::bind(&server::handle_write, this,
+            boost::asio::placeholders::error, conn));
+    }
+
+    // Start an accept operation for a new connection.
+    connection_ptr new_conn(new connection(acceptor_.get_io_service()));
+    acceptor_.async_accept(new_conn->socket(),
+        boost::bind(&server::handle_accept, this,
+          boost::asio::placeholders::error, new_conn));
+  }
+
+  /// Handle completion of a write operation.
+  void handle_write(const boost::system::error_code& e, connection_ptr conn)
+  {
+    // Nothing to do. The socket will be closed automatically when the last
+    // reference to the connection object goes away.
+  }
+
+private:
+  /// The acceptor object used to accept incoming socket connections.
+  boost::asio::ip::tcp::acceptor acceptor_;
+
+  /// The data to be sent to each client.
+  std::vector<pcl_data> clouds_;
+};
+
+} // namespace s11n_example
+
+int main(int argc, char* argv[])
 {
   try
   {
-        //double xyz[] = {-1000,45,987};
-        int size = 16384;
-        //create random data
-        double *xyz= new double[size];
-        for(int i = 0;i<size;i++)
-            xyz[i] = i;
-
-    const unsigned int port = 10000; //port the server listen
-    const unsigned int buff_size = 16384; //size of the send buffer
-
-    boost::asio::io_service io_service; //main asio object
-    tcp::endpoint endpoint(tcp::v4(), port); //endpoint
-    tcp::acceptor acceptor(io_service, endpoint);  //we accept connection there
-
-    //server loop
-    while(1) {
-        std::cout<<"Server Listening"<<std::endl;
-      tcp::socket socket(io_service);  //create a socket
-      acceptor.accept(socket); //attach to the acceptor
-      //we have got a new connection !
-      std::cout<<"Got a connection!"<<std::endl;
-      std::cout << " Remote @:port  " << socket.remote_endpoint().address() << " : "
-        << socket.remote_endpoint().port() << std::endl;
-
-      char* buff = new char[buff_size]; //creating the buffer
-      unsigned int count = 0; //counter
-      std::cout << "Sending" << std::endl;
-
-     for(int i = 0;i<1;i++){
-        //memset(buff,0,buff_size); //cleanup the buffer
-
-       // const char * px = reinterpret_cast<const char*>(&xyz);
-          const char * px = reinterpret_cast<const char*>(xyz);
-        boost::system::error_code ignored_error;
-        unsigned int len = sizeof(xyz);
-        boost::asio::write(socket, boost::asio::buffer(px,sizeof(double)*size),
-                   boost::asio::transfer_all(), ignored_error); //send
-        count+=len; //increment counter
-     }
-
-      delete(buff);  //delete buffer
-      std::cout << "Finished" << std::endl;
-      std::cout << "Sent "  << count << " bytes" << std::endl;
+    // Check command line arguments.
+    if (argc != 2)
+    {
+      //std::cerr << "Usage: server <port>" << std::endl;
+      //return 1;
+      std::cerr << "Defaulting to Port 10000" << std::endl;
+      argv[1]="10000";
     }
+    unsigned short port = boost::lexical_cast<unsigned short>(argv[1]);
 
+    boost::asio::io_service io_service;
+    pointcloud_connection::server server(io_service, port);
+    io_service.run();
   }
   catch (std::exception& e)
   {
@@ -374,8 +424,9 @@ int main()
   }
 
   return 0;
-#endif
+}
 
+#endif
 
 //#define TESTISR
 #ifdef TESTISR

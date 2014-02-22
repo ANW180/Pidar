@@ -10,6 +10,7 @@ LIBS += -LC/usr/local/lib \
 LIBS += -LC/usr/local/local \
 -lboost_thread \
 -lboost_system \
+-lboost_serialization \
 
 #TinyXML
 LIBS += -LC/usr/lib \
@@ -61,6 +62,8 @@ INCLUDEPATH += /usr/local/include/urg_c \
                /usr/include/flann \
 
 HEADERS += \
+    connection.hpp \
+    pointcloud.hpp \
     hokuyo.hpp \
     dynamixel.hpp
 
