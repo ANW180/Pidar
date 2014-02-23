@@ -35,11 +35,14 @@ namespace pointcloud_connection {
 class client
 {
 public:
+
   /// Constructor starts the asynchronous connect operation.
   client(boost::asio::io_service& io_service,
-      const std::string& host, const std::string& service)
+      const std::string& host, const std::string& service, int newcmd, double newval)
     : connection_(io_service)
   {
+      send_command = newcmd;
+      send_value = newval;
     // Resolve the host name into an IP address.
     boost::asio::ip::tcp::resolver resolver(io_service);
     boost::asio::ip::tcp::resolver::query query(host, service);
@@ -48,67 +51,74 @@ public:
 
     // Start an asynchronous connect operation.
     boost::asio::async_connect(connection_.socket(), endpoint_iterator,
-        boost::bind(&client::handle_connect, this,
+        boost::bind(&client::handle_write, this,
           boost::asio::placeholders::error));
   }
 
-  /// Handle completion of a connect operation.
-  void handle_connect(const boost::system::error_code& e)
-  {
-    if (!e)
-    {
-      // Successfully established connection. Start operation to read the list
-      // of stocks. The connection::async_read() function will automatically
-      // decode the data that is read from the underlying socket.
-      connection_.async_read(clouds_,
+
+  void handle_write(const boost::system::error_code& e){
+
+      //TODO: Command request logic here { }
+
+      pcl_commands command;
+      command.cmd = send_command;
+      std::cout << "sending cmd: " << command.cmd << std::endl;
+      commands_.push_back(command);
+
+      if(!e){
+
+      connection_.async_write(commands_,
           boost::bind(&client::handle_read, this,
             boost::asio::placeholders::error));
-    }
-    else
-    {
-      // An error occurred. Log it and return. Since we are not starting a new
-      // operation the io_service will run out of work to do and the client will
-      // exit.
-      std::cerr << e.message() << std::endl;
-    }
+      }
+      else
+      {
+          std::cout << "crap?: " << e << std::endl;
+      }
+  }
+
+  void handle_data(const boost::system::error_code& e){
+
+      if (!e)
+      {
+        // Print out the data that was received.
+         //TODO: Create class to handle received data
+        for (std::size_t i = 0; i < clouds_.size(); ++i)
+        {
+          std::cout << "Cloud number " << i << "\n";
+          std::cout << "    code: " << clouds_[i].id << "\n";
+          std::cout << "       x: " << clouds_[i].x[1079] << "\n";
+          std::cout << "       y: " << clouds_[i].y[3] << "\n";
+          std::cout << "       z: " << clouds_[i].z[4] << "\n";
+        }
+      }
+      else
+      {
+        // An error occurred.
+        std::cerr << "ERROR: " << e.message() << std::endl;
+      }
   }
 
   /// Handle completion of a read operation.
   void handle_read(const boost::system::error_code& e)
   {
-    if (!e)
-    {
-      // Print out the data that was received.
-      for (std::size_t i = 0; i < clouds_.size(); ++i)
-      {
-        std::cout << "Cloud number " << i << "\n";
-        std::cout << "    code: " << clouds_[i].id << "\n";
-        std::cout << "       x: " << clouds_[i].x[1079] << "\n";
-        std::cout << "       y: " << clouds_[i].y[3] << "\n";
-        std::cout << "       z: " << clouds_[i].z[4] << "\n";
-
-
-      }
-    }
-    else
-    {
-      // An error occurred.
-      std::cerr << "ERROR: " << e.message() << std::endl;
-    }
-
-    // Since we are not starting a new operation the io_service will run out of
-    // work to do and the client will exit.
+      connection_.async_read(clouds_,
+          boost::bind(&client::handle_data, this,
+            boost::asio::placeholders::error));
   }
 
 private:
   /// The connection to the server.
   connection connection_;
+  int send_command;
+  double send_value;
 
   /// The data received from the server.
   std::vector<pcl_data> clouds_;
+  std::vector<pcl_commands> commands_;
 };
 
-} // namespace s11n_example
+}
 
 int main(int argc, char* argv[])
 {
@@ -119,14 +129,21 @@ int main(int argc, char* argv[])
     {
       std::cerr << "Usage: client <host> <port>" << std::endl;
       //return 1;
-     //   std::cerr << "Default Client to localhost:10000" << std::endl;
+        std::cerr << "Default Client to localhost:10000" << std::endl;
         argv[1]="localhost";
         argv[2]="10000";
     }
 
-    boost::asio::io_service io_service;
-    pointcloud_connection::client client(io_service, "localhost", "10000");
-    io_service.run();
+    //Only connect when you want something, run will close when finished
+    for(int i = 0; i< 3;i++){
+        boost::asio::io_service io_service;
+        pointcloud_connection::client client(io_service, "localhost", "10000",i,0);
+        io_service.run();
+    }
+
+
+    //TODO: Create function to send different commands
+
   }
   catch (std::exception& e)
   {
@@ -137,90 +154,3 @@ int main(int argc, char* argv[])
 }
 
 #endif
-
-
-//#define TESTCLIENT
-#ifdef TESTCLIENT
-
-#include <time.h>
-#include <ctime>
-#include <iostream>
-#include <string>
-#include <boost/asio.hpp>
-#include <boost/array.hpp>
-#include <fstream>
-/**
- *http://julien.boucaron.free.fr/wordpress/?p=178
- */
-
-
-using boost::asio::ip::tcp;
-
-int main()
-{
-  try
-  {
-
-    const char *port = "10000"; //the port we connect
-    const unsigned int buff_size = 65536; //the size of the read buffer
-
-
-    boost::asio::io_service io_service; //asio main object
-    tcp::resolver resolver(io_service); //a resolver for name to @
-    tcp::resolver::query query("localhost", port); //ask the dns for this resolver
-    tcp::resolver::iterator endpoint_iterator = resolver.resolve(query); //iterator if multiple answers for a given name
-    tcp::resolver::iterator end;
-
-    tcp::socket socket(io_service); //attach a socket to the main asio object
-    socket.connect(*endpoint_iterator); //connect to the first returned object
-
-
-    unsigned int count = 0; //a counter
-    while(1) { //loop until (see break after)
-      boost::array<char, buff_size> buf; //create read buffer
-      boost::system::error_code error; //in case of error
-      size_t len = socket.read_some(boost::asio::buffer(buf), error); //read data
-      std::cout << "Read " << len <<  std::endl;
-      count += len;
-      std::cout << "Read a total of " << count << " bytes " << std::endl;
-      if (error == boost::asio::error::eof ) { //if end of file reached
-
-
-      }
-      else if (error) {
-        throw boost::system::system_error(error); // Some other error.
-      }
-      else {
-
-            //Create matching data structure
-            //len is the length of received information
-            double * data = new double[len];
-
-            //Copy received data into data structure
-            //memcpy(data, buf.data(), sizeof(double) * len);
-            memcpy(data, buf.data(), len);
-
-            //Output data to screen
-            std::cout<<"Begin data"<<std::endl;
-            for(int i = 0;i<(8000);i++)
-                std::cout<<data[i]<<std::endl;
-            std::cout<<"End data"<<std::endl<<"Length: "<<len<<std::endl;
-
-//            if (error == boost::asio::error::eof ) { //if end of file reached
-//                f.write(buf.data(),len); //finish write data
-//                f.close();   break; // Connection closed cleanly by peer.
-//                  }
-            break; //quit while(1) loop
-      }
-    }
-  }
-  catch (std::exception& e)
-  {
-    std::cout << "Exception: " << e.what() << std::endl;
-  }
-
-  return 0;
-}
-
-#endif
-

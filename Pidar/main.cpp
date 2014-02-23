@@ -338,22 +338,7 @@ public:
         boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), port))
   {
     // Create the data to be sent to each client.
-    pcl_data s;
-    s.id = 0;
-    fillarray(s.x,1080);
-    fillarray(s.y,1080);
-    fillarray(s.z,1080);
 
-
-    clouds_.push_back(s);
-
-//    s.id=1;
-//    fillarray(s.x,1080);
-//    fillarray(s.y,1080);
-//    fillarray(s.z,1080);
-
-
-//    clouds_.push_back(s);
 
 
     // Start an accept operation for a new connection.
@@ -368,12 +353,9 @@ public:
   {
     if (!e)
     {
-      // Successfully accepted a new connection. Send the list of stocks to the
-      // client. The connection::async_write() function will automatically
-      // serialize the data structure for us.
-      conn->async_write(clouds_,
-          boost::bind(&server::handle_write, this,
-            boost::asio::placeholders::error, conn));
+            conn->async_read(commands_,
+                  boost::bind(&server::handle_read,this,
+                  boost::asio::placeholders::error,conn));
     }
 
     // Start an accept operation for a new connection.
@@ -386,19 +368,75 @@ public:
   /// Handle completion of a write operation.
   void handle_write(const boost::system::error_code& e, connection_ptr conn)
   {
+      //After sending the cloud, clear the vector
+      clouds_.clear();
+
     // Nothing to do. The socket will be closed automatically when the last
     // reference to the connection object goes away.
   }
 
+  /// Handle completion of a read operation.
+  void handle_read(const boost::system::error_code& e, connection_ptr conn)
+  {
+      //TODO: make class to react to commands
+ int mycommand = 0; //init to 0
+    if (!e)
+    {
+        //only read first vector received [0], multiple vectors may allow for multiple commands and data
+        std::cout << "    cmd: " << commands_[0].cmd<< "\n";
+        mycommand = (int) commands_[0].cmd;
+
+        //TODO: create seperate class for protocol logic
+        if(mycommand == 1){
+        pcl_data s;
+        s.id = 1;
+        fillarray(s.x,1080);
+        fillarray(s.y,1080);
+        fillarray(s.z,1080);
+        clouds_.push_back(s);
+        }
+        else if(mycommand == 2)
+        {
+        pcl_data s;
+        s.id = 2;
+        fillarray(s.x,1080);
+        fillarray(s.y,1080);
+        fillarray(s.z,1080);
+        clouds_.push_back(s);
+        }
+        else{
+            pcl_data s;
+            s.id = -1;
+            fillarray(s.x,1080);
+            fillarray(s.y,1080);
+            fillarray(s.z,1080);
+            clouds_.push_back(s);
+        }
+
+        conn->async_write(clouds_,
+            boost::bind(&server::handle_write, this,
+              boost::asio::placeholders::error, conn));
+    }
+    else
+    {
+      // An error occurred.
+      std::cerr << "ERROR: " << e.message() << std::endl;
+    }
+
+
+    // Since we are not starting a new operation the io_service will run out of
+    // work to do and the client will exit.
+  }
 private:
   /// The acceptor object used to accept incoming socket connections.
   boost::asio::ip::tcp::acceptor acceptor_;
 
   /// The data to be sent to each client.
   std::vector<pcl_data> clouds_;
+  std::vector<pcl_commands> commands_;
 };
 
-} // namespace s11n_example
+}
 
 int main(int argc, char* argv[])
 {

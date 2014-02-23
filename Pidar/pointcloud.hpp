@@ -33,6 +33,17 @@ struct pcl_data
   }
 };
 
+struct pcl_commands
+{
+  int cmd;
+
+  template <typename Archive>
+  void serialize(Archive& ar, const unsigned int version)
+  {
+    ar & cmd;
+  }
+};
+
 } //
 
 #endif // SERIALIZATION_STOCK_HPP
