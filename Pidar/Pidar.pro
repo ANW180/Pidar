@@ -69,4 +69,5 @@ HEADERS += \
 
 SOURCES += hokuyo.cpp \
            dynamixel.cpp \
-           main.cpp
+           main.cpp \
+    connection.cpp

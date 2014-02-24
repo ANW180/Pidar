@@ -1,12 +1,7 @@
 //
 // connection.hpp
 // ~~~~~~~~~~~~~~
-//
-// Copyright (c) 2003-2013 Christopher M. Kohlhoff (chris at kohlhoff dot com)
-//
-// Distributed under the Boost Software License, Version 1.0. (See accompanying
-// file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
-//
+
 
 #ifndef SERIALIZATION_CONNECTION_HPP
 #define SERIALIZATION_CONNECTION_HPP
@@ -183,6 +178,6 @@ private:
 
 typedef boost::shared_ptr<connection> connection_ptr;
 
-} // namespace s11n_example
+}
 
 #endif // SERIALIZATION_CONNECTION_HPP

@@ -8,18 +8,8 @@
 ///
 ////////////////////////////////////////////////////////////////////////////////
 
-
 #define CLIENT
 #ifdef CLIENT
-//
-// client.cpp
-// ~~~~~~~~~~
-//
-// Copyright (c) 2003-2013 Christopher M. Kohlhoff (chris at kohlhoff dot com)
-//
-// Distributed under the Boost Software License, Version 1.0. (See accompanying
-// file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
-//
 
 #include <boost/asio.hpp>
 #include <boost/bind.hpp>
@@ -31,6 +21,9 @@
 
 namespace pointcloud_connection {
 
+
+std::vector<pcl_data> Latest_Clouds_;
+
 /// Downloads stock quote information from a server.
 class client
 {
@@ -41,6 +34,7 @@ public:
       const std::string& host, const std::string& service, int newcmd, double newval)
     : connection_(io_service)
   {
+
       send_command = newcmd;
       send_value = newval;
     // Resolve the host name into an IP address.
@@ -81,22 +75,20 @@ public:
 
       if (!e)
       {
-        // Print out the data that was received.
-         //TODO: Create class to handle received data
-        for (std::size_t i = 0; i < clouds_.size(); ++i)
-        {
-          std::cout << "Cloud number " << i << "\n";
-          std::cout << "    code: " << clouds_[i].id << "\n";
-          std::cout << "       x: " << clouds_[i].x[1079] << "\n";
-          std::cout << "       y: " << clouds_[i].y[3] << "\n";
-          std::cout << "       z: " << clouds_[i].z[4] << "\n";
-        }
+
+
+
+          Latest_Clouds_ = clouds_;
+
       }
       else
       {
         // An error occurred.
         std::cerr << "ERROR: " << e.message() << std::endl;
       }
+
+      //TODO: Create callback function here that updates data
+      // This is the endpoint for the connection
   }
 
   /// Handle completion of a read operation.
@@ -118,39 +110,67 @@ private:
   std::vector<pcl_commands> commands_;
 };
 
+pointcloud_connection::pcl_data sendCommand(int cmd){
+    boost::asio::io_service io_service;
+    pointcloud_connection::client client(io_service, "localhost", "10000",cmd,0);
+    io_service.run();
+    return Latest_Clouds_[0];
 }
 
-int main(int argc, char* argv[])
-{
-  try
-  {
-    // Check command line arguments.
-    if (argc != 3)
+
+pointcloud_connection::pcl_data getLatestCloud(){
+
+    return sendCommand(1);
+}
+
+pointcloud_connection::pcl_data getLatestSpeed(){
+
+    return sendCommand(2);
+}
+
+
+}
+    int main(int argc, char* argv[])
     {
-      std::cerr << "Usage: client <host> <port>" << std::endl;
-      //return 1;
-        std::cerr << "Default Client to localhost:10000" << std::endl;
-        argv[1]="localhost";
-        argv[2]="10000";
+      try
+      {
+
+
+        // Check command line arguments.
+        if (argc != 3)
+        {
+          std::cerr << "Usage: client <host> <port>" << std::endl;
+          //return 1;
+            std::cerr << "Default Client to localhost:10000" << std::endl;
+            argv[1]="localhost";
+            argv[2]="10000";
+        }
+
+        //Only connect when you want something, run will close when finished
+
+            pointcloud_connection::pcl_data mycloud = pointcloud_connection::getLatestCloud();
+
+            std::cout << "id: " << mycloud.id     << std::endl;
+            std::cout << "x: "  << mycloud.x[501]  << std::endl;
+            std::cout << "y: "  << mycloud.y[502]  << std::endl;
+            std::cout << "z: "  << mycloud.z[1079] << std::endl;
+
+        mycloud = pointcloud_connection::getLatestSpeed();
+
+        std::cout << "id: " << mycloud.id     << std::endl;
+
+
+        //TODO: Create class to handle received data
+        //TODO: Create function to send different commands
+
+      }
+      catch (std::exception& e)
+      {
+        std::cerr << e.what() << std::endl;
+      }
+
+      return 0;
     }
 
-    //Only connect when you want something, run will close when finished
-    for(int i = 0; i< 3;i++){
-        boost::asio::io_service io_service;
-        pointcloud_connection::client client(io_service, "localhost", "10000",i,0);
-        io_service.run();
-    }
-
-
-    //TODO: Create function to send different commands
-
-  }
-  catch (std::exception& e)
-  {
-    std::cerr << e.what() << std::endl;
-  }
-
-  return 0;
-}
 
 #endif

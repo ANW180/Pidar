@@ -1,15 +1,5 @@
-//
-// stock.hpp
-// ~~~~~~~~~
-//
-// Copyright (c) 2003-2013 Christopher M. Kohlhoff (chris at kohlhoff dot com)
-//
-// Distributed under the Boost Software License, Version 1.0. (See accompanying
-// file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
-//
-
-#ifndef SERIALIZATION_STOCK_HPP
-#define SERIALIZATION_STOCK_HPP
+#ifndef SERIALIZATION_POINTCLOUD_HPP
+#define SERIALIZATION_POINTCLOUD_HPP
 
 #include <string>
 
@@ -46,4 +36,4 @@ struct pcl_commands
 
 } //
 
-#endif // SERIALIZATION_STOCK_HPP
+#endif // SERIALIZATION_POINTCLOUD_HPP
