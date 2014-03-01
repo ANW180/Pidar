@@ -12,6 +12,7 @@ struct pcl_data
   double x[1080];
   double y[1080];
   double z[1080];
+  std::string message;
 
   template <typename Archive>
   void serialize(Archive& ar, const unsigned int version)

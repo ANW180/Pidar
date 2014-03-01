@@ -24,7 +24,6 @@ namespace pointcloud_connection {
 
 std::vector<pcl_data> Latest_Clouds_;
 
-/// Downloads stock quote information from a server.
 class client
 {
 public:
@@ -107,6 +106,7 @@ private:
 
   /// The data received from the server.
   std::vector<pcl_data> clouds_;
+
   std::vector<pcl_commands> commands_;
 };
 

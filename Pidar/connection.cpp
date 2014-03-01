@@ -17,7 +17,6 @@ void fillarray(double *arr, int size){
 
 }
 
-/// Serves stock quote information to any client that connects to it.
 class server
 {
 public:
