@@ -10,6 +10,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 #include "hokuyo.hpp"
 #include "dynamixel.hpp"
+#include "control.hpp"
 #include <time.h>
 #include <wiringPi.h>
 #include <ctime>
@@ -342,7 +343,10 @@ int main(int argc, char* argv[])
 
 #define BUTTON_PIN 0
 volatile int eventCounter = 0;
-void myInterrupt(void) {eventCounter++;}
+void myInterrupt(void) {
+
+    eventCounter++;
+}
 
 int main()
 {

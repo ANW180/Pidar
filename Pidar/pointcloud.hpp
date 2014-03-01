@@ -35,6 +35,7 @@ struct pcl_commands
   }
 };
 
+
 } //
 
 #endif // SERIALIZATION_POINTCLOUD_HPP
