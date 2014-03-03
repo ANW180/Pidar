@@ -7,9 +7,13 @@
 /// Email: jongulrich@gmail.com, watsontandrew@gmail.com
 ///
 ////////////////////////////////////////////////////////////////////////////////
-#include<hokuyo.hpp>
-#include<pointcloud.hpp>
-#include<dynamixel.hpp>
+
+#ifndef CONTROL_HPP
+#define CONTROL_HPP
+
+#include <hokuyo.hpp>
+#include <pointcloud.hpp>
+#include <dynamixel.hpp>
 #include <wiringPi.h>
 #include <connection.cpp>
 
@@ -50,6 +54,7 @@ namespace Pidar
         timespec mTimeStamp;
     };
 
+
     class Control
     {
     public:
@@ -63,18 +68,24 @@ namespace Pidar
                                      double startScanAngle,
                                      double stopScanAngle);
 
+        double getMotorPositionDegrees();
+
+        double getLaserPositionPolar();
+
     protected:
-    Motor::Dynamixel* motor;
-    Laser::Hokuyo *laser;
-    std::vector<CvPoint3D64f> mScan;
-    time_t mLaserTimestamp;
-    time_t mMotorTimestamp;
-    double mStartScanAngle;
-    double mStopScanAngle;
-    LaserCallback* mpLasercallback;
-    DynamixelCallback* mpMotorcallback;
+        Motor::Dynamixel* motor;
+        Laser::Hokuyo *laser;
+        std::vector<CvPoint3D64f> mScan;
+        time_t mLaserTimestamp;
+        time_t mMotorTimestamp;
+        double mStartScanAngle;
+        double mStopScanAngle;
+        LaserCallback* mpLasercallback;
+        DynamixelCallback* mpMotorcallback;
     };
 
 
 
 }
+
+#endif

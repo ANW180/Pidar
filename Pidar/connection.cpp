@@ -1,3 +1,6 @@
+#ifndef CONNECTIONCLASS
+#define CONNECTIONCLASS
+
 #include <boost/asio.hpp>
 #include <boost/bind.hpp>
 #include <boost/lexical_cast.hpp>
@@ -9,14 +12,6 @@
 
 namespace pointcloud_connection {
 
-void fillarray(double *arr, int size){
-    for(int i = 0;i<size;i++)
-    {
-        arr[i]=i;
-    }
-
-}
-
 class server
 {
 public:
@@ -27,7 +22,6 @@ public:
         boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), port))
   {
     // Create the data to be sent to each client.
-
 
 
     // Start an accept operation for a new connection.
@@ -62,6 +56,14 @@ public:
 
     // Nothing to do. The socket will be closed automatically when the last
     // reference to the connection object goes away.
+  }
+
+  void fillarray(double *arr, int size){
+      for(int i = 0;i<size;i++)
+      {
+          arr[i]=i;
+      }
+
   }
 
   /// Handle completion of a read operation.
@@ -125,3 +127,5 @@ private:
 };
 
 }
+
+#endif

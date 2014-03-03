@@ -16,8 +16,13 @@ Control::Control(){
     laser = new Laser::Hokuyo();
 }
 
-void LaserISR(void){
-    //TODO: stuff
+Control::~Control()
+{
+    //Shutdown();
+}
+
+void InterruptService(void){
+    //TODO: calculate / adjust values to put into the Data Structure
 }
 
 bool Control::Initialize(){
@@ -27,40 +32,46 @@ bool Control::Initialize(){
     laser->Initialize();
     motor->Initialize();
 
-//    if (wiringPiSetup () < 0) {
-//          fprintf (stderr, "Unable to setup wiringPi: %s\n", strerror (errno));
-//          return 1;
-//      }
+    if (wiringPiSetup () < 0) {
+          fprintf (stderr, "Unable to setup wiringPi: %s\n", strerror (errno));
+       //   return 1;
+      }
 
-//      // set Pin 17/0 generate an interrupt on low-to-high transitions
-//      // and attach myInterrupt() to the interrupt
-//      if ( wiringPiISR (HOKUYOSYNCPIN, INT_EDGE_RISING, &LaserISR) < 0 ) {
-//          fprintf (stderr, "Unable to setup ISR: %s\n", strerror (errno));
-//          return 1;
-//      }
+      // set Pin 17/0 generate an interrupt on low-to-high transitions
+      // and attach myInterrupt() to the interrupt
+      if ( wiringPiISR (HOKUYOSYNCPIN, INT_EDGE_RISING, &InterruptService) < 0 ) {
+          fprintf (stderr, "Unable to setup ISR: %s\n", strerror (errno));
+       //   return 1;
+      }
 
 
-//      try
-//      {
-//        unsigned short port = boost::lexical_cast<unsigned short>("10000");
+      try
+      {
+        unsigned short port = boost::lexical_cast<unsigned short>("10000");
 
-//        boost::asio::io_service io_service;
+        boost::asio::io_service io_service;
 
-//        pointcloud_connection::server server(io_service, port);
-//        io_service.run();
-//      }
-//      catch (std::exception& e)
-//      {
-//        std::cerr << e.what() << std::endl;
-//      }
+        pointcloud_connection::server server(io_service, port);
+        std::cout<<"Starting COM on port: " << port << std::endl;
+        io_service.run();
+      }
+      catch (std::exception& e)
+      {
+        std::cerr << e.what() << std::endl;
+      }
 
     return true;
 
 }
 
-double Motor::Dynamixel::GetPositionDegrees(){}
+double Control::getMotorPositionDegrees()
+{
+    return motor->GetPositionDegrees();
+}
 
 
+
+void Control::InterpolateScan(std::vector<CvPoint3D64f> scan, double startScanAngle,double stopScanAngle){}
 
 
 

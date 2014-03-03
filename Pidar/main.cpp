@@ -305,7 +305,7 @@ int main()
 #endif
 
 
-#define TESTSERIALSERVER
+//#define TESTSERIALSERVER
 #ifdef TESTSERIALSERVER
 #include <connection.cpp>
 
@@ -376,8 +376,10 @@ int main()
 #endif
 
 
-//#define TESTIMAGEGENERATION
+#define TESTIMAGEGENERATION
 #ifdef TESTIMAGEGENERATION
+#include<control.hpp>
+
 int main()
 {
 
@@ -388,8 +390,8 @@ int main()
 //    if time between m(t1) <> m(t2)
 //        angle = m(t1)angle
 
-
-
+    Pidar::Control* maincontrol = new Pidar::Control();
+    maincontrol->Initialize();
 
 
    return 0;
