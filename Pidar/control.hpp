@@ -37,7 +37,6 @@ namespace Pidar
         time_t mTimeStamp;
     };
 
-
     class DynamixelCallback : public Motor::Callback
     {
     public:
@@ -72,6 +71,12 @@ namespace Pidar
 
         double getLaserPositionPolar();
 
+        void startMotor(int rpm);
+
+        void stopMotor();
+
+        void stopLaser();
+
     protected:
         Motor::Dynamixel* motor;
         Laser::Hokuyo *laser;
@@ -80,8 +85,8 @@ namespace Pidar
         time_t mMotorTimestamp;
         double mStartScanAngle;
         double mStopScanAngle;
-        LaserCallback* mpLasercallback;
-        DynamixelCallback* mpMotorcallback;
+        LaserCallback mpLasercallback;
+        DynamixelCallback mpMotorcallback;
     };
 
 

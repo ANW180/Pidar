@@ -231,7 +231,7 @@ int main()
 /** This test tells the motor to move at 10 RPM and sets a timer at the
     start of the sequence, upon 1 revolution it will print the time
     elapsed. Theoretically it should be 6 seconds exactly given 10 RPM.*/
-//#define TESTDYNAMIXELSPEEDACCURACY
+#define TESTDYNAMIXELSPEEDACCURACY
 #ifdef TESTDYNAMIXELSPEEDACCURACY
 
 int main()
@@ -376,22 +376,25 @@ int main()
 #endif
 
 
-#define TESTIMAGEGENERATION
+//#define TESTIMAGEGENERATION
 #ifdef TESTIMAGEGENERATION
 #include<control.hpp>
 
 int main()
 {
 
-//    (P,T)....x1000
-//    (M,T)....x1000
-//    (72m 95ms) (45m 96ms) (65m 97ms) (55m 98ms)
-//        (234d 94ms) 	  (235d 97ms)
-//    if time between m(t1) <> m(t2)
-//        angle = m(t1)angle
-
     Pidar::Control* maincontrol = new Pidar::Control();
     maincontrol->Initialize();
+    maincontrol->startMotor(10);
+    delay(1000);
+    for(int i = 0;i<10;i++){
+        cout<<"Motor: " << maincontrol->getMotorPositionDegrees() << std::endl;
+        delay(100);
+    }
+    maincontrol->stopMotor();
+    maincontrol->stopLaser();
+
+
 
 
    return 0;
