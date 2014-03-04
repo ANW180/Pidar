@@ -30,9 +30,10 @@ namespace Pidar
                                       const time_t& timestamp)
         {
             mLaserScan = scan;
-            //cout << MiddleScanDistanceInches(mLaserScan) << endl;
             mTimeStamp = timestamp;
+            count++;
         }
+        unsigned int count;
         std::vector<CvPoint3D64f> mLaserScan;
         time_t mTimeStamp;
     };
@@ -46,7 +47,6 @@ namespace Pidar
                                       const timespec& timestamp)
         {
             mMotorAngle = pos;
-            //cout << mMotorAngle << endl;
             mTimeStamp = timestamp;
         }
         double mMotorAngle;
@@ -67,15 +67,15 @@ namespace Pidar
                                      double startScanAngle,
                                      double stopScanAngle);
 
-        double getMotorPositionDegrees();
+        double GetMotorPositionDegrees();
 
-        double getLaserPositionPolar();
+        double GetLaserPositionPolar();
 
-        void startMotor(int rpm);
+        void StartMotor(int rpm);
 
-        void stopMotor();
+        void StopMotor();
 
-        void stopLaser();
+        void StopLaser();
 
     protected:
         Motor::Dynamixel* motor;
@@ -85,8 +85,10 @@ namespace Pidar
         time_t mMotorTimestamp;
         double mStartScanAngle;
         double mStopScanAngle;
-        LaserCallback mpLasercallback;
+
         DynamixelCallback mpMotorcallback;
+        LaserCallback mpLasercallback;
+        pointcloud_connection::pcl_data mPointCloud;
     };
 
 
