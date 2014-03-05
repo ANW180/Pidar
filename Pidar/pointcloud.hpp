@@ -2,6 +2,8 @@
 #define SERIALIZATION_POINTCLOUD_HPP
 
 #include <string>
+#include <vector>
+#include<pointcloud.hpp>
 
 namespace pointcloud_connection {
 
@@ -9,18 +11,18 @@ namespace pointcloud_connection {
 struct pcl_data
 {
   int id;
-  double x[1080];
-  double y[1080];
-  double z[1080];
+  double r[1082];
+  double theta[1082];
+  double phi[1082];
   std::string message;
 
   template <typename Archive>
   void serialize(Archive& ar, const unsigned int version)
   {
     ar & id;
-    ar & x;
-    ar & y;
-    ar & z;
+    ar & r;
+    ar & theta;
+    ar & phi;
   }
 };
 
@@ -33,6 +35,19 @@ struct pcl_commands
   {
     ar & cmd;
   }
+};
+
+class Construction{
+public:
+    std::vector<pcl_data> CompleteScan;
+    Construction();
+    void addtoScan(pcl_data singlescan);
+    std::vector<pcl_data> getLast();
+
+
+protected:
+    std::vector<pcl_data> IncompleteScan;
+
 };
 
 

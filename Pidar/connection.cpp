@@ -81,26 +81,26 @@ public:
         if(mycommand == 1){
         pcl_data s;
         s.id = 1;
-        fillarray(s.x,1080);
-        fillarray(s.y,1080);
-        fillarray(s.z,1080);
+        fillarray(s.r,1080);
+        fillarray(s.theta,1080);
+        fillarray(s.phi,1080);
         clouds_.push_back(s);
         }
         else if(mycommand == 2)
         {
         pcl_data s;
         s.id = 2;
-        fillarray(s.x,1080);
-        fillarray(s.y,1080);
-        fillarray(s.z,1080);
+        fillarray(s.r,1080);
+        fillarray(s.theta,1080);
+        fillarray(s.phi,1080);
         clouds_.push_back(s);
         }
         else{
             pcl_data s;
             s.id = -1;
-            fillarray(s.x,1080);
-            fillarray(s.y,1080);
-            fillarray(s.z,1080);
+            fillarray(s.r,1080);
+            fillarray(s.theta,1080);
+            fillarray(s.phi,1080);
             clouds_.push_back(s);
         }
 

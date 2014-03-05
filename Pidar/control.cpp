@@ -10,6 +10,7 @@
 #include<control.hpp>
 
 using namespace Pidar;
+using namespace pointcloud_connection;
 
 Control::Control()
 {
@@ -25,6 +26,31 @@ Control::~Control()
 void InterruptService(void)
 {
     //TODO: calculate / adjust values to put into the Data Structure
+//    double current_position = Control::motor->GetPositionDegrees();
+//    double previous_position;
+//    double position_delta = previous_position - current_position;
+//    std::vector<CvPoint3D64f> laserscan = Control::mpLasercallback.mLaserScan;
+
+//    std::vector<pcl_data> singleScan;
+//    int cnt = laserscan.size();
+//    pcl_data temp;
+
+//    for(int i = 0;i<540;i++)
+//    {
+//        temp.r[i] = laserscan[i].x; //not sure the structure here...?
+//        temp.theta[i] = laserscan[i].y;
+//        temp.phi[i] = previous_position+(position_delta/cnt)*(1+i); //Value in radians of motor
+//    }
+
+//    for(int i = 540;i<1082;i++)
+//    {
+//        temp.r[i] = laserscan[i].x; //not sure the structure here...?
+//        temp.theta[i] = laserscan[i].y;
+//        temp.phi[i] = previous_position+(position_delta/cnt)*(1+i); //Value in radians of motor
+//    }
+//    singleScan.push_back(temp);
+
+    //TODO: Offload push and calculations to function
 }
 
 
@@ -59,7 +85,7 @@ bool Control::Initialize()
 
         // set Pin 17/0 generate an interrupt on low-to-high transitions
         // and attach myInterrupt() to the interrupt
-        if ( wiringPiISR (HOKUYOSYNCPIN, INT_EDGE_RISING, &InterruptService) < 0 )
+        if ( wiringPiISR (HOKUYOSYNCPIN, INT_EDGE_RISING, InterruptService) < 0 )
         {
             fprintf (stderr, "Unable to setup ISR: %s\n", strerror (errno));
             //   return 1;
