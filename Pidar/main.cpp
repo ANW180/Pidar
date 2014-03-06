@@ -8,6 +8,10 @@
 /// Email: watsontandrew@gmail.com, JonGUlrich@gmail.com
 ///
 ////////////////////////////////////////////////////////////////////////////////
+#ifndef MAIN_CPP
+#define MAIN_CPP
+
+
 #include "hokuyo.hpp"
 #include "dynamixel.hpp"
 #include "control.hpp"
@@ -379,18 +383,20 @@ int main()
 #define TESTIMAGEGENERATION
 #ifdef TESTIMAGEGENERATION
 #include<control.hpp>
+#include<global.hpp>
 
+Pidar::Control* maincontrol;
 int main()
 {
-
-    Pidar::Control* maincontrol = new Pidar::Control();
+    maincontrol = new Pidar::Control();
     maincontrol->Initialize();
-    //maincontrol->startMotor(10);
-    //delay(1000);
-//    for(int i = 0;i<10;i++){
-//        cout<<"Motor: " << maincontrol->getMotorPositionDegrees() << std::endl;
-//        delay(100);
-//    }
+    maincontrol->StartMotor(10);
+
+    delay(1000);
+    for(int i = 0;i<10;i++){
+        cout<<"Motor: " << maincontrol->GetMotorPositionDegrees() << std::endl;
+        delay(500);
+    }
     delay(3000);
     maincontrol->StopMotor();
     maincontrol->StopLaser();
@@ -398,8 +404,16 @@ int main()
 
 
 
+
+
+
+
+
+
    return 0;
 }
+#endif
+
 #endif
 
 /** End of File */

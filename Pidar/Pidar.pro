@@ -66,6 +66,7 @@ HEADERS += \
     pointcloud.hpp \
     hokuyo.hpp \
     control.hpp \
+    global.hpp \
     dynamixel.hpp
 
 SOURCES += hokuyo.cpp \

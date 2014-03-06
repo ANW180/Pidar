@@ -76,8 +76,11 @@ namespace Pidar
         void StopMotor();
 
         void StopLaser();
+        //static Control* GetInstance(){return maincontrol;}
+
 
     protected:
+       // static Control *maincontrol;
         Motor::Dynamixel* motor;
         Laser::Hokuyo *laser;
         std::vector<CvPoint3D64f> mScan;

@@ -134,7 +134,7 @@ void Dynamixel::StopCaptureThread()
     \param[in] true to move CW, false to move CCW*/
 void Dynamixel::SetSpeedRpm(const double rpm, const bool clockwise)
 {
-    double val = rpm / RX24_RPM_PER_UNIT;
+    double val = rpm / MX28_RPM_PER_UNIT;
     if(val > 1023.0)
     {
         val = 1023.0;
@@ -215,7 +215,7 @@ void Dynamixel::ProcessingThread()
             if( CommStatus == COMM_RXSUCCESS )
             {
                 mMutex.lock();
-                mPresentPositionDegrees = recv * RX24_DEG_PER_UNIT;
+                mPresentPositionDegrees = recv * MX28_DEG_PER_UNIT;
                 mMutex.unlock();
                 read = true;
             }

@@ -12,19 +12,14 @@
 using namespace Pidar;
 using namespace pointcloud_connection;
 
-Control::Control()
-{
-    motor = new Motor::Dynamixel();
-    laser = new Laser::Hokuyo();
-}
 
-Control::~Control()
-{
-    //Shutdown();
-}
-
+#include<global.hpp>
 void InterruptService(void)
 {
+
+    maincontrol->GetMotorPositionDegrees();
+
+
     //TODO: calculate / adjust values to put into the Data Structure
 //    double current_position = Control::motor->GetPositionDegrees();
 //    double previous_position;
@@ -52,6 +47,23 @@ void InterruptService(void)
 
     //TODO: Offload push and calculations to function
 }
+
+
+
+
+Control::Control()
+{
+    motor = new Motor::Dynamixel();
+    laser = new Laser::Hokuyo();
+}
+
+Control::~Control()
+{
+    //Shutdown();
+}
+
+
+
 
 
 
