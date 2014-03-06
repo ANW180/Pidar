@@ -17,7 +17,7 @@
 #include <sstream>
 #include <vector>
 
-namespace pointcloud_connection {
+namespace PointCloud {
 
 /// The connection class provides serialization primitives on top of a socket.
 /**

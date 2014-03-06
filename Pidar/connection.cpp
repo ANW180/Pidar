@@ -10,7 +10,7 @@
 #include <boost/serialization/vector.hpp>
 #include "pointcloud.hpp"
 
-namespace pointcloud_connection {
+namespace PointCloud {
 
 class server
 {

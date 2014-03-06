@@ -91,7 +91,7 @@ namespace Pidar
 
         DynamixelCallback mpMotorcallback;
         LaserCallback mpLasercallback;
-        pointcloud_connection::pcl_data mPointCloud;
+        PointCloud::pcl_data mPointCloud;
     };
 
 

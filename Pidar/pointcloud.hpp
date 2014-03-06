@@ -3,9 +3,8 @@
 
 #include <string>
 #include <vector>
-#include<pointcloud.hpp>
 
-namespace pointcloud_connection {
+namespace PointCloud {
 
 /// Structure to hold information about a single stock.
 struct pcl_data

@@ -1,6 +1,6 @@
 #include<pointcloud.hpp>
 
-using namespace pointcloud_connection;
+using namespace PointCloud;
 
 
 Construction::Construction(){

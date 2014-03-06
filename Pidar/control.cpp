@@ -10,7 +10,7 @@
 #include<control.hpp>
 
 using namespace Pidar;
-using namespace pointcloud_connection;
+using namespace PointCloud;
 
 
 #include<global.hpp>
@@ -114,7 +114,7 @@ bool Control::Initialize()
 
             boost::asio::io_service io_service;
 
-            pointcloud_connection::server server(io_service, port);
+            PointCloud::server server(io_service, port);
             std::cout<<"Starting COM on port: " << port << std::endl;
             io_service.run();
         }
