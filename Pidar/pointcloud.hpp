@@ -6,22 +6,34 @@
 
 namespace PointCloud {
 
+struct pcl_point
+{
+    double r;
+    double theta;
+    double phi;
+
+    template <typename Archive>
+    void serialize(Archive& ar, const unsigned int version)
+    {
+      ar & r;
+      ar & theta;
+      ar & phi;
+    }
+};
+
 /// Structure to hold information about a single stock.
 struct pcl_data
 {
   int id;
-  double r[1082];
-  double theta[1082];
-  double phi[1082];
+  std::vector<pcl_point> points;
   std::string message;
 
   template <typename Archive>
   void serialize(Archive& ar, const unsigned int version)
   {
     ar & id;
-    ar & r;
-    ar & theta;
-    ar & phi;
+    ar & points;
+    ar & message;
   }
 };
 

@@ -26,7 +26,7 @@
     // ------------------------------------
     // -----Create example point cloud-----
     // ------------------------------------
-pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr GetSamplePTRData(){
+pcl::PointCloud<pcl::PointXYZRGB>::Ptr GetSamplePTRData(){
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr point_cloud_ptr (new pcl::PointCloud<pcl::PointXYZRGB>);
     std::cout << "Genarating example point clouds.\n\n";
     // We're going to make an ellipse extruded along the z-axis. The colour for
@@ -10906,9 +10906,9 @@ int main()
 
 
         Render::Visual* newvisual = new Render::Visual();
-        boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer = newvisual->getViewer(GetSampleFileData());
+        boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer = newvisual->getViewer(GetSamplePTRData());
         int x = 0;
-        bool swap = true;
+        bool swap = false;
         while (!viewer->wasStopped ())
         {
             viewer->spinOnce (100);
@@ -10923,7 +10923,10 @@ int main()
                 }
                 else
                 {
-                    viewer->updatePointCloud(GetSampleFileData(),"Point Cloud");
+                    //viewer->updatePointCloud(GetSampleFileData(),"Point Cloud"); //local source
+                    pcl_data mycloud = ClientSide::getLatestCloud(); //remote source
+                    boost::this_thread::sleep (boost::posix_time::microseconds (10000));
+                    viewer->updatePointCloud(convertDataToPCL(mycloud),"Point Cloud");
                     swap = true;
                 }
                std::cout<<"Data Updated"<<std::endl;

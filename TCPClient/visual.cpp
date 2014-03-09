@@ -24,13 +24,6 @@ using namespace Render;
       return (viewer);
     }
 
-    pcl::PointCloud<pcl::PointXYZRGB>::Ptr ConvertDataToPCL(PointCloud::pcl_data){
-        pcl::PointCloud<pcl::PointXYZRGB>::Ptr point_cloud_ptr
-                 (new pcl::PointCloud<pcl::PointXYZRGB>);
-         point_cloud_ptr->width = (int) point_cloud_ptr->points.size ();
-         point_cloud_ptr->height = 1;
-        return point_cloud_ptr;
-    }
 
     //////////////////////////
     //
@@ -57,18 +50,23 @@ using namespace Render;
     return viewer;
     }
 
-    void show(PointCloud::pcl_data){
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr convertDataToPCL(PointCloud::pcl_data Data){
                pcl::PointCloud<pcl::PointXYZRGB>::Ptr point_cloud_ptr
                         (new pcl::PointCloud<pcl::PointXYZRGB>);
+               pcl::PointXYZRGB point;
+               for(int i=0;i<Data.points.size();i++)
+               {
+                           point.x = Data.points[i].r;
+                           point.y = Data.points[i].theta;
+                           point.z = Data.points[i].phi;
+                           point.rgb = 99999999;
+                           point_cloud_ptr->points.push_back (point);
+               }
+
                 point_cloud_ptr->width = (int) point_cloud_ptr->points.size ();
                 point_cloud_ptr->height = 1;
-                boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer;
-                viewer = rgbVis(point_cloud_ptr);
-                while (!viewer->wasStopped ())
-                {
-                    viewer->spinOnce (100);
-                    boost::this_thread::sleep (boost::posix_time::microseconds (100000));
-                }
+                return point_cloud_ptr;
+
 
             }
 

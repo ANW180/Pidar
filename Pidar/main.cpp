@@ -390,16 +390,16 @@ int main()
 {
     maincontrol = new Pidar::Control();
     maincontrol->Initialize();
-    maincontrol->StartMotor(10);
+//    maincontrol->StartMotor(10);
 
-    delay(1000);
-    for(int i = 0;i<10;i++){
-        cout<<"Motor: " << maincontrol->GetMotorPositionDegrees() << std::endl;
-        delay(500);
-    }
-    delay(3000);
-    maincontrol->StopMotor();
-    maincontrol->StopLaser();
+//    delay(1000);
+//    for(int i = 0;i<10;i++){
+//        cout<<"Motor: " << maincontrol->GetMotorPositionDegrees() << std::endl;
+//        delay(500);
+//    }
+//    delay(3000);
+//    maincontrol->StopMotor();
+//    maincontrol->StopLaser();
 
 
 

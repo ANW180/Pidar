@@ -70,9 +70,9 @@ Control::~Control()
 bool Control::Initialize()
 {
 
-    bool enableLaser = true;
-    bool enableMotor = true;
-    bool enableCOM = false;
+    bool enableLaser = false;
+    bool enableMotor = false;
+    bool enableCOM = true;
     bool enableISR = false;
 
     if(enableLaser)
