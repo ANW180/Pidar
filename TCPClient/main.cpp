@@ -26,7 +26,7 @@
     // ------------------------------------
     // -----Create example point cloud-----
     // ------------------------------------
-pcl::PointCloud<pcl::PointXYZRGB>::Ptr GetSamplePTRData(){
+pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr GetSamplePTRData(){
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr point_cloud_ptr (new pcl::PointCloud<pcl::PointXYZRGB>);
     std::cout << "Genarating example point clouds.\n\n";
     // We're going to make an ellipse extruded along the z-axis. The colour for
@@ -10901,12 +10901,35 @@ int main()
         //mycloud = ClientSide::getLatestSpeed();
         //std::cout << "id: " << mycloud.id     << std::endl;
 
-
         //TODO: Create class to handle received data
         //TODO: Create function to send different commands
 
+
         Render::Visual* newvisual = new Render::Visual();
-        newvisual->show(GetSampleFileData());
+        boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer = newvisual->getViewer(GetSampleFileData());
+        int x = 0;
+        bool swap = true;
+        while (!viewer->wasStopped ())
+        {
+            viewer->spinOnce (100);
+            boost::this_thread::sleep (boost::posix_time::microseconds (100000));
+
+            if(x%25==1 && x>1)
+            {
+                //TODO: Grab new data from server
+                if(swap == true){
+                   viewer->updatePointCloud(GetSamplePTRData(),"Point Cloud");
+                   swap = false;
+                }
+                else
+                {
+                    viewer->updatePointCloud(GetSampleFileData(),"Point Cloud");
+                    swap = true;
+                }
+               std::cout<<"Data Updated"<<std::endl;
+            }
+            x++;
+        }
 
     }
     catch (std::exception& e)
