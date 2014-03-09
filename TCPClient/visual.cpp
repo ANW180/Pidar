@@ -1,6 +1,10 @@
 #include<visual.hpp>
 using namespace Render;
-
+    ///////////////////////////
+    //
+    //  Helper Functions
+    //
+    //////////////////////////
     boost::shared_ptr<pcl::visualization::PCLVisualizer> rgbVis
     (pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr cloud)
     {
@@ -20,15 +24,29 @@ using namespace Render;
       return (viewer);
     }
 
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr ConvertDataToPCL(PointCloud::pcl_data){
+        pcl::PointCloud<pcl::PointXYZRGB>::Ptr point_cloud_ptr
+                 (new pcl::PointCloud<pcl::PointXYZRGB>);
+         point_cloud_ptr->width = (int) point_cloud_ptr->points.size ();
+         point_cloud_ptr->height = 1;
+        return point_cloud_ptr;
+    }
+
+    //////////////////////////
+    //
+    //Class Functions
+    //
+    //////////////////////////
+
     Visual::Visual(){
     }
 
 
-    void Visual::show(){
-        pcl::PointCloud<pcl::PointXYZRGB>::Ptr point_cloud_ptr
-                (new pcl::PointCloud<pcl::PointXYZRGB>);
-        point_cloud_ptr->width = (int) point_cloud_ptr->points.size ();
-        point_cloud_ptr->height = 1;
+    void Visual::show(pcl::PointCloud<pcl::PointXYZRGB>::Ptr point_cloud_ptr){
+//        pcl::PointCloud<pcl::PointXYZRGB>::Ptr point_cloud_ptr
+//                (new pcl::PointCloud<pcl::PointXYZRGB>);
+//        point_cloud_ptr->width = (int) point_cloud_ptr->points.size ();
+//        point_cloud_ptr->height = 1;
         boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer;
         viewer = rgbVis(point_cloud_ptr);
         while (!viewer->wasStopped ())
@@ -38,6 +56,21 @@ using namespace Render;
         }
 
     }
+
+    void show(PointCloud::pcl_data){
+               pcl::PointCloud<pcl::PointXYZRGB>::Ptr point_cloud_ptr
+                        (new pcl::PointCloud<pcl::PointXYZRGB>);
+                point_cloud_ptr->width = (int) point_cloud_ptr->points.size ();
+                point_cloud_ptr->height = 1;
+                boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer;
+                viewer = rgbVis(point_cloud_ptr);
+                while (!viewer->wasStopped ())
+                {
+                    viewer->spinOnce (100);
+                    boost::this_thread::sleep (boost::posix_time::microseconds (100000));
+                }
+
+            }
 
 
 
