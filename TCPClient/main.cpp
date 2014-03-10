@@ -10923,10 +10923,19 @@ int main()
                 }
                 else
                 {
+                    pcl_data mycloud;
                     //viewer->updatePointCloud(GetSampleFileData(),"Point Cloud"); //local source
-                    pcl_data mycloud = ClientSide::getLatestCloud(); //remote source
-                    boost::this_thread::sleep (boost::posix_time::microseconds (10000));
-                    viewer->updatePointCloud(convertDataToPCL(mycloud),"Point Cloud");
+                    //TODO: handle bad connection/data
+                    try{
+                    mycloud = ClientSide::getLatestCloud();//remote source
+                        boost::this_thread::sleep (boost::posix_time::microseconds (10000));
+                        viewer->updatePointCloud(convertDataToPCL(mycloud),"Point Cloud");
+
+                    }
+                    catch(std::exception e){
+                        std::cout<<"Failed to receive point cloud: "<<e.what()<<std::endl;
+                    }
+
                     swap = true;
                 }
                std::cout<<"Data Updated"<<std::endl;

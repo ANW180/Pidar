@@ -17,33 +17,25 @@ using namespace PointCloud;
 void InterruptService(void)
 {
 
-    maincontrol->GetMotorPositionDegrees();
+    double current_position = maincontrol->GetMotorPositionDegrees();
+    double previous_position = maincontrol->GetMotorPreviousPositionDegrees();
+
+    //Update Previous Motor Position
+    maincontrol->SetMotorPreviousPositionDegrees(current_position);
+
+    //Get Values to send for construction
+    std::vector<CvPoint3D64f> laserscan = maincontrol->GetLaserScan();
+    pcl_data Incomplete = maincontrol->getIncompleteConstruction();
+
+    //Send values and get newly constructed incompletescan
+    Incomplete = maincontrol->addtoScanConstruction(Incomplete, laserscan,
+                                      current_position,previous_position);
 
 
-    //TODO: calculate / adjust values to put into the Data Structure
-//    double current_position = Control::motor->GetPositionDegrees();
-//    double previous_position;
-//    double position_delta = previous_position - current_position;
-//    std::vector<CvPoint3D64f> laserscan = Control::mpLasercallback.mLaserScan;
+    //return the appended incomplete scan
+    maincontrol->setIncompleteConstruction(Incomplete);
 
-//    std::vector<pcl_data> singleScan;
-//    int cnt = laserscan.size();
-//    pcl_data temp;
 
-//    for(int i = 0;i<540;i++)
-//    {
-//        temp.r[i] = laserscan[i].x; //not sure the structure here...?
-//        temp.theta[i] = laserscan[i].y;
-//        temp.phi[i] = previous_position+(position_delta/cnt)*(1+i); //Value in radians of motor
-//    }
-
-//    for(int i = 540;i<1082;i++)
-//    {
-//        temp.r[i] = laserscan[i].x; //not sure the structure here...?
-//        temp.theta[i] = laserscan[i].y;
-//        temp.phi[i] = previous_position+(position_delta/cnt)*(1+i); //Value in radians of motor
-//    }
-//    singleScan.push_back(temp);
 
     //TODO: Offload push and calculations to function
 }
@@ -55,15 +47,13 @@ Control::Control()
 {
     motor = new Motor::Dynamixel();
     laser = new Laser::Hokuyo();
+    construct = new PointCloud::Construction();
 }
 
 Control::~Control()
 {
     //Shutdown();
 }
-
-
-
 
 
 
@@ -133,6 +123,15 @@ double Control::GetMotorPositionDegrees()
     return motor->GetPositionDegrees();
 }
 
+double Control::GetMotorPreviousPositionDegrees(){
+    double val = motor->GetPreviousPositionDegrees();
+}
+
+void Control::SetMotorPreviousPositionDegrees(double val){
+   motor->SetPreviousPositionDegrees(val);
+}
+
+
 void Control::StartMotor(int rpm)
 {
      Control::motor->SetSpeedRpm(rpm, true);
@@ -148,6 +147,27 @@ void Control::StopMotor()
 void Control::StopLaser()
 {
     Control::laser->Shutdown();
+}
+
+std::vector<CvPoint3D64f> Control::GetLaserScan(){
+    return Control::mpLasercallback.mLaserScan;
+}
+
+pcl_data Control::getIncompleteConstruction(){
+        return construct->getIncompleteScan();
+}
+
+
+void Control::setIncompleteConstruction(pcl_data data){
+    construct->setIncompleteScan(data);
+}
+
+pcl_data Control::addtoScanConstruction(pcl_data Incomplete, std::vector<CvPoint3D64f> laserscan,
+                                 double currentMotorPosition, double previousMotorPosition){
+
+    return construct->addtoScan(Incomplete, laserscan,
+                                currentMotorPosition,previousMotorPosition);
+
 }
 
 void Control::InterpolateScan(std::vector<CvPoint3D64f> scan, double startScanAngle,double stopScanAngle)

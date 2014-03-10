@@ -23,7 +23,7 @@ Dynamixel::Dynamixel()
     mID = 1;
     mSerialPort = "/dev/ttyUSB0";
     mpDocument = new TiXmlDocument();
-    mCommandSpeedRpm = mPresentPositionDegrees = 0.0;
+    mCommandSpeedRpm = mPresentPositionDegrees = mPreviousPositionDegrees = 0.0;
     mBaudRate = 34; // 34 ~ 57142.9 for 57600 connection
 }
 
@@ -158,6 +158,13 @@ double Dynamixel::GetPositionDegrees()
     return mPresentPositionDegrees;
 }
 
+double Dynamixel::GetPreviousPositionDegrees(){
+    return mPreviousPositionDegrees;
+}
+
+void Dynamixel::SetPreviousPositionDegrees(double val){
+    mPreviousPositionDegrees = val;
+}
 
 /** Prints to screen the result of a wirte/read to the dynamixel */
 void Dynamixel::PrintCommStatus(int CommStatus)

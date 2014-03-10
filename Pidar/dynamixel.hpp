@@ -93,6 +93,11 @@ namespace Motor
         /** Get current position of servo
             \returns Position of motor in degrees*/
         virtual double GetPositionDegrees();
+
+        virtual double GetPreviousPositionDegrees();
+
+        void SetPreviousPositionDegrees(double val);
+
         /** Prints to screen the result of a wirte/read to the dynamixel */
         static void PrintCommStatus(int CommStatus);
 
@@ -127,7 +132,6 @@ namespace Motor
 
     protected:
         virtual void ProcessingThread();
-
         bool mConnectedFlag;
         bool mProcessingThreadFlag;
         int mBaudRate;
@@ -139,6 +143,7 @@ namespace Motor
         boost::mutex mMutex;
         int mCommandSpeedRpm;
         double mPresentPositionDegrees;
+        double mPreviousPositionDegrees;
         bool mCommandSpeedFlag;
         bool mFirstMotorReadFlag;
         timespec mPrevReadTimeStamp;

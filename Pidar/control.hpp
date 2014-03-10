@@ -69,6 +69,10 @@ namespace Pidar
 
         double GetMotorPositionDegrees();
 
+        double GetMotorPreviousPositionDegrees();
+
+        void SetMotorPreviousPositionDegrees(double val);
+
         double GetLaserPositionPolar();
 
         void StartMotor(int rpm);
@@ -76,6 +80,16 @@ namespace Pidar
         void StopMotor();
 
         void StopLaser();
+
+        PointCloud::pcl_data getIncompleteConstruction();
+
+        void setIncompleteConstruction(PointCloud::pcl_data data);
+
+        PointCloud::pcl_data addtoScanConstruction(PointCloud::pcl_data Incomplete, std::vector<CvPoint3D64f> laserscan,
+                                       double currentMotorPosition, double previousMotorPosition);
+
+        std::vector<CvPoint3D64f> GetLaserScan();
+
         //static Control* GetInstance(){return maincontrol;}
 
 
@@ -83,6 +97,7 @@ namespace Pidar
        // static Control *maincontrol;
         Motor::Dynamixel* motor;
         Laser::Hokuyo *laser;
+        PointCloud::Construction *construct;
         std::vector<CvPoint3D64f> mScan;
         time_t mLaserTimestamp;
         time_t mMotorTimestamp;

@@ -50,15 +50,16 @@ using namespace Render;
     return viewer;
     }
 
+
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr convertDataToPCL(PointCloud::pcl_data Data){
                pcl::PointCloud<pcl::PointXYZRGB>::Ptr point_cloud_ptr
                         (new pcl::PointCloud<pcl::PointXYZRGB>);
                pcl::PointXYZRGB point;
                for(int i=0;i<Data.points.size();i++)
                {
-                           point.x = Data.points[i].r;
-                           point.y = Data.points[i].theta;
-                           point.z = Data.points[i].phi;
+                           point.x = Data.points[i].r; //Will need to convert polar to cartestian
+                           point.y = Data.points[i].theta; //Will need to convert polar to cartestian
+                           point.z = Data.points[i].phi;  //Will need to convert polar to cartestian
                            point.rgb = 99999999;
                            point_cloud_ptr->points.push_back (point);
                }
@@ -66,7 +67,6 @@ using namespace Render;
                 point_cloud_ptr->width = (int) point_cloud_ptr->points.size ();
                 point_cloud_ptr->height = 1;
                 return point_cloud_ptr;
-
 
             }
 
