@@ -14,8 +14,6 @@
 
 namespace PointCloud {
 
-
-
 class server
 {
 public:
@@ -39,7 +37,7 @@ public:
             std::cout<<"Command 2 requested: Speed"<<std::endl;
             s.id = 1;
             s.speed = PublicScan.speed;
-            PublicScan.speed ++;
+            //PublicScan.speed ++;
             s.message = "Speed only returned";
           break;
 
@@ -141,8 +139,6 @@ private:
   std::vector<pcl_data> clouds_;
   std::vector<pcl_commands> commands_;
 };
-
-
 
 
 }

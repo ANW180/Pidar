@@ -121,43 +121,74 @@ int main()
         boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer = newvisual->getViewer(GetSamplePTRData());
         int x = 0;
         bool swap = false;
+//        while (!viewer->wasStopped ())
+//        {
+//            viewer->spinOnce (100);
+//            boost::this_thread::sleep (boost::posix_time::microseconds (100000));
+
+//            if(x%25==1 && x>1)
+//            {
+//                //TODO: Grab new data from server
+//                if(swap == true){
+//                   viewer->updatePointCloud(GetSamplePTRData(),"Point Cloud");
+//                   swap = false;
+//                }
+//                else
+//                {
+//                    pcl_data mycloud;
+//                    //viewer->updatePointCloud(GetSampleTXTFileData(),"Point Cloud"); //local source
+//                    //TODO: handle bad connection/data
+//                    try{
+//                    mycloud = ClientSide::getLatestCloud();//remote source
+//                        boost::this_thread::sleep (boost::posix_time::microseconds (10000));
+//                        viewer->updatePointCloud(convertDataToPCL(mycloud),"Point Cloud");
+//                    }
+//                    catch(std::exception e){
+//                        std::cout<<"Failed to receive point cloud: "<<e.what()<<std::endl;
+//                    }
+
+//                    swap = true;
+//                }
+//               std::cout<<"Data Updated"<<std::endl;
+//            }
+//            pcl_data received;
+//            received = ClientSide::getLatestSpeed();
+//            //std::cout<<"Received ID: "<<received.id<<std::endl;
+//            //std::cout<<"Received Message: "<<received.message<<std::endl;
+//            std::cout<<"Speed Reported: "<<received.speed<<std::endl<<std::endl;
+//            x++;
+//        }
+
+
+        int start = 0;
+        int stop = 1080;
+        //Testing while loop
         while (!viewer->wasStopped ())
         {
             viewer->spinOnce (100);
-            boost::this_thread::sleep (boost::posix_time::microseconds (100000));
+            //boost::this_thread::sleep (boost::posix_time::microseconds (100000));
 
-            if(x%25==1 && x>1)
-            {
-                //TODO: Grab new data from server
-                if(swap == true){
-                   viewer->updatePointCloud(GetSamplePTRData(),"Point Cloud");
-                   swap = false;
+            pcl_data mycloud;
+            //viewer->updatePointCloud(GetSampleTXTFileData(),"Point Cloud"); //local source
+            //TODO: handle bad connection/data
+            try{
+            mycloud = ClientSide::getLatestCloud();//remote source
+                boost::this_thread::sleep (boost::posix_time::microseconds (10000));
+                viewer->updatePointCloud(convertDataToPCLPartial(mycloud,start,stop),"Point Cloud");
+                start+=0;
+                stop+=1080;
+                if(stop>10000){
+                    start = 0;
+                    stop = 1080;
                 }
-                else
-                {
-                    pcl_data mycloud;
-                    //viewer->updatePointCloud(GetSampleTXTFileData(),"Point Cloud"); //local source
-                    //TODO: handle bad connection/data
-                    try{
-                    mycloud = ClientSide::getLatestCloud();//remote source
-                        boost::this_thread::sleep (boost::posix_time::microseconds (10000));
-                        viewer->updatePointCloud(convertDataToPCL(mycloud),"Point Cloud");
-                    }
-                    catch(std::exception e){
-                        std::cout<<"Failed to receive point cloud: "<<e.what()<<std::endl;
-                    }
-
-                    swap = true;
-                }
-               std::cout<<"Data Updated"<<std::endl;
             }
-            pcl_data received;
-            received = ClientSide::getLatestSpeed();
-            //std::cout<<"Received ID: "<<received.id<<std::endl;
-            //std::cout<<"Received Message: "<<received.message<<std::endl;
-            std::cout<<"Speed Reported: "<<received.speed<<std::endl<<std::endl;
-            x++;
+            catch(std::exception e){
+                std::cout<<"Failed to receive point cloud: "<<e.what()<<std::endl;
+            }
+
         }
+
+
 
     }
     catch (std::exception& e)

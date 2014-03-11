@@ -50,6 +50,7 @@ struct pcl_commands
 
 //Globally Accessible Scan. This should always be complete.
 extern pcl_data PublicScan;
+extern pcl_data PublicPartialScan;
 
 
 #endif

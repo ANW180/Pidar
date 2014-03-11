@@ -14,7 +14,7 @@ namespace Render{
 
         void getViewer(pcl_data);
         pcl::PointCloud<pcl::PointXYZRGB>::Ptr convertDataToPCL(pcl_data Data);
-
+        pcl::PointCloud<pcl::PointXYZRGB>::Ptr convertDataToPCLPartial(pcl_data Data, int start, int stop);
     };
 
 }

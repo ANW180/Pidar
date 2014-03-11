@@ -12,6 +12,7 @@
 using namespace Pidar;
 using namespace PointCloud;
 pcl_data PublicScan;
+pcl_data PublicPartialScan;
 
 
 #include <fstream>
@@ -81,13 +82,12 @@ void InterruptService(void)
 }
 
 
-
-
 Control::Control()
 {
     motor = new Motor::Dynamixel();
     laser = new Laser::Hokuyo();
     construct = new PointCloud::Construction();
+    PublicPartialScan.scancount = 0;
 }
 
 Control::~Control()
@@ -96,12 +96,10 @@ Control::~Control()
 }
 
 
-
-
-
 bool Control::Initialize()
 {
 
+    //Test Switches
     bool enableLaser = false;
     bool enableMotor = false;
     bool enableCOM = true;
