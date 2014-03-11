@@ -80,11 +80,7 @@ public:
 
         if (!e)
         {
-
-
-
             Latest_Clouds_ = clouds_;
-
         }
         else
         {
@@ -119,12 +115,25 @@ private:
 void setServer(std::string add, std::string prt){
     Address = add;
     Port = prt;
+
+    //Put in empty cloud if empty cloud found.
+    if(Latest_Clouds_.size()<1)
+    {
+        pcl_data blank;
+        blank.id = -1;
+        Latest_Clouds_.push_back(blank);
+    }
 }
 
 pcl_data sendCommand(int cmd){
     boost::asio::io_service io_service;
     ClientSide::client client(io_service, Address, Port,cmd,0);
     io_service.run();
+
+
+    std::cout<<"Received ID: "<<Latest_Clouds_[0].id<<std::endl;
+    std::cout<<"Received Message: "<<Latest_Clouds_[0].message<<std::endl;
+
     return Latest_Clouds_[0];
 }
 

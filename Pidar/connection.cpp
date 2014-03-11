@@ -15,9 +15,44 @@
 namespace PointCloud {
 
 
+
 class server
 {
 public:
+
+    //This will choose what happends with each command from the client
+    pcl_data ProcessCommands(std::vector<pcl_commands> cmd){
+
+        pcl_data s;
+        int id = (int)cmd[0].cmd;
+        switch ( id ) {
+        case 0:
+          break;
+        case 1:
+            s = PublicScan;
+            std::cout<<"connection.cpp: ID: "<<s.id<<std::endl;
+            s.message = "Full Scan Returned";
+          break;
+
+        case 2:
+            s.id = 2;
+            std::cout<<"Command 2 requested: Speed"<<std::endl;
+            s.id = 1;
+            s.speed = PublicScan.speed;
+            PublicScan.speed ++;
+            s.message = "Speed only returned";
+          break;
+
+        default:
+            s.id = 99;
+            std::cout<<"Other command requested"<<std::endl;
+            s.message = "No command of this type exists... Sorry.";
+          break;
+        }
+
+        return s;
+
+    }
 
   /// Constructor opens the acceptor and starts waiting for the first incoming
   /// connection.
@@ -74,37 +109,15 @@ public:
   void handle_read(const boost::system::error_code& e, connection_ptr conn)
   {
       //TODO: make class to react to commands
- int mycommand = 0; //init to 0
+
     if (!e)
     {
-        //only read first vector received [0], multiple vectors may allow for multiple commands and data
-        std::cout << "    cmd: " << commands_[0].cmd<< "\n";
-        mycommand = (int) commands_[0].cmd;
+        //Get return data
+        clouds_.clear();
+        pcl_data ret = ProcessCommands(commands_);
+        clouds_.push_back(ret);
 
-        //TODO: create seperate class for protocol logic
-        if(mycommand == 1){
-            pcl_data s;
-            s = PublicScan;
-            std::cout<<"connection.cpp: ID: "<<s.id<<std::endl;
-            clouds_.clear();
-            clouds_.push_back(s);
-        }
-        else if(mycommand == 2)
-        {
-           clouds_.clear();
-           pcl_data s;
-           s.id = 2;
-           clouds_.push_back(s);
-           std::cout<<"Command 2 requested: Nothing here yet..."<<std::endl;
-        }
-        else{
-            clouds_.clear();
-            pcl_data s;
-            s.id = 99;
-            clouds_.push_back(s);
-            std::cout<<"Other command requested: Nothing here yet..."<<std::endl;
-        }
-
+        //Send back the data
         conn->async_write(clouds_,
             boost::bind(&server::handle_write, this,
               boost::asio::placeholders::error, conn));
@@ -128,6 +141,9 @@ private:
   std::vector<pcl_data> clouds_;
   std::vector<pcl_commands> commands_;
 };
+
+
+
 
 }
 

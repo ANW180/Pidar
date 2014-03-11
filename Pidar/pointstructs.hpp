@@ -22,6 +22,7 @@ typedef struct pcl_data
 {
   int id;
   int scancount;
+  double speed;
   std::vector<pcl_point> points;
   std::string message;
 
@@ -29,6 +30,7 @@ typedef struct pcl_data
   void serialize(Archive& ar, const unsigned int version)
   {
     ar & scancount;
+    ar & speed;
     ar & id;
     ar & points;
     ar & message;
@@ -46,6 +48,7 @@ struct pcl_commands
   }
 };
 
+//Globally Accessible Scan. This should always be complete.
 extern pcl_data PublicScan;
 
 

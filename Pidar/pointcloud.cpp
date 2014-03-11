@@ -45,8 +45,6 @@ pcl_data Construction::addtoScan(pcl_data Incomplete, std::vector<CvPoint3D64f> 
             Incomplete.points.push_back(point);
     }
 
-    //TODO: If complete scan set completescan and clear incomplete scan.
-
     if(scancomplete)
     {
 
@@ -73,7 +71,6 @@ void Construction::setCompleteScan(pcl_data data){
 }
 
 pcl_data Construction::getCompleteScan(){
-    //CompleteScan = GetSampleFileData(); //For Testing **********
     return CompleteScan;
 }
 
