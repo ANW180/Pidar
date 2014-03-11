@@ -12,6 +12,7 @@ LIBS += -LC/usr/local/local \
 -lboost_system \
 -lboost_serialization \
 
+
 #TinyXML
 LIBS += -LC/usr/lib \
 -ltinyxml \
@@ -67,7 +68,8 @@ HEADERS += \
     hokuyo.hpp \
     control.hpp \
     global.hpp \
-    dynamixel.hpp
+    dynamixel.hpp \
+    pointstructs.hpp
 
 SOURCES += hokuyo.cpp \
            pointcloud.cpp \

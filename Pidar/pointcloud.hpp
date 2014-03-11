@@ -4,58 +4,14 @@
 #include <string>
 #include <vector>
 #include <opencv2/core/types_c.h>
+#include <../Pidar/pointstructs.hpp>
 
 namespace PointCloud {
 
-struct pcl_point
-{
-    double r;
-    double theta;
-    double phi;
-
-    template <typename Archive>
-    void serialize(Archive& ar, const unsigned int version)
-    {
-      ar & r;
-      ar & theta;
-      ar & phi;
-    }
-};
-
-/// Structure to hold information about a single stock.
-struct pcl_data
-{
-  int id;
-  int scancount;
-  std::vector<pcl_point> points;
-  std::string message;
-
-  template <typename Archive>
-  void serialize(Archive& ar, const unsigned int version)
-  {
-    ar & scancount;
-    ar & id;
-    ar & points;
-    ar & message;
-  }
-};
-
-struct pcl_commands
-{
-  int cmd;
-
-  template <typename Archive>
-  void serialize(Archive& ar, const unsigned int version)
-  {
-    ar & cmd;
-  }
-};
-
-
-using namespace PointCloud;
 class Construction{
 public:
 
+    pcl_data CompleteScan;
     Construction();
     pcl_data addtoScan(pcl_data incomplete, std::vector<CvPoint3D64f> laserscan,
                        double currentMotorPosition, double previousMotorPosition);
@@ -69,7 +25,7 @@ public:
 
 protected:
     pcl_data IncompleteScan;
-    pcl_data CompleteScan;
+
 
 };
 

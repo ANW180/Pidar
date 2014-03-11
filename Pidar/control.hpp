@@ -11,16 +11,19 @@
 #ifndef CONTROL_HPP
 #define CONTROL_HPP
 
+#include <connection.cpp>
 #include <hokuyo.hpp>
-#include <pointcloud.hpp>
 #include <dynamixel.hpp>
 #include <wiringPi.h>
-#include <connection.cpp>
+#include <pointcloud.hpp>
 
 #define HOKUYOSYNCPIN 0
 
+
 namespace Pidar
 {
+
+
     class LaserCallback : public Laser::Callback
     {
     public:
@@ -63,6 +66,8 @@ namespace Pidar
 
         bool Initialize(); //laser, motor,
 
+        Pidar::Control* getMainControl();
+
         void InterpolateScan(std::vector<CvPoint3D64f> scan,
                                      double startScanAngle,
                                      double stopScanAngle);
@@ -81,11 +86,13 @@ namespace Pidar
 
         void StopLaser();
 
-        PointCloud::pcl_data getIncompleteConstruction();
+        pcl_data getIncompleteConstruction();
 
-        void setIncompleteConstruction(PointCloud::pcl_data data);
+        pcl_data getCompleteConstruction();
 
-        PointCloud::pcl_data addtoScanConstruction(PointCloud::pcl_data Incomplete, std::vector<CvPoint3D64f> laserscan,
+        void setIncompleteConstruction(pcl_data data);
+
+        pcl_data addtoScanConstruction(pcl_data Incomplete, std::vector<CvPoint3D64f> laserscan,
                                        double currentMotorPosition, double previousMotorPosition);
 
         std::vector<CvPoint3D64f> GetLaserScan();
@@ -106,7 +113,7 @@ namespace Pidar
 
         DynamixelCallback mpMotorcallback;
         LaserCallback mpLasercallback;
-        PointCloud::pcl_data mPointCloud;
+        pcl_data mPointCloud;
     };
 
 

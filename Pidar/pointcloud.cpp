@@ -1,6 +1,4 @@
 #include<pointcloud.hpp>
-//#include<algorithm>
-
 
 using namespace PointCloud;
 
@@ -8,18 +6,25 @@ Construction::Construction(){
 
 }
 
+
 pcl_data Construction::addtoScan(pcl_data Incomplete, std::vector<CvPoint3D64f> laserscan,
                                  double currentMotorPosition, double previousMotorPosition){
 
     int scancnt = 1080;
-    //absolute value (with doubles)
-    double delta_position = 0.0;
-    if(currentMotorPosition>previousMotorPosition)
-            delta_position = currentMotorPosition - previousMotorPosition;
-    else
-            delta_position = previousMotorPosition - currentMotorPosition;
 
-    //TODO: Check for complete scan
+    //Check for complete scan & get delta
+    double delta_position = 0.0;
+    bool scancomplete = false;
+    if(currentMotorPosition<previousMotorPosition){
+        delta_position = (previousMotorPosition-currentMotorPosition);
+        scancomplete = true;
+    }
+    else
+    {
+        delta_position = (currentMotorPosition-previousMotorPosition);
+        scancomplete = false;
+    }
+
 
     for(int i = 0;i<(scancnt/2);i++)
     {
@@ -31,7 +36,7 @@ pcl_data Construction::addtoScan(pcl_data Incomplete, std::vector<CvPoint3D64f> 
 
     }
 
-    for(int i = 540;i<scancnt;i++)
+    for(int i = (scancnt/2);i<scancnt;i++)
     {
             pcl_point point;
             point.r = laserscan[i].x;
@@ -42,11 +47,14 @@ pcl_data Construction::addtoScan(pcl_data Incomplete, std::vector<CvPoint3D64f> 
 
     //TODO: If complete scan set completescan and clear incomplete scan.
 
-//    if(scancomplete)
-//    {
-//        CompleteScan = Construction::IncompleteScan;
-//        clearIncompleteScan();
-//    }
+    if(scancomplete)
+    {
+
+        CompleteScan = Construction::IncompleteScan;
+        pcl_data PublicScan;
+        PublicScan = getCompleteScan();
+        clearIncompleteScan();
+    }
 
     return Incomplete;
 
@@ -65,6 +73,7 @@ void Construction::setCompleteScan(pcl_data data){
 }
 
 pcl_data Construction::getCompleteScan(){
+    //CompleteScan = GetSampleFileData(); //For Testing **********
     return CompleteScan;
 }
 
@@ -80,3 +89,4 @@ pcl_data Construction::getIncompleteScan(){
 void Construction::setIncompleteScan(pcl_data data){
     IncompleteScan = data;
 }
+

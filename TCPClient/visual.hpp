@@ -12,8 +12,8 @@ namespace Render{
 
         boost::shared_ptr<pcl::visualization::PCLVisualizer> getViewer(pcl::PointCloud<pcl::PointXYZRGB>::Ptr point_cloud_ptr);
 
-        void getViewer(PointCloud::pcl_data);
-        pcl::PointCloud<pcl::PointXYZRGB>::Ptr convertDataToPCL(PointCloud::pcl_data Data);
+        void getViewer(pcl_data);
+        pcl::PointCloud<pcl::PointXYZRGB>::Ptr convertDataToPCL(pcl_data Data);
 
     };
 

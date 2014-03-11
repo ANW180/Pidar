@@ -38,6 +38,7 @@ HEADERS += \
     ../Pidar/connection.hpp \
     ../Pidar/pointcloud.hpp \
     visual.hpp \
+    ../Pidar/pointstructs.hpp
 
 SOURCES += main.cpp \
            client.cpp \
