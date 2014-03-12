@@ -15,7 +15,6 @@
 #include <hokuyo.hpp>
 #include <dynamixel.hpp>
 #include <wiringPi.h>
-#include <pointcloud.hpp>
 
 #define HOKUYOSYNCPIN 0
 
@@ -60,57 +59,62 @@ namespace Pidar
     class Control
     {
     public:
+        ///
+        ///  Controller Functions
+        ///
         Control();
         ~Control();
 
-
         bool Initialize(); //laser, motor,
 
-        Pidar::Control* getMainControl();
-
-        void InterpolateScan(std::vector<CvPoint3D64f> scan,
-                                     double startScanAngle,
-                                     double stopScanAngle);
-
+        ///
+        ///  Motor Functions
+        ///
         double GetMotorPositionDegrees();
 
         double GetMotorPreviousPositionDegrees();
 
         void SetMotorPreviousPositionDegrees(double val);
 
-        double GetLaserPositionPolar();
-
         void StartMotor(int rpm);
 
         void StopMotor();
 
-        void StopLaser();
-
-        pcl_data getIncompleteConstruction();
-
-        pcl_data getCompleteConstruction();
-
-        void setIncompleteConstruction(pcl_data data);
-
-        pcl_data addtoScanConstruction(pcl_data Incomplete, std::vector<CvPoint3D64f> laserscan,
-                                       double currentMotorPosition, double previousMotorPosition);
+        ///
+        /// Laser Functions
+        ///
+        double GetLaserPositionPolar();
 
         std::vector<CvPoint3D64f> GetLaserScan();
 
-        //static Control* GetInstance(){return maincontrol;}
+        void StopLaser();
+
+
+        ///
+        /// Scan Management Functions
+        ///
+        pcl_data getIncompleteScan();
+
+        pcl_data getCompleteScan();
+
+        void setCompleteScan(pcl_data data);
+
+        void setIncompleteConstruction(pcl_data data);
+
+        void clearIncompleteScan();
+
+        void addtoScanConstruction(std::vector<CvPoint3D64f> laserscan,
+                                       double currentMotorPosition, double previousMotorPosition);
 
 
     protected:
-       // static Control *maincontrol;
         Motor::Dynamixel* motor;
         Laser::Hokuyo *laser;
-        PointCloud::Construction *construct;
         std::vector<CvPoint3D64f> mScan;
         time_t mLaserTimestamp;
         time_t mMotorTimestamp;
         double mStartScanAngle;
         double mStopScanAngle;
-
         DynamixelCallback mpMotorcallback;
         LaserCallback mpLasercallback;
         pcl_data mPointCloud;

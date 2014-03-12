@@ -253,7 +253,7 @@ void Dynamixel::ProcessingThread()
 //        sleep.tv_sec = remaining.tv_sec = 0;
 //        sleep.tv_nsec = 25000L; //25 microseconds
 //        nanosleep(&sleep, &remaining);
-        boost::this_thread::sleep(boost::posix_time::millisec(5));
+        boost::this_thread::sleep(boost::posix_time::millisec(24));
 
     }
 }

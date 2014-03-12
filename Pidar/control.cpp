@@ -55,38 +55,36 @@ pcl_data GetSampleTXTFileData(){
 }
 
 #include<global.hpp>
+double current_position;
+double previous_position;
+std::vector<CvPoint3D64f> laserscan;
 void InterruptService(void)
 {
 
-    double current_position = maincontrol->GetMotorPositionDegrees();
-    double previous_position = maincontrol->GetMotorPreviousPositionDegrees();
+    //Get Current and Previous Positions
+    current_position = maincontrol->GetMotorPositionDegrees();
+    previous_position = maincontrol->GetMotorPreviousPositionDegrees();
 
     //Update Previous Motor Position
     maincontrol->SetMotorPreviousPositionDegrees(current_position);
 
     //Get Values to send for construction
-    std::vector<CvPoint3D64f> laserscan = maincontrol->GetLaserScan();
-    pcl_data Incomplete = maincontrol->getIncompleteConstruction();
+    laserscan = maincontrol->GetLaserScan();
 
     //Send values and get newly constructed incompletescan
-    Incomplete = maincontrol->addtoScanConstruction(Incomplete, laserscan,
+    //this will update values as needed
+    maincontrol->addtoScanConstruction(laserscan,
                                       current_position,previous_position);
-
-
-    //return the appended incomplete scan
-    maincontrol->setIncompleteConstruction(Incomplete);
-
-
-
-    //TODO: Offload push and calculations to function
 }
 
 
+///
+/// Controller Functions
+///
 Control::Control()
 {
     motor = new Motor::Dynamixel();
     laser = new Laser::Hokuyo();
-    construct = new PointCloud::Construction();
     PublicPartialScan.scancount = 0;
 }
 
@@ -94,7 +92,6 @@ Control::~Control()
 {
     //Shutdown();
 }
-
 
 bool Control::Initialize()
 {
@@ -170,68 +167,110 @@ bool Control::Initialize()
 
 }
 
-double Control::GetMotorPositionDegrees()
-{
-    return motor->GetPositionDegrees();
-}
 
-double Control::GetMotorPreviousPositionDegrees(){
-    double val = motor->GetPreviousPositionDegrees();
-}
+    ///
+    ///  Motor Functions
+    ///
+    double Control::GetMotorPositionDegrees()
+    {
+        return motor->GetPositionDegrees();
+    }
 
-void Control::SetMotorPreviousPositionDegrees(double val){
-   motor->SetPreviousPositionDegrees(val);
-}
+    double Control::GetMotorPreviousPositionDegrees(){
+        return motor->GetPreviousPositionDegrees();
+    }
 
+    void Control::SetMotorPreviousPositionDegrees(double val){
+       motor->SetPreviousPositionDegrees(val);
+    }
 
-void Control::StartMotor(int rpm)
-{
-     Control::motor->SetSpeedRpm(rpm, true);
-}
+    void Control::StartMotor(int rpm)
+    {
+         Control::motor->SetSpeedRpm(rpm, true);
+    }
 
-void Control::StopMotor()
+    void Control::StopMotor()
 {
      Control::motor->SetSpeedRpm(0, true);
      delay(1000);
      Control::motor->Shutdown();
 }
 
-void Control::StopLaser()
-{
-    Control::laser->Shutdown();
-}
+    ///
+    /// Laser Functions
+    ///
+    void Control::StopLaser()
+    {
+        Control::laser->Shutdown();
+    }
 
-std::vector<CvPoint3D64f> Control::GetLaserScan(){
+    std::vector<CvPoint3D64f> Control::GetLaserScan(){
     return Control::mpLasercallback.mLaserScan;
 }
 
-pcl_data Control::getIncompleteConstruction(){
-        return construct->getIncompleteScan();
+    ///
+    /// Scan Management Functions
+    ///
+    pcl_data Control::getIncompleteScan(){
+              return PublicPartialScan;
+    }
+
+    pcl_data Control::getCompleteScan(){
+            return PublicScan;
+    }
+
+    void Control::setCompleteScan(pcl_data data){
+        PublicScan = data;
+    }
+
+    void Control::setIncompleteConstruction(pcl_data data){
+        PublicPartialScan = data;
+    }
+
+    void Control::clearIncompleteScan(){
+        PublicPartialScan.id = 0;
+        PublicPartialScan.message = "";
+        PublicPartialScan.points.clear();
+        PublicPartialScan.scancount = 0;
+    }
+
+    void Control::addtoScanConstruction(std::vector<CvPoint3D64f> laserscan,
+                                     double currentMotorPosition, double previousMotorPosition){
+
+        int scancnt = laserscan.size();//1080;
+
+        //Check for complete scan & get delta
+        double delta_position = 0.0;
+        bool scancomplete = false;
+        if(currentMotorPosition<previousMotorPosition){
+            delta_position = ((360-previousMotorPosition)+currentMotorPosition);
+            scancomplete = true;
+        }
+        else
+        {
+            delta_position = (currentMotorPosition-previousMotorPosition);
+            scancomplete = false;
+        }
+
+        for(int i = 0;i<scancnt;i++)
+        {
+                pcl_point point;
+                point.r = laserscan[i].x;
+                point.theta = laserscan[i].y;
+                point.phi = previousMotorPosition + (i*(delta_position/scancnt));
+                PublicPartialScan.points.push_back(point);
+        }
+
+        PublicPartialScan.scancount++;
+
+        // If complete set the complete scan and copy to globally
+        // accessible object
+        if(scancomplete)
+    {
+        setCompleteScan(PublicPartialScan);
+        clearIncompleteScan();
+    }
 }
 
-pcl_data Control::getCompleteConstruction(){
-        return construct->getCompleteScan();
-}
 
-
-Pidar::Control* getMainControl(){
-   return maincontrol;
-}
-
-
-void Control::setIncompleteConstruction(pcl_data data){
-    construct->setIncompleteScan(data);
-}
-
-pcl_data Control::addtoScanConstruction(pcl_data Incomplete, std::vector<CvPoint3D64f> laserscan,
-                                 double currentMotorPosition, double previousMotorPosition){
-
-    return construct->addtoScan(Incomplete, laserscan,
-                                currentMotorPosition,previousMotorPosition);
-
-}
-
-void Control::InterpolateScan(std::vector<CvPoint3D64f> scan, double startScanAngle,double stopScanAngle)
-{
-}
-/* End of File */
+/*End of File */

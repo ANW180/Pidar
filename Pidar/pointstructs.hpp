@@ -1,6 +1,5 @@
-#ifndef GLOB_HPP
-#define GLOB_HPP
-#include<../Pidar/pointcloud.hpp>
+#ifndef POINTSTRUCT_HPP
+#define POINTSTRUCT_HPP
 
 typedef struct pcl_point
 {

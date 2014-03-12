@@ -17,6 +17,11 @@
 #include <sstream>
 #include <vector>
 
+#define GET_NULL            0
+#define GET_FULL_SCAN       1
+#define GET_CURRENT_SPEED   2
+#define GET_OTHER           99
+
 namespace PointCloud {
 
 /// The connection class provides serialization primitives on top of a socket.

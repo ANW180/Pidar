@@ -9,7 +9,6 @@
 #include <connection.hpp> // Must come before boost/serialization headers.
 #include <boost/serialization/vector.hpp>
 #include <vector>
-#include <pointcloud.hpp>
 #include <pointstructs.hpp>
 
 namespace PointCloud {
@@ -23,26 +22,26 @@ public:
 
         pcl_data s;
         int id = (int)cmd[0].cmd;
+
         switch ( id ) {
-        case 0:
+        case GET_NULL:
           break;
-        case 1:
+        case GET_FULL_SCAN:
             s = PublicScan;
             std::cout<<"connection.cpp: ID: "<<s.id<<std::endl;
             s.message = "Full Scan Returned";
           break;
 
-        case 2:
+        case GET_CURRENT_SPEED:
             s.id = 2;
             std::cout<<"Command 2 requested: Speed"<<std::endl;
             s.id = 1;
             s.speed = PublicScan.speed;
-            //PublicScan.speed ++;
             s.message = "Speed only returned";
           break;
 
         default:
-            s.id = 99;
+            s.id = GET_OTHER;
             std::cout<<"Other command requested"<<std::endl;
             s.message = "No command of this type exists... Sorry.";
           break;
