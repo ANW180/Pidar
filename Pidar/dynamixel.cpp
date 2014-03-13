@@ -12,9 +12,11 @@
 /// http://support.robotis.com/en/product/dynamixel/rx_series/rx-24f.htm
 ////////////////////////////////////////////////////////////////////////////////
 #include "dynamixel.hpp"
+#include <ctime>
+#include <stdio.h>
+#include <stdlib.h>
 
 using namespace Motor;
-
 
 Dynamixel::Dynamixel()
 {
@@ -198,6 +200,7 @@ void Dynamixel::PrintCommStatus(int CommStatus)
 
 void Dynamixel::ProcessingThread()
 {
+    timespec t2;
     while(mProcessingThreadFlag)
     {
         if(IsConnected())
@@ -239,8 +242,9 @@ void Dynamixel::ProcessingThread()
                     callback != mCallbacks.end();
                     callback++)
                 {
+                    clock_gettime(CLOCK_REALTIME, &t2);
                     (*callback)->ProcessServoData(mPresentPositionDegrees,
-                                                  mCurrReadTimeStamp);
+                                                  t2);
                 }
                 mMutex.unlock();
             }
@@ -253,8 +257,7 @@ void Dynamixel::ProcessingThread()
 //        sleep.tv_sec = remaining.tv_sec = 0;
 //        sleep.tv_nsec = 25000L; //25 microseconds
 //        nanosleep(&sleep, &remaining);
-        boost::this_thread::sleep(boost::posix_time::millisec(24));
-
+        boost::this_thread::sleep(boost::posix_time::millisec(12));
     }
 }
 

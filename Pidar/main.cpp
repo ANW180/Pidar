@@ -15,6 +15,7 @@
 #include "hokuyo.hpp"
 #include "dynamixel.hpp"
 #include "control.hpp"
+#include "global.hpp"
 #include <time.h>
 #include <wiringPi.h>
 #include <ctime>
@@ -25,6 +26,10 @@
 //#include <pcl/visualization/pcl_visualizer.h>
 //#include <pcl/common/common_headers.h>
 
+
+Pidar::Control* maincontrol;
+timespec t1;
+int reset = 1;
 using namespace std;
 
 //boost::shared_ptr<pcl::visualization::PCLVisualizer> rgbVis
@@ -103,8 +108,16 @@ public:
                                   const timespec& timestamp)
     {
         mMotorAngle = pos;
+        timespec t2 = timestamp;
         //cout << mMotorAngle << endl;
+        timespec dif = diff(t1, t2);
+        cout << "Sec: "
+             << dif.tv_sec
+             << "Nsec: "
+             << dif.tv_nsec
+             << endl;
         mTimeStamp = timestamp;
+        reset = 1;
     }
     double mMotorAngle;
     timespec mTimeStamp;
@@ -154,21 +167,31 @@ int main()
 #endif
 
 
-//#define TESTDYNAMIXELFEEDBACK
+#define TESTDYNAMIXELFEEDBACK
 #ifdef TESTDYNAMIXELFEEDBACK
 int main()
 {
     Motor::Dynamixel* motor = new Motor::Dynamixel();
     ExampleDynamixelCallback callback;
     motor->RegisterCallback(&callback);
-    double rpm = 10.0;
+    double rpm = 0.0;
     if(motor->Initialize())
     {
         motor->SetSpeedRpm(rpm, true);
+        clock_gettime(CLOCK_REALTIME, &t1);
         while (1)
         {
-            boost::this_thread::sleep(
-                        boost::posix_time::millisec(10000000));
+            if(reset == 1)
+            {
+                //std::cout << "I RESET" << std::endl;
+                clock_gettime(CLOCK_REALTIME, &t1);
+                reset = 0;
+            }
+            //std::cout << "I RESET" << std::endl;
+            timespec sleep, remaining;
+            sleep.tv_sec = remaining.tv_sec = 0;
+            sleep.tv_nsec = 1000L; //25 microseconds
+            nanosleep(&sleep, &remaining);
         }
     }
    return 0;
@@ -380,12 +403,8 @@ int main()
 #endif
 
 
-#define TESTIMAGEGENERATION
+//#define TESTIMAGEGENERATION
 #ifdef TESTIMAGEGENERATION
-#include<control.hpp>
-#include<global.hpp>
-
-Pidar::Control* maincontrol;
 int main()
 {
     maincontrol = new Pidar::Control();
