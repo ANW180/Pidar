@@ -97,8 +97,8 @@ bool Control::Initialize()
 {
 
     //Test Switches
-    bool enableLaser = false;
-    bool enableMotor = false;
+    bool enableLaser = true;
+    bool enableMotor = true;
     bool enableCOM = true;
     bool enableISR = false;
 

@@ -214,7 +214,7 @@ void Dynamixel::ProcessingThread()
                 CommStatus = dxl_get_result();
                 if(CommStatus != COMM_RXSUCCESS)
                 {
-                    PrintCommStatus(CommStatus);
+                    //PrintCommStatus(CommStatus);
                 }
             }
             mMutex.unlock();
@@ -231,7 +231,7 @@ void Dynamixel::ProcessingThread()
             }
             else
             {
-                PrintCommStatus(CommStatus);
+                //PrintCommStatus(CommStatus);
             }
             // Trigger callbacks (if there is a read)
             if(read)
@@ -250,14 +250,14 @@ void Dynamixel::ProcessingThread()
             }
             else
             {
-                std::cout << "No Read" << std::endl;
+                //std::cout << "No Read" << std::endl;
             }
         }
 //        timespec sleep, remaining;
 //        sleep.tv_sec = remaining.tv_sec = 0;
 //        sleep.tv_nsec = 25000L; //25 microseconds
 //        nanosleep(&sleep, &remaining);
-        boost::this_thread::sleep(boost::posix_time::millisec(12));
+        boost::this_thread::sleep(boost::posix_time::millisec(24));
     }
 }
 

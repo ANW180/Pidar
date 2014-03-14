@@ -108,14 +108,14 @@ public:
                                   const timespec& timestamp)
     {
         mMotorAngle = pos;
-        timespec t2 = timestamp;
-        //cout << mMotorAngle << endl;
-        timespec dif = diff(t1, t2);
-        cout << "Sec: "
-             << dif.tv_sec
-             << "Nsec: "
-             << dif.tv_nsec
-             << endl;
+//        timespec t2 = timestamp;
+//        //cout << mMotorAngle << endl;
+//        timespec dif = diff(t1, t2);
+//        cout << "Sec: "
+//             << dif.tv_sec
+//             << "Nsec: "
+//             << dif.tv_nsec
+//             << endl;
         mTimeStamp = timestamp;
         reset = 1;
     }
@@ -156,7 +156,7 @@ int main()
         while (1)
         {
             boost::this_thread::sleep(
-                        boost::posix_time::millisec(10000000));
+                        boost::posix_time::millisec(100));
         }
         laser->Shutdown();
         delete laser;
@@ -167,7 +167,7 @@ int main()
 #endif
 
 
-#define TESTDYNAMIXELFEEDBACK
+//#define TESTDYNAMIXELFEEDBACK
 #ifdef TESTDYNAMIXELFEEDBACK
 int main()
 {
@@ -188,10 +188,10 @@ int main()
                 reset = 0;
             }
             //std::cout << "I RESET" << std::endl;
-            timespec sleep, remaining;
-            sleep.tv_sec = remaining.tv_sec = 0;
-            sleep.tv_nsec = 1000L; //25 microseconds
-            nanosleep(&sleep, &remaining);
+//            timespec sleep, remaining;
+//            sleep.tv_sec = remaining.tv_sec = 0;
+//            sleep.tv_nsec = 1000L; //25 microseconds
+//            nanosleep(&sleep, &remaining);
         }
     }
    return 0;
@@ -403,7 +403,7 @@ int main()
 #endif
 
 
-//#define TESTIMAGEGENERATION
+#define TESTIMAGEGENERATION
 #ifdef TESTIMAGEGENERATION
 int main()
 {
