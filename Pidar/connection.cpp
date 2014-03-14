@@ -51,15 +51,13 @@ public:
 
     }
 
+public:
   /// Constructor opens the acceptor and starts waiting for the first incoming
   /// connection.
   server(boost::asio::io_service& io_service, unsigned short port)
     : acceptor_(io_service,
         boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), port))
   {
-    // Create the data to be sent to each client.
-
-    // Start an accept operation for a new connection.
     connection_ptr new_conn(new connection(acceptor_.get_io_service()));
     acceptor_.async_accept(new_conn->socket(),
         boost::bind(&server::handle_accept, this,
@@ -69,6 +67,7 @@ public:
   /// Handle completion of a accept operation.
   void handle_accept(const boost::system::error_code& e, connection_ptr conn)
   {
+
     if (!e)
     {
             conn->async_read(commands_,

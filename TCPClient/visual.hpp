@@ -1,6 +1,6 @@
 #include <pcl/visualization/pcl_visualizer.h>
 #include <pcl/common/common_headers.h>
-#include <../Pidar/pointcloud.hpp>
+#include "../Pidar/pointstructs.hpp"
 #include <boost/bind.hpp>
 #include <boost/asio.hpp>
 

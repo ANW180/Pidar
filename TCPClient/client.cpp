@@ -17,8 +17,7 @@
 #include <vector>
 #include "../Pidar/connection.hpp" // Must come before boost/serialization headers.
 #include <boost/serialization/vector.hpp>
-#include "../Pidar/pointcloud.hpp"
-
+#include "../Pidar/pointstructs.hpp"
 
 using namespace PointCloud;
 
@@ -42,11 +41,13 @@ public:
 
         send_command = newcmd;
         send_value = newval;
-        // Resolve the host name into an IP address.
+
         boost::asio::ip::tcp::resolver resolver(io_service);
-        boost::asio::ip::tcp::resolver::query query(host, service);
-        boost::asio::ip::tcp::resolver::iterator endpoint_iterator =
-                resolver.resolve(query);
+            boost::asio::ip::tcp::resolver::query query(host, service);
+            boost::asio::ip::tcp::resolver::iterator endpoint_iterator =
+              resolver.resolve(query);
+            boost::asio::ip::tcp::endpoint endpoint = *endpoint_iterator;
+
 
         // Start an asynchronous connect operation.
         boost::asio::async_connect(connection_.socket(), endpoint_iterator,
@@ -100,6 +101,36 @@ public:
                                            boost::asio::placeholders::error));
     }
 
+    /// Handle completion of a connect operation.
+      void handle_connect(const boost::system::error_code& e,
+          boost::asio::ip::tcp::resolver::iterator endpoint_iterator)
+      {
+        if (!e)
+        {
+          // Successfully established connection. Start operation to read the list
+          // of stocks. The connection::async_read() function will automatically
+          // decode the data that is read from the underlying socket.
+          connection_.async_read(clouds_,
+              boost::bind(&client::handle_read, this,
+                boost::asio::placeholders::error));
+        }
+        else if (endpoint_iterator != boost::asio::ip::tcp::resolver::iterator())
+        {
+          // Try the next endpoint.
+          connection_.socket().close();
+          boost::asio::ip::tcp::endpoint endpoint = *endpoint_iterator;
+          connection_.socket().async_connect(endpoint,
+              boost::bind(&client::handle_connect, this,
+                boost::asio::placeholders::error, ++endpoint_iterator));
+        }
+        else
+        {
+          // An error occurred. Log it and return. Since we are not starting a new
+          // operation the io_service will run out of work to do and the client will
+          // exit.
+          std::cerr << e.message() << std::endl;
+        }
+      }
 private:
     /// The connection to the server.
     connection connection_;

@@ -99,7 +99,7 @@ bool Control::Initialize()
     //Test Switches
     bool enableLaser = true;
     bool enableMotor = true;
-    bool enableCOM = true;
+    bool enableCOM = false; //Now in main, true here will take over main thread
     bool enableISR = false;
 
     ///******* TESTING ONLY **********************************

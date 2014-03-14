@@ -17,9 +17,9 @@
 #include <vector>
 #include "../Pidar/connection.hpp" // Must come before boost/serialization headers.
 #include <boost/serialization/vector.hpp>
-#include "../Pidar/pointcloud.hpp"
 #include <client.cpp>
 #include <visual.cpp>
+#include "../Pidar/pointstructs.hpp"
 
 
 

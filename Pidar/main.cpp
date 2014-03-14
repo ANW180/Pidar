@@ -409,6 +409,20 @@ int main()
 {
     maincontrol = new Pidar::Control();
     maincontrol->Initialize();
+
+    //Start Web Server Thread
+    unsigned short port = boost::lexical_cast<unsigned short>("10000");
+    boost::asio::io_service io_service;
+    PointCloud::server server(io_service, port);
+    boost::thread bt(boost::bind(&boost::asio::io_service::run, &io_service));
+
+    while(1)
+    {
+
+        std::cout<<"in main()"<<std::endl;
+        sleep(5);
+
+    }
 //    maincontrol->StartMotor(10);
 
 //    delay(1000);
