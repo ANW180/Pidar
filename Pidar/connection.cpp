@@ -10,6 +10,7 @@
 #include <boost/serialization/vector.hpp>
 #include <vector>
 #include <pointstructs.hpp>
+#include <point.hpp>
 
 namespace PointCloud {
 

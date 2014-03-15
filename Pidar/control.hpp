@@ -28,7 +28,7 @@ namespace Pidar
     public:
         LaserCallback(){}
         ~LaserCallback(){}
-        virtual void ProcessLaserData(const std::vector<CvPoint3D64f>& scan,
+        virtual void ProcessLaserData(const std::vector<Point3D>& scan,
                                       const time_t& timestamp)
         {
             mLaserScan = scan;
@@ -36,7 +36,7 @@ namespace Pidar
             count++;
         }
         unsigned int count;
-        std::vector<CvPoint3D64f> mLaserScan;
+        std::vector<Point3D> mLaserScan;
         time_t mTimeStamp;
     };
 
@@ -85,7 +85,7 @@ namespace Pidar
         ///
         double GetLaserPositionPolar();
 
-        std::vector<CvPoint3D64f> GetLaserScan();
+        std::vector<Point3D> GetLaserScan();
 
         void StopLaser();
 
@@ -103,14 +103,14 @@ namespace Pidar
 
         void clearIncompleteScan();
 
-        void addtoScanConstruction(std::vector<CvPoint3D64f> laserscan,
+        void addtoScanConstruction(std::vector<Point3D> laserscan,
                                        double currentMotorPosition, double previousMotorPosition);
 
 
     protected:
         Motor::Dynamixel* motor;
         Laser::Hokuyo *laser;
-        std::vector<CvPoint3D64f> mScan;
+        std::vector<Point3D> mScan;
         time_t mLaserTimestamp;
         time_t mMotorTimestamp;
         double mStartScanAngle;

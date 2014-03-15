@@ -10,7 +10,8 @@
 #ifndef HOKUYO_HPP
 #define HOKUYO_HPP
 #include <boost/thread.hpp>
-#include <opencv2/core/core.hpp>
+//#include <opencv2/core/core.hpp>
+#include "point.hpp"
 #include <tinyxml.h>
 #include <urg_utils.h>
 #include <urg_sensor.h>
@@ -39,7 +40,7 @@ namespace Laser
         /** Function called when new data becomes available from the laser,
             \param[in] Scan data in polar coordinates.
             \param[in] Time stamp in UTC */
-        virtual void ProcessLaserData(const std::vector<CvPoint3D64f>& scan,
+        virtual void ProcessLaserData(const std::vector<Point3D>& scan,
                                       const time_t& timestamp) = 0;
     };
     ////////////////////////////////////////////////////////////////////////////
@@ -108,7 +109,7 @@ namespace Laser
         std::string mSerialPort;
         TiXmlDocument* mpDocument;
         boost::thread mProcessingThread;
-        std::vector<CvPoint3D64f> mLaserScan;
+        std::vector<Point3D> mLaserScan;
         Callback::Set mCallbacks;
     };
 }

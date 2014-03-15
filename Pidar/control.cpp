@@ -57,7 +57,7 @@ pcl_data GetSampleTXTFileData(){
 #include<global.hpp>
 double current_position;
 double previous_position;
-std::vector<CvPoint3D64f> laserscan;
+std::vector<Point3D> laserscan;
 void InterruptService(void)
 {
 
@@ -204,7 +204,7 @@ bool Control::Initialize()
         Control::laser->Shutdown();
     }
 
-    std::vector<CvPoint3D64f> Control::GetLaserScan(){
+    std::vector<Point3D> Control::GetLaserScan(){
     return Control::mpLasercallback.mLaserScan;
 }
 
@@ -234,7 +234,7 @@ bool Control::Initialize()
         PublicPartialScan.scancount = 0;
     }
 
-    void Control::addtoScanConstruction(std::vector<CvPoint3D64f> laserscan,
+    void Control::addtoScanConstruction(std::vector<Point3D> laserscan,
                                      double currentMotorPosition, double previousMotorPosition){
 
         int scancnt = laserscan.size();//1080;
@@ -255,8 +255,8 @@ bool Control::Initialize()
         for(int i = 0;i<scancnt;i++)
         {
                 pcl_point point;
-                point.r = laserscan[i].x;
-                point.theta = laserscan[i].y;
+                point.r = (laserscan[i]).GetX();
+                point.theta = laserscan[i].GetY();
                 point.phi = previousMotorPosition + (i*(delta_position/scancnt));
                 PublicPartialScan.points.push_back(point);
         }

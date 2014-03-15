@@ -136,10 +136,10 @@ void Hokuyo::ProcessingThread()
     {
         if(IsConnected())
         {
-            CvPoint3D64f point;
+            Point3D point;
             long timestamp = 0;
             int index = 0;
-            std::vector<CvPoint3D64f> scan;
+            std::vector<Point3D> scan;
             int scanCount = urg_get_distance(urg,
                                              mpHokuyoScan,
                                              &timestamp);
@@ -158,8 +158,8 @@ void Hokuyo::ProcessingThread()
                    mpHokuyoScan[index] <= urg->max_distance) */
                 // Convert to meteres/radians. Save into appropriate data
                 // structure.
-                point.x = mpHokuyoScan[index]/1000.0;
-                point.z = -1 * urg_step2rad(urg, i);
+                point.SetX(mpHokuyoScan[index]/1000.0);
+                point.SetY(-1 * urg_step2rad(urg, i));
                 scan.push_back(point);
                 index++;
             }
