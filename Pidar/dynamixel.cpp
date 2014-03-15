@@ -12,9 +12,6 @@
 /// http://support.robotis.com/en/product/dynamixel/rx_series/rx-24f.htm
 ////////////////////////////////////////////////////////////////////////////////
 #include "dynamixel.hpp"
-#include <ctime>
-#include <stdio.h>
-#include <stdlib.h>
 
 using namespace Motor;
 

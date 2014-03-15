@@ -10,8 +10,7 @@
 #ifndef HOKUYO_HPP
 #define HOKUYO_HPP
 #include <boost/thread.hpp>
-//#include <opencv2/core/core.hpp>
-#include "point.hpp"
+#include "point3d.hpp"
 #include <tinyxml.h>
 #include <urg_utils.h>
 #include <urg_sensor.h>

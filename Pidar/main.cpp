@@ -10,18 +10,17 @@
 ////////////////////////////////////////////////////////////////////////////////
 #ifndef MAIN_CPP
 #define MAIN_CPP
-
 #include "hokuyo.hpp"
 #include "dynamixel.hpp"
 #include "control.hpp"
 #include "global.hpp"
-#include <time.h>
 #include <wiringPi.h>
+#include <boost/asio.hpp>
+#include <boost/thread/thread.hpp>
+#include <time.h>
 #include <ctime>
 #include <iostream>
 #include <string>
-#include <boost/asio.hpp>
-#include <boost/thread/thread.hpp>
 
 
 Pidar::Control* maincontrol;

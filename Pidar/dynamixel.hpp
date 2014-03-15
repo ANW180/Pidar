@@ -18,6 +18,9 @@
 #include <string>
 #include <vector>
 #include <set>
+#include <ctime>
+#include <stdio.h>
+#include <stdlib.h>
 #include "dxl/dxl_hal.h"
 #include "dxl/dynamixel.h"
 

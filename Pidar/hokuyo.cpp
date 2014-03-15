@@ -52,7 +52,6 @@ bool Hokuyo::LoadSettings(const std::string& settings)
         }
         return true;
     }
-
     return false;
 }
 
@@ -69,7 +68,6 @@ bool Hokuyo::Initialize()
         return false;
     }
     mConnectedFlag = true;
-
     if(mpHokuyoScan)
     {
         delete[] mpHokuyoScan;
@@ -108,7 +106,6 @@ bool Hokuyo::StartCaptureThread()
     mProcessingThreadFlag = false;
     mProcessingThread.join();
     mProcessingThread.detach();
-
     if(IsConnected())
     {
         mProcessingThreadFlag = true;
@@ -116,7 +113,6 @@ bool Hokuyo::StartCaptureThread()
                             boost::bind(&Hokuyo::ProcessingThread, this));
         return true;
     }
-
     return false;
 }
 
@@ -175,7 +171,6 @@ void Hokuyo::ProcessingThread()
                 (*iter)->ProcessLaserData(mLaserScan, timestamp);
             }
         }
-//        boost::this_thread::sleep(boost::posix_time::millisec(50));
     }
 }
 /* End of File */

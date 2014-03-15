@@ -7,22 +7,19 @@
 /// Email: jongulrich@gmail.com, watsontandrew@gmail.com
 ///
 ////////////////////////////////////////////////////////////////////////////////
-
 #ifndef CONTROL_HPP
 #define CONTROL_HPP
-
-#include <connection.cpp>
-#include <hokuyo.hpp>
-#include <dynamixel.hpp>
-#include <wiringPi.h>
+#include "connection.cpp"
+#include "hokuyo.hpp"
+#include "dynamixel.hpp"
+#include "wiringPi.h"
+#include <fstream>
 
 #define HOKUYOSYNCPIN 0
 
 
 namespace Pidar
 {
-
-
     class LaserCallback : public Laser::Callback
     {
     public:
@@ -55,7 +52,12 @@ namespace Pidar
         timespec mTimeStamp;
     };
 
-
+    ////////////////////////////////////////////////////////////////////////////
+    ///
+    /// \class Control
+    /// \brief Used to handle control of all PIDAR components
+    ///
+    ////////////////////////////////////////////////////////////////////////////
     class Control
     {
     public:
@@ -64,49 +66,35 @@ namespace Pidar
         ///
         Control();
         ~Control();
-
         bool Initialize(); //laser, motor,
 
         ///
         ///  Motor Functions
         ///
         double GetMotorPositionDegrees();
-
         double GetMotorPreviousPositionDegrees();
-
         void SetMotorPreviousPositionDegrees(double val);
-
         void StartMotor(int rpm);
-
         void StopMotor();
 
         ///
         /// Laser Functions
         ///
         double GetLaserPositionPolar();
-
         std::vector<Point3D> GetLaserScan();
-
         void StopLaser();
-
 
         ///
         /// Scan Management Functions
         ///
-        pcl_data getIncompleteScan();
-
-        pcl_data getCompleteScan();
-
-        void setCompleteScan(pcl_data data);
-
-        void setIncompleteConstruction(pcl_data data);
-
-        void clearIncompleteScan();
-
-        void addtoScanConstruction(std::vector<Point3D> laserscan,
-                                       double currentMotorPosition, double previousMotorPosition);
-
-
+        pcl_data GetIncompleteScan();
+        pcl_data GetCompleteScan();
+        void SetCompleteScan(pcl_data data);
+        void SetIncompleteConstruction(pcl_data data);
+        void ClearIncompleteScan();
+        void AddToScanConstruction(std::vector<Point3D> laserscan,
+                                   double currentMotorPosition,
+                                   double previousMotorPosition);
     protected:
         Motor::Dynamixel* motor;
         Laser::Hokuyo *laser;
