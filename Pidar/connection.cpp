@@ -68,9 +68,10 @@ namespace PointCloud
       {
         if (!e)
         {
-                conn->async_read(commands_,
-                      boost::bind(&server::handle_read,this,
-                      boost::asio::placeholders::error,conn));
+//                conn->async_read(commands_,
+//                      boost::bind(&server::handle_read,this,
+//                      boost::asio::placeholders::error,conn));
+            handle_read(e,conn);
         }
         // Start an accept operation for a new connection.
         connection_ptr new_conn(new Connection(acceptor_.get_io_service()));
@@ -107,6 +108,10 @@ namespace PointCloud
           //TODO: make class to react to commands
         if (!e)
         {
+            pcl_commands c;
+            c.cmd = 1;
+            commands_.clear();
+            commands_.push_back(c);
             //Get return data
             clouds_.clear();
             pcl_data ret = ProcessCommands(commands_);

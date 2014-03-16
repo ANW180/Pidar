@@ -22,7 +22,6 @@
 #include "../Pidar/pointstructs.hpp"
 
 
-
     // ------------------------------------
     // -----Create example point cloud-----
     // ------------------------------------
@@ -107,20 +106,13 @@ int main()
 
         ClientSide::setServer("localhost","10000"); //not needed unless changing values
 
-        //pcl_data mycloud = ClientSide::getLatestCloud();
-        //std::cout << "id: " << mycloud.id     << std::endl;
-
-        //mycloud = ClientSide::getLatestSpeed();
-        //std::cout << "id: " << mycloud.id     << std::endl;
-
-        //TODO: Create class to handle received data
-        //TODO: Create function to send different commands
-
-
         Render::Visual* newvisual = new Render::Visual();
         boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer = newvisual->getViewer(GetSamplePTRData());
         int x = 0;
         bool swap = false;
+
+
+
 //        while (!viewer->wasStopped ())
 //        {
 //            viewer->spinOnce (100);
@@ -160,13 +152,20 @@ int main()
 //        }
 
 
+//        while(1)
+//        {
+//            pcl_data mycloud;
+//            mycloud = ClientSide::getLatestCloud();//remote source
+//                boost::this_thread::sleep (boost::posix_time::milliseconds (3000));
+//        }
+
         int start = 0;
         int stop = 1080;
         //Testing while loop
         while (!viewer->wasStopped ())
         {
-            viewer->spinOnce (100);
-            //boost::this_thread::sleep (boost::posix_time::microseconds (100000));
+            viewer->spinOnce (1000);
+            //boost::this_thread::sleep (boost::posix_time::milliseconds (3000));
 
             pcl_data mycloud;
             //viewer->updatePointCloud(GetSampleTXTFileData(),"Point Cloud"); //local source
