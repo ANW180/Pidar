@@ -121,7 +121,7 @@ int main()
             viewer->spinOnce (100);
             boost::this_thread::sleep (boost::posix_time::microseconds (100000));
 
-            if(x%10==1 && x>1)
+            if(x%5==1 && x>1)
             {
                 //TODO: Grab new data from server
 //                if(swap == true){

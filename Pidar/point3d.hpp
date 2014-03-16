@@ -21,8 +21,8 @@ public:
     }
     ~Point3D(){}
     void SetX(double val){ mX = val;}
-    void SetY(double val){ mX = val;}
-    void SetZ(double val){ mX = val;}
+    void SetY(double val){ mY = val;}
+    void SetZ(double val){ mZ = val;}
     double GetX(){return mX;}
     double GetY(){return mY;}
     double GetZ(){return mZ;}

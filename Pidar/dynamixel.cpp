@@ -23,7 +23,7 @@ Dynamixel::Dynamixel()
     mSerialPort = "/dev/ttyUSB0";
     mpDocument = new TiXmlDocument();
     mCommandSpeedRpm = mPresentPositionDegrees = mPreviousPositionDegrees = 0.0;
-    mBaudRate = 1; // 34 ~ 57142.9 for 57600 connection
+    mBaudRate = 34; // 34 ~ 57142.9 for 57600 connection
 }
 
 

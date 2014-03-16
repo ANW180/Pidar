@@ -106,18 +106,18 @@ bool Control::Initialize()
     bool enableLaser = true;
     bool enableMotor = true;
     bool enableCOM = false; //Now in main, true here will take over main thread
-    bool enableISR = false;
+    bool enableISR = true;
 
-    ///******* TESTING ONLY **********************************
-    //This is for testing only (remove when not testing)
-    PublicScan = GetSampleTXTFileData();
-    PublicScan.id = 1; //initialization
-    PublicScan.speed = 88;
-    std::cout<<"control.cpp: ID: "<<PublicScan.id<<std::endl;
-    std::cout<<"control.cpp: r: "<<PublicScan.points[0].r<<std::endl;
-    std::cout<<"control.cpp: theta: "<<PublicScan.points[0].theta<<std::endl;
-    std::cout<<"control.cpp: phi: "<<PublicScan.points[0].phi<<std::endl;
-    ///******** END TESTING LINES ****************************
+//    ///******* TESTING ONLY **********************************
+//    //This is for testing only (remove when not testing)
+//    PublicScan = GetSampleTXTFileData();
+//    PublicScan.id = 1; //initialization
+//    PublicScan.speed = 88;
+//    std::cout<<"control.cpp: ID: "<<PublicScan.id<<std::endl;
+//    std::cout<<"control.cpp: r: "<<PublicScan.points[0].r<<std::endl;
+//    std::cout<<"control.cpp: theta: "<<PublicScan.points[0].theta<<std::endl;
+//    std::cout<<"control.cpp: phi: "<<PublicScan.points[0].phi<<std::endl;
+//    ///******** END TESTING LINES ****************************
 
 
     if(enableLaser)
@@ -253,32 +253,54 @@ bool Control::Initialize()
         //Check for complete scan & get delta
         double delta_position = 0.0;
         bool scancomplete = false;
-        if(currentMotorPosition<previousMotorPosition)
+        if (previousMotorPosition > currentMotorPosition)
         {
             delta_position = ((360-previousMotorPosition)+currentMotorPosition);
-            scancomplete = true;
         }
         else
         {
             delta_position = (currentMotorPosition-previousMotorPosition);
+        }
+        if(PublicPartialScan.points.size() > 10000)
+        {
+            scancomplete = true;
+        }
+        else
+        {
             scancomplete = false;
         }
 
-        for(int i = 0;i<scancnt;i++)
+        for(int i = 0; i <= scancnt / 2; i++)
         {
             pcl_point point;
             point.r = (laserscan[i]).GetX();
-            point.theta = laserscan[i].GetY();
+            point.theta = (laserscan[i]).GetY();
             point.phi = previousMotorPosition + (i*(delta_position/scancnt));
             PublicPartialScan.points.push_back(point);
         }
-
+        for(int i = scancnt / 2; i < scancnt; i++)
+        {
+            pcl_point point;
+            point.r = (laserscan[i]).GetX();
+            point.theta = (laserscan[i]).GetY();
+            point.phi = 360.0 - previousMotorPosition + 180.0 + (i*(delta_position/scancnt));
+            PublicPartialScan.points.push_back(point);
+        }
         PublicPartialScan.scancount++;
 
         // If complete set the complete scan and copy to globally
         // accessible object
         if(scancomplete)
         {
+            std::cout<<"Scan Completed"<<std::endl<<std::endl;
+            std::cout<<"Scan count: "<<PublicPartialScan.scancount<<std::endl;
+            std::cout<<"Point count:"<<PublicPartialScan.points.size()<<std::endl;
+            std::cout<<"Example points[0]:"<<std::endl;
+            std::cout<<"r: "<<PublicPartialScan.points[200].r<<std::endl;
+            std::cout<<"theta: "<<PublicPartialScan.points[200].theta<<std::endl;
+            std::cout<<"phi: "<<PublicPartialScan.points[0].phi<<std::endl;
+            std::cout<<std::endl;
+
             SetCompleteScan(PublicPartialScan);
             ClearIncompleteScan();
         }

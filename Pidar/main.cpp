@@ -69,6 +69,7 @@ public:
     {
         mLaserScan = scan;
         //cout << MiddleScanDistanceInches(mLaserScan) << endl;
+        cout << mLaserScan.at(mLaserScan.size()/2).GetX() << endl;
         mTimeStamp = timestamp;
     }
     std::vector<Point3D> mLaserScan;
@@ -366,6 +367,8 @@ int main()
 {
     maincontrol = new Pidar::Control();
     maincontrol->Initialize();
+    maincontrol->StartMotor(10);
+    sleep(1);
 
     //Start Web Server Thread
     unsigned short port = boost::lexical_cast<unsigned short>("10000");
@@ -378,9 +381,8 @@ int main()
 
         std::cout<<"in main()"<<std::endl;
         sleep(5);
-
     }
-//    maincontrol->StartMotor(10);
+
 
 //    delay(1000);
 //    for(int i = 0;i<10;i++){
