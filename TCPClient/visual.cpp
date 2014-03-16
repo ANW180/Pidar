@@ -49,7 +49,7 @@ using namespace Render;
                         (new pcl::PointCloud<pcl::PointXYZRGB>);
                pcl::PointXYZRGB point;
 
-               bool xyz = true; //false = spherical data, true = cartesian data
+               bool xyz = false; //false = spherical data, true = cartesian data
 
                for(int i=0;i<Data.points.size();i++)
                {
@@ -64,7 +64,7 @@ using namespace Render;
                        //TODO: Convert these to cartesian
                        double r = Data.points[i].r;
                        double theta = Data.points[i].theta;
-                       double phi = Data.points[i].phi;
+                       double phi = DEG2RAD(Data.points[i].phi);
 
                        point.x = r * sin(theta) * cos(phi);
                        point.y = r * sin(theta) * sin(phi);
