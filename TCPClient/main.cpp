@@ -7,10 +7,6 @@
 /// Email: JonGUlrich@gmail.com
 ///
 ////////////////////////////////////////////////////////////////////////////////
-
-#define CLIENT
-#ifdef CLIENT
-
 #include <boost/asio.hpp>
 #include <boost/bind.hpp>
 #include <iostream>
@@ -104,7 +100,7 @@ int main()
     try
     {
 
-        ClientSide::setServer("192.168.1.70","10000"); //not needed unless changing values
+        setServer("192.168.1.70","10000"); //not needed unless changing values
 
         Render::Visual* newvisual = new Render::Visual();
         boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer = newvisual->getViewer(GetSamplePTRData());
@@ -136,7 +132,7 @@ int main()
                     try{
 
 
-                        mycloud = ClientSide::getLatestCloud();//remote source
+                        mycloud = getLatestCloud();//remote source
 
                     for(int i=0;i<mycloud.points.size();i++)
                     {
@@ -186,7 +182,6 @@ int main()
 //        {
 //            viewer->spinOnce (1000);
 //            //boost::this_thread::sleep (boost::posix_time::milliseconds (3000));
-
 //            pcl_data mycloud;
 //            //viewer->updatePointCloud(GetSampleTXTFileData(),"Point Cloud"); //local source
 //            //TODO: handle bad connection/data
@@ -204,19 +199,11 @@ int main()
 //            catch(std::exception e){
 //                std::cout<<"Failed to receive point cloud: "<<e.what()<<std::endl;
 //            }
-
 //        }
-
-
-
     }
     catch (std::exception& e)
     {
         std::cerr << e.what() << std::endl;
     }
-
     return 0;
 }
-
-
-#endif

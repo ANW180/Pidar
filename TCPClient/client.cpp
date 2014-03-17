@@ -1,16 +1,12 @@
 ////////////////////////////////////////////////////////////////////////////////
 ///
-/// \file main.cpp
-/// \brief Main file for client application
+/// \file client.cpp
+/// \brief Client class source file for client application
 /// Author: Jonathan Ulrich
 /// Created: 2/11/13
 /// Email: JonGUlrich@gmail.com
 ///
 ////////////////////////////////////////////////////////////////////////////////
-
-#define CLIENT_CPP
-#ifdef CLIENT_CPP
-
 #include <boost/asio.hpp>
 #include <boost/bind.hpp>
 #include <iostream>
@@ -20,10 +16,6 @@
 #include "../Pidar/pointstructs.hpp"
 
 using namespace PointCloud;
-
-
-namespace ClientSide {
-
 
 std::vector<pcl_data> Latest_Clouds_;
 std::string Port = "10000";
@@ -38,7 +30,6 @@ public:
            const std::string& host, const std::string& service, int newcmd, double newval)
         : connection_(io_service)
     {
-
         send_command = newcmd;
         send_value = newval;
 
@@ -61,8 +52,6 @@ public:
         {
             //handle_write(e);
             handle_read(e);
-
-
         }
         else if (endpoint_iterator != boost::asio::ip::tcp::resolver::iterator())
         {
@@ -83,20 +72,20 @@ public:
       }
 
 
-    void handle_write(const boost::system::error_code& e){
-
+    void handle_write(const boost::system::error_code& e)
+    {
         //TODO: Command request logic here { }
-
         pcl_commands command;
         command.cmd = send_command;
         std::cout << "sending cmd: " << command.cmd << std::endl;
         commands_.push_back(command);
-
-        if(!e){
-
+        if(!e)
+        {
             connection_.async_write(commands_,
-                                    boost::bind(&client::handle_read, this,
-                                                boost::asio::placeholders::error));
+                                    boost::bind(
+                                        &client::handle_read,
+                                        this,
+                                        boost::asio::placeholders::error));
         }
         else
         {
@@ -113,8 +102,8 @@ public:
                                            boost::asio::placeholders::error));
     }
 
-    void handle_data(const boost::system::error_code& e){
-
+    void handle_data(const boost::system::error_code& e)
+    {
         if (!e)
         {
             Latest_Clouds_ = clouds_;
@@ -124,7 +113,6 @@ public:
             // An error occurred.
             std::cerr << "ERROR: " << e.message() << std::endl;
         }
-
         //TODO: Create callback function here that updates data
         // This is the endpoint for the connection
     }
@@ -142,7 +130,8 @@ private:
     std::vector<pcl_commands> commands_;
 };
 
-void setServer(std::string add, std::string prt){
+void setServer(std::string add, std::string prt)
+{
     Address = add;
     Port = prt;
 
@@ -155,9 +144,10 @@ void setServer(std::string add, std::string prt){
     }
 }
 
-pcl_data sendCommand(int cmd){
+pcl_data sendCommand(int cmd)
+{
     boost::asio::io_service io_service;
-    ClientSide::client client(io_service, Address, Port,cmd,0);
+    client(io_service, Address, Port,cmd,0);
     io_service.run();
 
 
@@ -168,17 +158,12 @@ pcl_data sendCommand(int cmd){
 }
 
 
-pcl_data getLatestCloud(){
-
+pcl_data getLatestCloud()
+{
     return sendCommand(1);
 }
 
-pcl_data getLatestSpeed(){
-
+pcl_data getLatestSpeed()
+{
     return sendCommand(2);
 }
-
-
-}
-
-#endif
