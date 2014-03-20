@@ -34,7 +34,6 @@ INCLUDEPATH += /usr/local/include/urg_c \
                /usr/local/include/dxl \
 
 HEADERS += \
-    connection.hpp \
     hokuyo.hpp \
     control.hpp \
     global.hpp \

@@ -11,6 +11,7 @@
 #define POINTSTRUCT_HPP
 #include <vector>
 #include <string>
+#include <deque>
 
 typedef struct pcl_point
 {
@@ -57,8 +58,5 @@ typedef struct pcl_commands
 }pcl_commands;
 
 //Globally Accessible Scan. This should always be complete.
-extern pcl_data PublicScan;
-extern pcl_data PublicPartialScan;
-
-
+extern std::deque<pcl_data> SendPoints;
 #endif

@@ -371,29 +371,15 @@ int main()
     sleep(1);
 
     //Start Web Server Thread
-    unsigned short port = boost::lexical_cast<unsigned short>("10000");
     boost::asio::io_service io_service;
-    PointCloud::server server(io_service, port);
+    PointCloud::server s(io_service, boost::asio::ip::address::from_string("239.255.0.1"));
     boost::thread bt(boost::bind(&boost::asio::io_service::run, &io_service));
 
     while(1)
     {
-
         std::cout<<"in main()"<<std::endl;
         sleep(5);
     }
-
-
-//    delay(1000);
-//    for(int i = 0;i<10;i++){
-//        cout<<"Motor: " << maincontrol->GetMotorPositionDegrees() << std::endl;
-//        delay(500);
-//    }
-//    delay(3000);
-//    maincontrol->StopMotor();
-//    maincontrol->StopLaser();
-
-
 
 
    return 0;

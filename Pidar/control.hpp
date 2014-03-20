@@ -92,7 +92,7 @@ namespace Pidar
         void SetCompleteScan(pcl_data data);
         void SetIncompleteConstruction(pcl_data data);
         void ClearIncompleteScan();
-        void AddToScanConstruction(std::vector<Point3D> laserscan,
+        void AddToScanQueue(std::vector<Point3D> laserscan,
                                    double currentMotorPosition,
                                    double previousMotorPosition);
     protected:

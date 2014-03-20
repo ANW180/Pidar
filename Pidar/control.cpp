@@ -12,8 +12,7 @@
 double current_position;
 double previous_position;
 std::vector<Point3D> laserscan;
-pcl_data PublicScan;
-pcl_data PublicPartialScan;
+std::deque<pcl_data> SendPoints;
 
 using namespace Pidar;
 using namespace PointCloud;
@@ -34,7 +33,7 @@ void InterruptService(void)
 
     //Send values and get newly constructed incompletescan
     //this will update values as needed
-    maincontrol->AddToScanConstruction(laserscan,
+    maincontrol->AddToScanQueue(laserscan,
                                       current_position,previous_position);
 }
 
@@ -91,7 +90,6 @@ Control::Control()
 {
     motor = new Motor::Dynamixel();
     laser = new Laser::Hokuyo();
-    PublicPartialScan.scancount = 0;
 }
 
 Control::~Control()
@@ -106,17 +104,29 @@ bool Control::Initialize()
     bool enableLaser = true;
     bool enableMotor = true;
     bool enableCOM = false; //Now in main, true here will take over main thread
-    bool enableISR = true;
+    bool enableISR = false;
 
 //    ///******* TESTING ONLY **********************************
-//    //This is for testing only (remove when not testing)
-//    PublicScan = GetSampleTXTFileData();
-//    PublicScan.id = 1; //initialization
-//    PublicScan.speed = 88;
-//    std::cout<<"control.cpp: ID: "<<PublicScan.id<<std::endl;
-//    std::cout<<"control.cpp: r: "<<PublicScan.points[0].r<<std::endl;
-//    std::cout<<"control.cpp: theta: "<<PublicScan.points[0].theta<<std::endl;
-//    std::cout<<"control.cpp: phi: "<<PublicScan.points[0].phi<<std::endl;
+    //This is for testing only (remove when not testing)
+    pcl_data tmpscan = GetSampleTXTFileData();
+    tmpscan.id = 1; //initialization
+    tmpscan.speed = 88;
+    for(int i = 0; i<tmpscan.points.size()-1080;i+=1080)
+    {
+        pcl_data x;
+        for(int j = 0;j<1080;j++)
+        {
+         pcl_point y = tmpscan.points[i+j];
+         x.points.push_back(y);
+        }
+        SendPoints.push_back(x);
+    }
+    std::cout<<"Queue Length: "<<SendPoints.size()<<std::endl;
+    std::cout<<"control.cpp: ID: "<<tmpscan.id<<std::endl;
+    std::cout<<"control.cpp: r: "<<tmpscan.points[0].r<<std::endl;
+    std::cout<<"control.cpp: theta: "<<tmpscan.points[0].theta<<std::endl;
+    std::cout<<"control.cpp: phi: "<<tmpscan.points[0].phi<<std::endl;
+
 //    ///******** END TESTING LINES ****************************
 
 
@@ -153,13 +163,11 @@ bool Control::Initialize()
     {     
         try
         {
-            unsigned short port = boost::lexical_cast<unsigned short>("10000");
-
+            //Start Web Server Thread
             boost::asio::io_service io_service;
+            PointCloud::server s(io_service, boost::asio::ip::address::from_string("239.255.0.1"));
+            boost::thread bt(boost::bind(&boost::asio::io_service::run, &io_service));
 
-            PointCloud::server server(io_service, port);
-            std::cout<<"Starting COM on port: " << port << std::endl;
-            io_service.run();
         }
         catch (std::exception& e)
         {
@@ -214,45 +222,14 @@ bool Control::Initialize()
         return Control::mpLasercallback.mLaserScan;
     }
 
-    ///
-    /// Scan Management Functions
-    ///
-    pcl_data Control::GetIncompleteScan()
-    {
-        return PublicPartialScan;
-    }
 
-    pcl_data Control::GetCompleteScan()
-    {
-        return PublicScan;
-    }
-
-    void Control::SetCompleteScan(pcl_data data)
-    {
-        PublicScan = data;
-    }
-
-    void Control::SetIncompleteConstruction(pcl_data data)
-    {
-        PublicPartialScan = data;
-    }
-
-    void Control::ClearIncompleteScan()
-    {
-        PublicPartialScan.id = 0;
-        PublicPartialScan.message = "";
-        PublicPartialScan.points.clear();
-        PublicPartialScan.scancount = 0;
-    }
-
-    void Control::AddToScanConstruction(std::vector<Point3D> laserscan,
+    void Control::AddToScanQueue(std::vector<Point3D> laserscan,
                                         double currentMotorPosition,
                                         double previousMotorPosition)
     {
         int scancnt = laserscan.size();//1080;
         //Check for complete scan & get delta
         double delta_position = 0.0;
-        bool scancomplete = false;
         if (previousMotorPosition > currentMotorPosition)
         {
             delta_position = ((360-previousMotorPosition)+currentMotorPosition);
@@ -261,14 +238,8 @@ bool Control::Initialize()
         {
             delta_position = (currentMotorPosition-previousMotorPosition);
         }
-        if(PublicPartialScan.points.size() > 10000)
-        {
-            scancomplete = true;
-        }
-        else
-        {
-            scancomplete = false;
-        }
+
+        pcl_data tmp;
 
         for(int i = 0; i <= scancnt / 2; i++)
         {
@@ -276,7 +247,7 @@ bool Control::Initialize()
             point.r = (laserscan[i]).GetX();
             point.theta = (laserscan[i]).GetY();
             point.phi = previousMotorPosition + (i*(delta_position/scancnt));
-            PublicPartialScan.points.push_back(point);
+            tmp.points.push_back(point);
         }
         for(int i = scancnt / 2; i < scancnt; i++)
         {
@@ -284,26 +255,11 @@ bool Control::Initialize()
             point.r = (laserscan[i]).GetX();
             point.theta = (laserscan[i]).GetY();
             point.phi = 360.0 - previousMotorPosition + 180.0 + (i*(delta_position/scancnt));
-            PublicPartialScan.points.push_back(point);
+            tmp.points.push_back(point);
         }
-        PublicPartialScan.scancount++;
+        //Add scan to queue
+        SendPoints.push_back(tmp);
 
-        // If complete set the complete scan and copy to globally
-        // accessible object
-        if(scancomplete)
-        {
-            std::cout<<"Scan Completed"<<std::endl<<std::endl;
-            std::cout<<"Scan count: "<<PublicPartialScan.scancount<<std::endl;
-            std::cout<<"Point count:"<<PublicPartialScan.points.size()<<std::endl;
-            std::cout<<"Example points[0]:"<<std::endl;
-            std::cout<<"r: "<<PublicPartialScan.points[200].r<<std::endl;
-            std::cout<<"theta: "<<PublicPartialScan.points[200].theta<<std::endl;
-            std::cout<<"phi: "<<PublicPartialScan.points[0].phi<<std::endl;
-            std::cout<<std::endl;
-
-            SetCompleteScan(PublicPartialScan);
-            ClearIncompleteScan();
-        }
 }
 
 
