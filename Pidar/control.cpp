@@ -104,7 +104,7 @@ bool Control::Initialize()
     bool enableLaser = true;
     bool enableMotor = true;
     bool enableCOM = false; //Now in main, true here will take over main thread
-    bool enableISR = false;
+    bool enableISR = true;
 
 //    ///******* TESTING ONLY **********************************
     //This is for testing only (remove when not testing)
