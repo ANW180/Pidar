@@ -9,7 +9,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 #ifndef CONTROL_HPP
 #define CONTROL_HPP
-#include "connection.cpp"
+#include "server.cpp"
 #include "hokuyo.hpp"
 #include "dynamixel.hpp"
 #include "wiringPi.h"
@@ -87,11 +87,6 @@ namespace Pidar
         ///
         /// Scan Management Functions
         ///
-        pcl_data GetIncompleteScan();
-        pcl_data GetCompleteScan();
-        void SetCompleteScan(pcl_data data);
-        void SetIncompleteConstruction(pcl_data data);
-        void ClearIncompleteScan();
         void AddToScanQueue(std::vector<Point3D> laserscan,
                                    double currentMotorPosition,
                                    double previousMotorPosition);
@@ -107,8 +102,6 @@ namespace Pidar
         LaserCallback mpLasercallback;
         pcl_data mPointCloud;
     };
-
-
 
 }
 

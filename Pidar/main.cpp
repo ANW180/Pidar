@@ -375,11 +375,37 @@ int main()
     PointCloud::server s(io_service, boost::asio::ip::address::from_string("239.255.0.1"));
     boost::thread bt(boost::bind(&boost::asio::io_service::run, &io_service));
 
+    int total=0;
     while(1)
     {
+
         std::cout<<"in main()"<<std::endl;
+        std::cout<<"Queue: "<<SendPoints.size()<<std::endl;
+
+        //TESTING DATA
+//        total++;
+//        for(int j = 0;j<10;j++)
+//        {
+//            pcl_data tmp;
+//            for(int i = 0;i<1080;i++)
+//            {
+//                int neg = 1;
+//                if(i%6==0)
+//                    neg=-1;
+//                pcl_point pt;
+//                pt.r = neg * 1.927 + total/10000;
+//                pt.theta = neg * (-3.5+(i%1000)) - (total/10000);
+//                pt.phi = neg * (i/1000)+pt.r - pt.theta + 0.000001;
+//                tmp.points.push_back(pt);
+//            }
+//            SendPoints.push_back(tmp);
+//            //END TESTING DATA
+//        }
         sleep(5);
     }
+
+
+
 
 
    return 0;

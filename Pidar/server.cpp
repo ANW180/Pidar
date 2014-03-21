@@ -1,5 +1,5 @@
-#ifndef CONNECTIONCLASS
-#define CONNECTIONCLASS
+#ifndef SERVER_CPP
+#define SERVER_CPP
 #include "pointstructs.hpp"
 #include "point3d.hpp"
 #include "control.hpp"
@@ -66,6 +66,10 @@ const int max_message_count = 1000;
                           boost::asio::buffer(clouds_[0].points), endpoint_,
                   boost::bind(&server::handle_send_to, this,
                     boost::asio::placeholders::error));
+          }
+          else
+          {
+              handle_send_to(error);
           }
         }
       }

@@ -19,6 +19,9 @@ using namespace PointCloud;
 
 std::vector<pcl_data> Latest_Clouds_;
 std::deque<pcl_data> SendPoints;
+bool lock_write;
+bool lock_clear;
+bool lock_read;
 const short multicast_port = 30001;
 
 class receiver
@@ -56,7 +59,7 @@ public:
     if (!error)
     {
       //std::cout.write(data_, bytes_recvd);
-      std::cout << std::endl;
+     // std::cout << std::endl;
       //Generate PCL_POINT vector from buffer
 
       int points_rcvd;
@@ -83,12 +86,15 @@ public:
           dat.points.push_back(tmp);
       }
 
-    SendPoints.push_back(dat);
+      while(lock_clear || lock_read);
+      lock_write = true;
+      SendPoints.push_back(dat);
+      lock_write = false;
 
-    std::cout<<"Clouds_ size: "<<dat.points.size()<<std::endl;
-    std::cout<<"X: "<<dat.points[0].r<<std::endl;
-    std::cout<<"Theta: "<<dat.points[0].theta<<std::endl;
-    std::cout<<"Phi: "<<dat.points[0].phi<<std::endl;
+//    std::cout<<"Clouds_ size: "<<dat.points.size()<<std::endl;
+//    std::cout<<"X: "<<dat.points[0].r<<std::endl;
+//    std::cout<<"Theta: "<<dat.points[0].theta<<std::endl;
+//    std::cout<<"Phi: "<<dat.points[0].phi<<std::endl;
   //  clouds_.clear();
    //   std::cout << std::endl;
 

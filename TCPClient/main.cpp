@@ -55,13 +55,26 @@ int main()
         while (!viewer->wasStopped ())
         {
 
+
+
             if(!SendPoints.empty())
             {
-                pcl_data buff = SendPoints.front();
 
-                for(int i = 0;i<buff.points.size();i++){
-                    viewing.points.push_back(buff.points[i]);
+                int amt = SendPoints.size();
+                for(int j=0;j<amt;j++)
+                {
+                    while(lock_clear || lock_write);
+                    lock_read = true;
+                    pcl_data buff = SendPoints[j];
+                    lock_read = false;
+
+                    for(int i = 0;i<buff.points.size();i++){
+                        viewing.points.push_back(buff.points[i]);
+                    }
+
                 }
+                std::cout<<"Added "<<amt<<" Points";
+
 
                 std::cout<<"Updating Cloud"<<std::endl;
                 pcl_data viewcloud;
@@ -69,11 +82,23 @@ int main()
                 viewer->updatePointCloud(convertDataToPCL(viewing),"Point Cloud");
                 SendPoints.pop_front();
                 std::cout<<"Cloud updated"<<std::endl;
+                std::cout<<"Points Shown: "<< viewing.points.size()<<std::endl;
 
-                if(viewing.points.size()>60000)
+                if(viewing.points.size()>200000)
                 {
                     viewing.points.clear();
                 }
+
+
+
+
+                while(lock_clear || lock_write);
+                lock_clear = true;
+                SendPoints.clear();
+                lock_clear = false;
+
+
+
 
             }
             viewer->spinOnce (100);

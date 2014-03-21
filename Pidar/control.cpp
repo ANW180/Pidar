@@ -223,6 +223,9 @@ bool Control::Initialize()
     }
 
 
+    ///
+    /// Scan Management Functions
+    ///
     void Control::AddToScanQueue(std::vector<Point3D> laserscan,
                                         double currentMotorPosition,
                                         double previousMotorPosition)
@@ -258,7 +261,14 @@ bool Control::Initialize()
             tmp.points.push_back(point);
         }
         //Add scan to queue
+
+        if(SendPoints.size()>100){
+            SendPoints.clear();
+            std::cout<<"Queue Cleared Due To Congestion"<<std::endl;
+        }
+
         SendPoints.push_back(tmp);
+
 
 }
 

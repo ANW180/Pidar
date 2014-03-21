@@ -45,4 +45,4 @@ SOURCES +=  hokuyo.cpp \
             dynamixel.cpp \
             control.cpp \
             main.cpp \
-            connection.cpp
+    server.cpp
