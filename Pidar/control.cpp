@@ -267,20 +267,12 @@ bool Control::Initialize()
         pcl_data tmp;
         if(laserscan.size() > 0)
         {
-            for(int i = 0; i <= scancnt / 2; i++)
+            for(int i = 0; i <= scancnt; i++)
             {
                 pcl_point point;
                 point.r = (laserscan[i]).GetX();
                 point.theta = (laserscan[i]).GetY();
                 point.phi = previousMotorPosition + (i*(delta_position/scancnt));
-                tmp.points.push_back(point);
-            }
-            for(int i = scancnt / 2; i < scancnt; i++)
-            {
-                pcl_point point;
-                point.r = (laserscan[i]).GetX();
-                point.theta = (laserscan[i]).GetY();
-                point.phi = 360.0 - previousMotorPosition + 180.0 + (i*(delta_position/scancnt));
                 tmp.points.push_back(point);
             }
             //Add scan to queue

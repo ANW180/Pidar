@@ -15,7 +15,7 @@
 #include "wiringPi.h"
 #include <fstream>
 
-#define HOKUYOSYNCPIN 0
+#define HOKUYOSYNCPIN 17
 
 
 namespace Pidar
