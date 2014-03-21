@@ -63,13 +63,17 @@ int main()
                 int amt = SendPoints.size();
                 for(int j=0;j<amt;j++)
                 {
-                    while(lock_clear || lock_write);
-                    lock_read = true;
-                    pcl_data buff = SendPoints[j];
-                    lock_read = false;
+                    if(!lock_clear || !lock_write)
+                    {
+                        lock_read = true;
+                        pcl_data buff = SendPoints[j];
+                        lock_read = false;
 
-                    for(int i = 0;i<buff.points.size();i++){
-                        viewing.points.push_back(buff.points[i]);
+
+                        for(int i = 0;i<buff.points.size();i++)
+                        {
+                            viewing.points.push_back(buff.points[i]);
+                        }
                     }
 
                 }
@@ -84,7 +88,7 @@ int main()
                 std::cout<<"Cloud updated"<<std::endl;
                 std::cout<<"Points Shown: "<< viewing.points.size()<<std::endl;
 
-                if(viewing.points.size()>200000)
+                if(viewing.points.size()>24500)
                 {
                     viewing.points.clear();
                 }
@@ -92,10 +96,12 @@ int main()
 
 
 
-                while(lock_clear || lock_write);
-                lock_clear = true;
-                SendPoints.clear();
-                lock_clear = false;
+                if(!lock_clear || !lock_write)
+                {
+                    lock_clear = true;
+                    SendPoints.clear();
+                    lock_clear = false;
+                }
 
 
 

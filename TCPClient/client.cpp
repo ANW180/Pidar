@@ -86,10 +86,12 @@ public:
           dat.points.push_back(tmp);
       }
 
-      while(lock_clear || lock_read);
-      lock_write = true;
-      SendPoints.push_back(dat);
-      lock_write = false;
+      if(!lock_clear || !lock_read)
+      {
+          lock_write = true;
+          SendPoints.push_back(dat);
+          lock_write = false;
+      }
 
 //    std::cout<<"Clouds_ size: "<<dat.points.size()<<std::endl;
 //    std::cout<<"X: "<<dat.points[0].r<<std::endl;
