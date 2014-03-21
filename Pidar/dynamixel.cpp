@@ -23,7 +23,7 @@ Dynamixel::Dynamixel()
     mSerialPort = "/dev/ttyUSB0";
     mpDocument = new TiXmlDocument();
     mCommandSpeedRpm = mPresentPositionDegrees = mPreviousPositionDegrees = 0.0;
-    mBaudRate = 34; // 34 ~ 57142.9 for 57600 connection
+    mBaudRate = 0; // 34 ~ 57142.9 for 57600 connection
 }
 
 
@@ -213,6 +213,7 @@ void Dynamixel::ProcessingThread()
                 {
                     //PrintCommStatus(CommStatus);
                 }
+                mCommandSpeedFlag = false;
             }
             mMutex.unlock();
             // Read present position
@@ -250,11 +251,10 @@ void Dynamixel::ProcessingThread()
                 //std::cout << "No Read" << std::endl;
             }
         }
-//        timespec sleep, remaining;
-//        sleep.tv_sec = remaining.tv_sec = 0;
-//        sleep.tv_nsec = 25000L; //25 microseconds
-//        nanosleep(&sleep, &remaining);
-        boost::this_thread::sleep(boost::posix_time::millisec(20));
+        timespec sleep, remaining;
+        sleep.tv_sec = remaining.tv_sec = 0;
+        sleep.tv_nsec = 20000L; //20 microseconds
+        nanosleep(&sleep, &remaining);
     }
 }
 

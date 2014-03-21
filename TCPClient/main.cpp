@@ -88,7 +88,7 @@ int main()
                 std::cout<<"Cloud updated"<<std::endl;
                 std::cout<<"Points Shown: "<< viewing.points.size()<<std::endl;
 
-                if(viewing.points.size()>24500)
+                if(viewing.points.size()>55000)
                 {
                     viewing.points.clear();
                 }

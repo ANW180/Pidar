@@ -30,7 +30,7 @@ using namespace Render;
         viewer->addPointCloud<pcl::PointXYZRGB>(cloud, rgb, "Point Cloud");
         viewer->setPointCloudRenderingProperties
               (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 3, "Point Cloud");
-        viewer->addCoordinateSystem(1.0);
+        //viewer->addCoordinateSystem(1.0);
         viewer->initCameraParameters();
         return (viewer);
     }

@@ -39,7 +39,7 @@ void InterruptService(void)
     //Get Current and Previous Positions
     current_position = maincontrol->GetMotorPositionDegrees();
     previous_position = maincontrol->GetMotorPreviousPositionDegrees();
-    if(fabs(current_position - previous_position) < 0.1)
+    if(fabs(current_position - previous_position) < 0.001)
     {
         std::cout << "Bad Servo Read ISR #: " << i << std::endl;
         i++;
