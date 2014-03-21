@@ -104,8 +104,6 @@ int main()
                 }
 
 
-
-
             }
             viewer->spinOnce (100);
         }

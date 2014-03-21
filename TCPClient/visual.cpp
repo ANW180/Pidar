@@ -35,6 +35,30 @@ using namespace Render;
         return (viewer);
     }
 
+    int GetDistanceColor(double x, double y, double z){
+        int rgb;
+        double  distance = sqrt(pow((x), 2) + pow((y), 2) + pow((z), 2));
+        double scale = 0.5;
+        distance *=scale;
+        if(distance < 0.3)
+            rgb = ((int)209) << 16 | ((int)0) << 8 | ((int)0); //red
+        else if(distance > 0.3 && distance < 0.6)
+            rgb = ((int)255) << 16 | ((int)102) << 8 | ((int)304); //orange
+        else if(distance > 0.6 && distance < 1.0)
+            rgb = ((int)255) << 16 | ((int)218) << 8 | ((int)33); //yellow
+        else if(distance > 1.0 && distance < 1.5)
+            rgb = ((int)51) << 16 | ((int)221) << 8 | ((int)0); //green
+        else if(distance > 1.5 && distance < 2.0)
+            rgb = ((int)17) << 16 | ((int)51) << 8 | ((int)204); //blue
+        else if(distance > 2.0 && distance < 3.0)
+            rgb = ((int)34) << 16 | ((int)0) << 8 | ((int)102); //indigo
+        else
+            rgb = ((int)51) << 16 | ((int)0) << 8 | ((int)68); //violet
+
+        return rgb;
+
+    }
+
 
     //////////////////////////
     //
@@ -82,8 +106,13 @@ using namespace Render;
                 point.x = r * sin(theta) * cos(phi);
                 point.y = r * sin(theta) * sin(phi);
                 point.z = r * cos(theta);
+
+               // if()
+               // point.rgb = ((int)255) << 16 | ((int)0) << 8 | ((int)0);
             }
-            point.rgb = 99999999;
+            //point.rgb = 99999999;
+            //calculate distance & colorize
+            point.rgb = GetDistanceColor(point.x,point.y,point.z);
             point_cloud_ptr->points.push_back (point);
         }
         point_cloud_ptr->width = (int) point_cloud_ptr->points.size ();
