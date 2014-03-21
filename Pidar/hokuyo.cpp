@@ -161,14 +161,18 @@ void Hokuyo::ProcessingThread()
             }
             // Size of a full scan in 3D data structure is 553472 bytes.
             //TODO add mutex lock
+            mMutex.lock();
             mLaserScan = scan;
+            mMutex.unlock();
             //Trigger Callbacks
             Callback::Set::iterator iter;
             for(iter = mCallbacks.begin();
                 iter != mCallbacks.end();
                 iter++)
             {
+                mMutex.lock();
                 (*iter)->ProcessLaserData(mLaserScan, timestamp);
+                mMutex.unlock();
             }
         }
     }

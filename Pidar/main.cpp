@@ -24,25 +24,25 @@
 
 
 Pidar::Control* maincontrol;
-timespec t1;
+//timespec t1;
 int reset = 1;
 using namespace std;
 
-timespec diff(timespec start, timespec end)
-{
-    timespec temp;
-    if((end.tv_nsec - start.tv_nsec) < 0)
-    {
-        temp.tv_sec = end.tv_sec - start.tv_sec - 1;
-        temp.tv_nsec = 1000000000L + end.tv_nsec - start.tv_nsec;
-    }
-    else
-    {
-        temp.tv_sec = end.tv_sec - start.tv_sec;
-        temp.tv_nsec = end.tv_nsec - start.tv_nsec;
-    }
-    return temp;
-}
+//timespec diff(timespec start, timespec end)
+//{
+//    timespec temp;
+//    if((end.tv_nsec - start.tv_nsec) < 0)
+//    {
+//        temp.tv_sec = end.tv_sec - start.tv_sec - 1;
+//        temp.tv_nsec = 1000000000L + end.tv_nsec - start.tv_nsec;
+//    }
+//    else
+//    {
+//        temp.tv_sec = end.tv_sec - start.tv_sec;
+//        temp.tv_nsec = end.tv_nsec - start.tv_nsec;
+//    }
+//    return temp;
+//}
 
 
 double MiddleScanDistanceInches (const std::vector<Point3D>& scan)
@@ -326,35 +326,34 @@ int main(int argc, char* argv[])
 //#define TESTISR
 #ifdef TESTISR
 
-#define BUTTON_PIN 0
+#define BUTTON_PIN 17
 volatile int eventCounter = 0;
-void myInterrupt(void) {
-
+void myInterrupt(void)
+{
     eventCounter++;
 }
 
 int main()
 {
-
-    if (wiringPiSetup () < 0) {
-          fprintf (stderr, "Unable to setup wiringPi: %s\n", strerror (errno));
-          return 1;
-      }
-
-      // set Pin 17/0 generate an interrupt on high-to-low transitions
-      // and attach myInterrupt() to the interrupt
-      if ( wiringPiISR (BUTTON_PIN, INT_EDGE_FALLING, &myInterrupt) < 0 ) {
-          fprintf (stderr, "Unable to setup ISR: %s\n", strerror (errno));
-          return 1;
-      }
-
-      // display counter value every second.
-      while ( 1 ) {
-        printf( "%d\n", eventCounter );
+    if (wiringPiSetupSys() < 0)
+    {
+        fprintf (stderr, "Unable to setup wiringPi: %s\n", strerror (errno));
+        return 1;
+    }
+    // set Pin 17/0 generate an interrupt on high-to-low transitions
+    // and attach myInterrupt() to the interrupt
+    if ( wiringPiISR (BUTTON_PIN, INT_EDGE_FALLING, &myInterrupt) < 0 )
+    {
+        fprintf (stderr, "Unable to setup ISR: %s\n", strerror (errno));
+        return 1;
+    }
+    // display counter value every second.
+    while (1)
+    {
+        std::cout << eventCounter << std::endl;
         eventCounter = 0;
-        delay( 1000 ); // wait 1 second
-      }
-
+        delay(1000); // wait 1 second
+    }
       return 0;
 }
 
@@ -375,39 +374,10 @@ int main()
     PointCloud::server s(io_service, boost::asio::ip::address::from_string("239.255.0.1"));
     boost::thread bt(boost::bind(&boost::asio::io_service::run, &io_service));
 
-    int total=0;
     while(1)
     {
-
-        std::cout<<"in main()"<<std::endl;
-        std::cout<<"Queue: "<<SendPoints.size()<<std::endl;
-
-        //TESTING DATA
-//        total++;
-//        for(int j = 0;j<10;j++)
-//        {
-//            pcl_data tmp;
-//            for(int i = 0;i<1080;i++)
-//            {
-//                int neg = 1;
-//                if(i%6==0)
-//                    neg=-1;
-//                pcl_point pt;
-//                pt.r = neg * 1.927 + total/10000;
-//                pt.theta = neg * (-3.5+(i%1000)) - (total/10000);
-//                pt.phi = neg * (i/1000)+pt.r - pt.theta + 0.000001;
-//                tmp.points.push_back(pt);
-//            }
-//            SendPoints.push_back(tmp);
-//            //END TESTING DATA
-//        }
         sleep(5);
     }
-
-
-
-
-
    return 0;
 }
 #endif

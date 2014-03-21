@@ -106,6 +106,7 @@ namespace Laser
         int mHokuyoMinStep;
         int mHokuyoMaxStep;
         std::string mSerialPort;
+        boost::mutex mMutex;
         TiXmlDocument* mpDocument;
         boost::thread mProcessingThread;
         std::vector<Point3D> mLaserScan;

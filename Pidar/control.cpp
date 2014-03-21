@@ -16,15 +16,35 @@ std::deque<pcl_data> SendPoints;
 
 using namespace Pidar;
 using namespace PointCloud;
-
-
+timespec diff(timespec start, timespec end)
+{
+    timespec temp;
+    if((end.tv_nsec - start.tv_nsec) < 0)
+    {
+        temp.tv_sec = end.tv_sec - start.tv_sec - 1;
+        temp.tv_nsec = 1000000000L + end.tv_nsec - start.tv_nsec;
+    }
+    else
+    {
+        temp.tv_sec = end.tv_sec - start.tv_sec;
+        temp.tv_nsec = end.tv_nsec - start.tv_nsec;
+    }
+    return temp;
+}
+timespec t1, t2;
+int i = 0;
 void InterruptService(void)
 {
-
+    //clock_gettime(CLOCK_THREAD_CPUTIME_ID, &t1);
     //Get Current and Previous Positions
     current_position = maincontrol->GetMotorPositionDegrees();
     previous_position = maincontrol->GetMotorPreviousPositionDegrees();
-
+    if(fabs(current_position - previous_position) < 0.1)
+    {
+        std::cout << "Bad Servo Read ISR #: " << i << std::endl;
+        i++;
+        return;
+    }
     //Update Previous Motor Position
     maincontrol->SetMotorPreviousPositionDegrees(current_position);
 
@@ -35,6 +55,8 @@ void InterruptService(void)
     //this will update values as needed
     maincontrol->AddToScanQueue(laserscan,
                                       current_position,previous_position);
+    //clock_gettime(CLOCK_THREAD_CPUTIME_ID, &t2);
+    //std::cout << diff(t1, t2).tv_sec << " " << diff(t1, t2).tv_nsec << std::endl;
 }
 
 
@@ -108,24 +130,27 @@ bool Control::Initialize()
 
 //    ///******* TESTING ONLY **********************************
     //This is for testing only (remove when not testing)
-    pcl_data tmpscan = GetSampleTXTFileData();
-    tmpscan.id = 1; //initialization
-    tmpscan.speed = 88;
-    for(int i = 0; i<tmpscan.points.size()-1080;i+=1080)
-    {
-        pcl_data x;
-        for(int j = 0;j<1080;j++)
-        {
-         pcl_point y = tmpscan.points[i+j];
-         x.points.push_back(y);
-        }
-        SendPoints.push_back(x);
-    }
-    std::cout<<"Queue Length: "<<SendPoints.size()<<std::endl;
-    std::cout<<"control.cpp: ID: "<<tmpscan.id<<std::endl;
-    std::cout<<"control.cpp: r: "<<tmpscan.points[0].r<<std::endl;
-    std::cout<<"control.cpp: theta: "<<tmpscan.points[0].theta<<std::endl;
-    std::cout<<"control.cpp: phi: "<<tmpscan.points[0].phi<<std::endl;
+//    if(!enableISR)
+//    {
+//        pcl_data tmpscan = GetSampleTXTFileData();
+//        tmpscan.id = 1; //initialization
+//        tmpscan.speed = 88;
+//        for(int i = 0; i<tmpscan.points.size()-1080;i+=1080)
+//        {
+//            pcl_data x;
+//            for(int j = 0;j<1080;j++)
+//            {
+//             pcl_point y = tmpscan.points[i+j];
+//             x.points.push_back(y);
+//            }
+//            SendPoints.push_back(x);
+//        }
+//        std::cout<<"Queue Length: "<<SendPoints.size()<<std::endl;
+//        std::cout<<"control.cpp: ID: "<<tmpscan.id<<std::endl;
+//        std::cout<<"control.cpp: r: "<<tmpscan.points[0].r<<std::endl;
+//        std::cout<<"control.cpp: theta: "<<tmpscan.points[0].theta<<std::endl;
+//        std::cout<<"control.cpp: phi: "<<tmpscan.points[0].phi<<std::endl;
+//    }
 
 //    ///******** END TESTING LINES ****************************
 
@@ -144,14 +169,14 @@ bool Control::Initialize()
 
     if(enableISR)
     {
-        if (wiringPiSetup () < 0)
+        if (wiringPiSetupSys () < 0)
         {
             fprintf (stderr, "Unable to setup wiringPi: %s\n", strerror (errno));
             //   return 1;
         }
         // set Pin 17/0 generate an interrupt on low-to-high transitions
         // and attach myInterrupt() to the interrupt
-        if ( wiringPiISR (HOKUYOSYNCPIN, INT_EDGE_RISING, InterruptService) < 0 )
+        if ( wiringPiISR (HOKUYOSYNCPIN, INT_EDGE_FALLING, InterruptService) < 0 )
         {
             fprintf (stderr, "Unable to setup ISR: %s\n", strerror (errno));
             //   return 1;
@@ -160,7 +185,7 @@ bool Control::Initialize()
     }
 
     if(enableCOM)
-    {     
+    {
         try
         {
             //Start Web Server Thread
@@ -204,7 +229,7 @@ bool Control::Initialize()
     void Control::StopMotor()
     {
         Control::motor->SetSpeedRpm(0, true);
-        delay(1000);
+        sleep(1000);
         Control::motor->Shutdown();
     }
 
@@ -223,9 +248,6 @@ bool Control::Initialize()
     }
 
 
-    ///
-    /// Scan Management Functions
-    ///
     void Control::AddToScanQueue(std::vector<Point3D> laserscan,
                                         double currentMotorPosition,
                                         double previousMotorPosition)
@@ -233,43 +255,37 @@ bool Control::Initialize()
         int scancnt = laserscan.size();//1080;
         //Check for complete scan & get delta
         double delta_position = 0.0;
-        if (previousMotorPosition > currentMotorPosition)
+        if (previousMotorPosition < currentMotorPosition)
         {
-            delta_position = ((360-previousMotorPosition)+currentMotorPosition);
+            delta_position = ((360-previousMotorPosition)-currentMotorPosition);
         }
         else
         {
-            delta_position = (currentMotorPosition-previousMotorPosition);
+            delta_position = fabs(currentMotorPosition-previousMotorPosition);
         }
 
         pcl_data tmp;
-
-        for(int i = 0; i <= scancnt / 2; i++)
+        if(laserscan.size() > 0)
         {
-            pcl_point point;
-            point.r = (laserscan[i]).GetX();
-            point.theta = (laserscan[i]).GetY();
-            point.phi = previousMotorPosition + (i*(delta_position/scancnt));
-            tmp.points.push_back(point);
+            for(int i = 0; i <= scancnt / 2; i++)
+            {
+                pcl_point point;
+                point.r = (laserscan[i]).GetX();
+                point.theta = (laserscan[i]).GetY();
+                point.phi = previousMotorPosition + (i*(delta_position/scancnt));
+                tmp.points.push_back(point);
+            }
+            for(int i = scancnt / 2; i < scancnt; i++)
+            {
+                pcl_point point;
+                point.r = (laserscan[i]).GetX();
+                point.theta = (laserscan[i]).GetY();
+                point.phi = 360.0 - previousMotorPosition + 180.0 + (i*(delta_position/scancnt));
+                tmp.points.push_back(point);
+            }
+            //Add scan to queue
+            SendPoints.push_back(tmp);
         }
-        for(int i = scancnt / 2; i < scancnt; i++)
-        {
-            pcl_point point;
-            point.r = (laserscan[i]).GetX();
-            point.theta = (laserscan[i]).GetY();
-            point.phi = 360.0 - previousMotorPosition + 180.0 + (i*(delta_position/scancnt));
-            tmp.points.push_back(point);
-        }
-        //Add scan to queue
-
-        if(SendPoints.size()>100){
-            SendPoints.clear();
-            std::cout<<"Queue Cleared Due To Congestion"<<std::endl;
-        }
-
-        SendPoints.push_back(tmp);
-
-
 }
 
 
