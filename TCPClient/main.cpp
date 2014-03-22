@@ -87,6 +87,7 @@ int main()
                 std::cout<<"Points Shown: "<< viewing.points.size()<<std::endl;
 
 
+
                 if(viewing.points.size()>24500)
                 {
                     viewing.points.clear();
