@@ -31,14 +31,16 @@ using namespace Render;
         viewer->setPointCloudRenderingProperties
 
               (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 2, "Point Cloud");
-        viewer->addCoordinateSystem(1.0);
+        //Coordinate Frame      
+        //viewer->addCoordinateSystem(1.0);
 
-
+        //Text
         viewer->addText("Pidar",0,0,100,1,1,1,"Pidar",0);
         viewer->addText("Points Shown:",350,10,25,1,1,1,"Points Shown:",0);
         viewer->addText("0",525,10,20,1,1,1,"points",0);
 
 
+        //Camera Angle
        // 0.865668,3.3245/0.18839,0.14193,2.32075/0.34419,0.184331,-1.47331/-0.676125,-0.735908,-0.0359887/0.8575/832,469/73,80
         viewer->setCameraClipDistances(0.865668, 3.3245);
         viewer->setCameraPosition(0.18839,0.14193,2.32075, 0.34419,0.184331,-1.47331, -0.676125,-0.735908,-0.0359887);
