@@ -16,12 +16,14 @@
 #include <client.cpp>
 #include <visual.cpp>
 #include "../Pidar/pointstructs.hpp"
+#include <boost/lexical_cast.hpp>
+#include <string>
 
 
     // ------------------------------------
-    // -----Create example point cloud-----
+    // -----Create default empty point cloud-----
     // ------------------------------------
-pcl::PointCloud<pcl::PointXYZRGB>::Ptr GetSamplePTRData(){
+pcl::PointCloud<pcl::PointXYZRGB>::Ptr GetEmptyPTRData(){
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr point_cloud_ptr (new pcl::PointCloud<pcl::PointXYZRGB>);
     point_cloud_ptr->width = (int) point_cloud_ptr->points.size ();
     point_cloud_ptr->height = 1;
@@ -32,13 +34,14 @@ int main()
 {
     try
     {
+        //Generate a single point (0,0,0) to initialize queue
         pcl_data x;
-        x.id = 0;
+            x.id = 0;
         pcl_point y;
-        y.r =0.0;
-        y.theta = 0.0;
-        y.phi = 0.0;
-        x.points.push_back(y);
+            y.r =0.0;
+            y.theta = 0.0;
+            y.phi = 0.0;
+            x.points.push_back(y);
         SendPoints.push_back(x);
 
         boost::asio::io_service io_service;
@@ -49,17 +52,14 @@ int main()
 
 
         Render::Visual* newvisual = new Render::Visual();
-        boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer = newvisual->getViewer(GetSamplePTRData());
+        boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer = newvisual->getViewer(GetEmptyPTRData());
 
         pcl_data viewing;
         while (!viewer->wasStopped ())
         {
 
-
-
             if(!SendPoints.empty())
             {
-
                 int amt = SendPoints.size();
                 for(int j=0;j<amt;j++)
                 {
@@ -69,7 +69,6 @@ int main()
                         pcl_data buff = SendPoints[j];
                         lock_read = false;
 
-
                         for(int i = 0;i<buff.points.size();i++)
                         {
                             viewing.points.push_back(buff.points[i]);
@@ -77,23 +76,21 @@ int main()
                     }
 
                 }
-                std::cout<<"Added "<<amt<<" Points";
 
-
+                std::cout<<"Added "<<amt<<" Points"<<std::endl;
                 std::cout<<"Updating Cloud"<<std::endl;
-                pcl_data viewcloud;
-               // viewer->updatePointCloud(convertDataToPCL(SendPoints.front()),"Point Cloud"); //1 scan at a time shown
+
+                viewer->updateText(boost::lexical_cast<std::string>(viewing.points.size()),525,10,20,1,1,1,"points");
                 viewer->updatePointCloud(convertDataToPCL(viewing),"Point Cloud");
-                SendPoints.pop_front();
+
                 std::cout<<"Cloud updated"<<std::endl;
                 std::cout<<"Points Shown: "<< viewing.points.size()<<std::endl;
+
 
                 if(viewing.points.size()>24500)
                 {
                     viewing.points.clear();
                 }
-
-
 
 
                 if(!lock_clear || !lock_write)
@@ -102,14 +99,10 @@ int main()
                     SendPoints.clear();
                     lock_clear = false;
                 }
-
-
             }
+
             viewer->spinOnce (100);
         }
-
-
-
 
     }
     catch (std::exception& e)
