@@ -19,6 +19,8 @@
 #include <boost/lexical_cast.hpp>
 #include <string>
 
+#include<fstream>
+
 
     // ------------------------------------
     // -----Create default empty point cloud-----
@@ -30,6 +32,22 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr GetEmptyPTRData(){
     return point_cloud_ptr;
  }
 
+void WritePointsToFile(pcl_data data, std::string filename)
+{
+    std::ofstream outputFile;
+    outputFile.open(filename.c_str());
+
+    for(int i = 0;i<data.points.size();i++)
+    {
+        outputFile << data.points[i].r << ","
+                   << data.points[i].theta <<","
+                   << data.points[i].phi << endl;
+    }
+
+    outputFile.close();
+    std::cout << "Wrote "<<data.points.size() <<" points, to file: "<<filename<<std::endl;
+}
+
 int main()
 {
     try
@@ -38,7 +56,7 @@ int main()
         pcl_data x;
             x.id = 0;
         pcl_point y;
-            y.r =0.0;
+            y.r =   0.0;
             y.theta = 0.0;
             y.phi = 0.0;
             x.points.push_back(y);
@@ -90,7 +108,9 @@ int main()
 
                 if(viewing.points.size()>24500)
                 {
+                    WritePointsToFile(viewing,"lastfullimage.csv");
                     viewing.points.clear();
+
                 }
 
 
