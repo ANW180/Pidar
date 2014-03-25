@@ -69,7 +69,7 @@ public:
     {
         mLaserScan = scan;
         //cout << MiddleScanDistanceInches(mLaserScan) << endl;
-        //cout << mLaserScan.at(mLaserScan.size()/2).GetX() << endl;
+        cout << mLaserScan.at(mLaserScan.size()/2).GetX() << endl;
         mTimeStamp = timestamp;
     }
     std::vector<Point3D> mLaserScan;
@@ -91,7 +91,7 @@ public:
 //        timespec dif = diff(t1, t2);
 //        cout << "Sec: "
 //             << dif.tv_sec
-//             << " Nsec: "
+//             << "Nsec: "
 //             << dif.tv_nsec
 //             << endl;
         mTimeStamp = timestamp;
@@ -146,10 +146,10 @@ int main()
                 reset = 0;
             }
             //std::cout << "I RESET" << std::endl;
-            timespec sleep, remaining;
-            sleep.tv_sec = remaining.tv_sec = 0;
-            sleep.tv_nsec = 1000L; //25 microseconds
-            nanosleep(&sleep, &remaining);
+//            timespec sleep, remaining;
+//            sleep.tv_sec = remaining.tv_sec = 0;
+//            sleep.tv_nsec = 1000L; //25 microseconds
+//            nanosleep(&sleep, &remaining);
         }
     }
    return 0;
@@ -169,7 +169,7 @@ int main()
     motor->RegisterCallback(&mcallback);
     if(motor->Initialize())
     {
-        motor->SetSpeedRpm(55, true);
+        motor->SetSpeedRpm(0, true);
         if(laser->Initialize())
         {
             while(1)
@@ -376,8 +376,7 @@ int main()
 
     while(1)
     {
-        boost::this_thread::sleep(
-                    boost::posix_time::millisec(1000));
+        sleep(5);
     }
    return 0;
 }

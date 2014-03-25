@@ -29,9 +29,25 @@ using namespace Render;
               <pcl::PointXYZRGB> rgb(cloud);
         viewer->addPointCloud<pcl::PointXYZRGB>(cloud, rgb, "Point Cloud");
         viewer->setPointCloudRenderingProperties
-              (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 3, "Point Cloud");
+
+              (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 2, "Point Cloud");
+        //Coordinate Frame      
         //viewer->addCoordinateSystem(1.0);
-        viewer->initCameraParameters();
+
+        //Text
+        viewer->addText("Pidar",0,0,100,1,1,1,"Pidar",0);
+        viewer->addText("Points Shown:",350,10,25,1,1,1,"Points Shown:",0);
+        viewer->addText("0",525,10,20,1,1,1,"points",0);
+
+
+        //Camera Angle
+       // 0.865668,3.3245/0.18839,0.14193,2.32075/0.34419,0.184331,-1.47331/-0.676125,-0.735908,-0.0359887/0.8575/832,469/73,80
+        viewer->setCameraClipDistances(0.865668, 3.3245);
+        viewer->setCameraPosition(0.18839,0.14193,2.32075, 0.34419,0.184331,-1.47331, -0.676125,-0.735908,-0.0359887);
+        viewer->setCameraFieldOfView(0.8575);
+        viewer->setSize(832, 469);
+        viewer->setPosition(73, 80);
+
         return (viewer);
     }
 
@@ -87,18 +103,11 @@ using namespace Render;
     {
         pcl::PointCloud<pcl::PointXYZRGB>::Ptr point_cloud_ptr
                 (new pcl::PointCloud<pcl::PointXYZRGB>);
+
         pcl::PointXYZRGB point;
-        bool xyz = false; //false = spherical data, true = cartesian data
         for(unsigned int i = 0; i < Data.points.size(); i++)
         {
-            if(xyz)
-            {
-                point.x = Data.points[i].r; //actually x
-                point.y = Data.points[i].theta; //actually y
-                point.z = Data.points[i].phi;  //actually z
-            }
-            else
-            {
+
                 //TODO: Convert these to cartesian
                 double r = Data.points[i].r;
                 double theta = Data.points[i].theta;
@@ -107,59 +116,12 @@ using namespace Render;
                 point.y = r * sin(theta) * sin(phi);
                 point.z = r * cos(theta);
 
-               // if()
-               // point.rgb = ((int)255) << 16 | ((int)0) << 8 | ((int)0);
-            }
-            //point.rgb = 99999999;
             //calculate distance & colorize
             point.rgb = GetDistanceColor(point.x,point.y,point.z);
             point_cloud_ptr->points.push_back (point);
+
         }
         point_cloud_ptr->width = (int) point_cloud_ptr->points.size ();
-        point_cloud_ptr->height = 1;
-        return point_cloud_ptr;
-    }
-
-
-    pcl::PointCloud<pcl::PointXYZRGB>::Ptr convertDataToPCLPartial(
-                                               pcl_data Data,
-                                               unsigned int start,
-                                               unsigned int stop)
-    {
-        pcl::PointCloud<pcl::PointXYZRGB>::Ptr point_cloud_ptr
-                (new pcl::PointCloud<pcl::PointXYZRGB>);
-        pcl::PointXYZRGB point;
-        bool xyz = true; //false = spherical data, true = cartesian data
-        if (Data.points.size() < start)
-        {
-            start = Data.points.size();
-        }
-        if (Data.points.size() < stop)
-        {
-            stop = Data.points.size();
-        }
-        for(unsigned int i = start; i < stop; i++)
-        {
-            if(xyz)
-            {
-                point.x = Data.points[i].r; //actually x
-                point.y = Data.points[i].theta; //actually y
-                point.z = Data.points[i].phi;  //actually z
-            }
-            else
-            {
-                //TODO: Convert these to cartesian
-                double r = Data.points[i].r;
-                double theta = Data.points[i].theta;
-                double phi = Data.points[i].phi;
-                point.x = r * sin(theta) * cos(phi);
-                point.y = r * sin(theta) * sin(phi);
-                point.z = r * cos(theta);
-            }
-            point.rgb = 99999999;
-            point_cloud_ptr->points.push_back (point);
-        }
-        point_cloud_ptr->width = (int)point_cloud_ptr->points.size();
         point_cloud_ptr->height = 1;
         return point_cloud_ptr;
     }

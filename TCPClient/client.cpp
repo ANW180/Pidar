@@ -58,8 +58,7 @@ public:
   {
     if (!error)
     {
-      //std::cout.write(data_, bytes_recvd);
-     // std::cout << std::endl;
+
       //Generate PCL_POINT vector from buffer
 
       int points_rcvd;
@@ -93,12 +92,6 @@ public:
           lock_write = false;
       }
 
-//    std::cout<<"Clouds_ size: "<<dat.points.size()<<std::endl;
-//    std::cout<<"X: "<<dat.points[0].r<<std::endl;
-//    std::cout<<"Theta: "<<dat.points[0].theta<<std::endl;
-//    std::cout<<"Phi: "<<dat.points[0].phi<<std::endl;
-  //  clouds_.clear();
-   //   std::cout << std::endl;
 
       socket_.async_receive_from(
           boost::asio::buffer(data_, max_length), sender_endpoint_,
