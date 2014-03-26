@@ -1,6 +1,5 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
-
 #include <pcl/visualization/pcl_visualizer.h>
 #include <pcl/common/common_headers.h>
 //#include <pcl/visualization/window.h>
@@ -9,8 +8,14 @@
 #include <vtkSmartPointer.h>
 #include <QMainWindow>
 #include <boost/thread.hpp>
+#include "receiver.h"
+
 
 class Ui_MainWindow;
+
+namespace Ui {
+class MainWindow;
+}
 
 class MainWindow : public QMainWindow
 {
@@ -21,6 +26,7 @@ public:
     ~MainWindow() {};
     virtual void StartThread();
     virtual void ShowPointCloud();
+    pcl::PointCloud<pcl::PointXYZ>::Ptr convertPointsToPTR(std::vector<pcl_point> points);
 
 public slots:
 

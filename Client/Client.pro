@@ -40,9 +40,12 @@ INCLUDEPATH += /usr/include/boost \
                /usr/include/flann \
 
 
-SOURCES += main.cpp\
-        mainwindow.cpp
 
-HEADERS  += mainwindow.h
+SOURCES += main.cpp\
+        mainwindow.cpp \
+        receiver.cpp
+
+HEADERS  += mainwindow.h \
+    receiver.h
 
 FORMS    += mainwindow.ui

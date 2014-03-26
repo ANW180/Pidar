@@ -31,7 +31,7 @@
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_2">
        <item>
-        <widget class="QVTKWidget" name="vtkWidget" native="true"/>
+        <widget class="QVTKWidget" name="vtkWidget"/>
        </item>
       </layout>
      </widget>
@@ -52,9 +52,9 @@
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="pushButton">
+       <widget class="QPushButton" name="btnClear">
         <property name="text">
-         <string>PushButton</string>
+         <string>Clear</string>
         </property>
        </widget>
       </item>
@@ -68,7 +68,7 @@
      <x>0</x>
      <y>0</y>
      <width>600</width>
-     <height>20</height>
+     <height>23</height>
     </rect>
    </property>
   </widget>
@@ -78,7 +78,7 @@
   <customwidget>
    <class>QVTKWidget</class>
    <extends>QWidget</extends>
-   <header>qvtkwidget.h</header>
+   <header>QVTKWidget.h</header>
   </customwidget>
  </customwidgets>
  <resources/>
