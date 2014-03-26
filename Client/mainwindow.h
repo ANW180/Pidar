@@ -9,7 +9,13 @@
 #include <QMainWindow>
 #include <boost/thread.hpp>
 #include "receiver.h"
+#include <cstdlib>
+#include <cstring>
+#include <iostream>
+#include <boost/asio.hpp>
 
+using boost::asio::ip::udp;
+enum { max_length = 1024 };
 
 class Ui_MainWindow;
 
@@ -23,7 +29,7 @@ class MainWindow : public QMainWindow
 
 public:
     MainWindow();
-    ~MainWindow() {};
+    ~MainWindow();
     virtual void StartThread();
     virtual void ShowPointCloud();
     pcl::PointCloud<pcl::PointXYZ>::Ptr convertPointsToPTR(std::vector<pcl_point> points);
@@ -31,11 +37,17 @@ public:
 public slots:
 
 
+private slots:
+    void on_btnClear_clicked();
+
+    void on_btnSetSpeed_clicked();
+
 private:
     vtkSmartPointer<vtkRenderer> mRenderer;
     vtkSmartPointer<vtkRenderWindow> mRenderWindow;
     pcl::PointCloud<pcl::PointXYZ>::Ptr mPointCloud;
     Ui_MainWindow *mUi;
+    Ui::MainWindow *ui;
     boost::thread mUpdateThread;
     boost::mutex mMutex;
     bool mThreadQuitFlag;

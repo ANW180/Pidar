@@ -11,6 +11,7 @@ int main(int argc, char *argv[])
     MainWindow window;
     boost::asio::io_service io_service;
 
+    //TODO: make this killable
     receiver r(io_service,
                boost::asio::ip::address::from_string("0.0.0.0"),
                boost::asio::ip::address::from_string("239.255.0.1"));
