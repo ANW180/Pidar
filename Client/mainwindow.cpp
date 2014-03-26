@@ -1,8 +1,8 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
-pcl::visualization::PCLVisualizer visualizer;
-
+pcl::visualization::PCLVisualizer visualizer("Dont Show", false);
+unsigned int i = 0;
 MainWindow::MainWindow()
 {
     mUi = new Ui_MainWindow;
@@ -16,8 +16,9 @@ MainWindow::MainWindow()
     }
     visualizer.setShowFPS(false);
     visualizer.addPointCloud<pcl::PointXYZ>(mPointCloud);
-    mRenderer = visualizer.getRendererCollection()->GetFirstRenderer();
-    mUi->vtkWidget->GetRenderWindow()->AddRenderer(mRenderer);
+    //mRenderer = visualizer.getRendererCollection()->GetFirstRenderer();
+//    mUi->vtkWidget->GetRenderWindow()->AddRenderer(mRenderer);
+    mUi->vtkWidget->SetRenderWindow(visualizer.getRenderWindow());
 }
 
 void MainWindow::StartThread()
@@ -42,9 +43,13 @@ void MainWindow::ShowPointCloud()
                                                  100.0 * float(rand()) / float(RAND_MAX),
                                                  100.0 * float(rand()) / float(RAND_MAX)));
         }
-        visualizer.updatePointCloud<pcl::PointXYZ>(mPointCloud);
+        i++;
+        std::string str = boost::lexical_cast<std::string> (i);
+        visualizer.addPointCloud<pcl::PointXYZ>(mPointCloud, str);
+
         mMutex.unlock();
-        visualizer.updateCamera();
+        mUi->vtkWidget->update();
+        //visualizer.updateCamera();
         boost::this_thread::sleep(boost::posix_time::millisec(50));
     }
 }
