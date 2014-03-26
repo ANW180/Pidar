@@ -366,7 +366,8 @@ int main()
 {
     maincontrol = new Pidar::Control();
     maincontrol->Initialize();
-    maincontrol->StartMotor(10);
+    globMotorSpeed = 10;
+    maincontrol->StartMotor(globMotorSpeed);
     sleep(1);
 
     //Start Web Server Thread
@@ -374,9 +375,25 @@ int main()
     PointCloud::server s(io_service, boost::asio::ip::address::from_string("239.255.0.1"));
     boost::thread bt(boost::bind(&boost::asio::io_service::run, &io_service));
 
+    //Start Seperate Command Web Server
+    boost::asio::io_service io_service_cmds;
+    commandserver cmdsrv(io_service_cmds,10001);
+    boost::thread bt2(boost::bind(&boost::asio::io_service::run, &io_service_cmds));
+
     while(1)
     {
+        //Check for updates from client
+        if(globFoundUpdate){
+            maincontrol->StartMotor(globMotorSpeed);
+            globFoundUpdate = false;
+
+            //If stopping motor, stop whole program
+            if(globMotorSpeed == 0)
+                return 0;
+        }
+        std::cout<<"Current Speed: "<<globMotorSpeed<<std::endl;
         sleep(5);
+
     }
    return 0;
 }

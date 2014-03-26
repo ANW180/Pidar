@@ -13,6 +13,8 @@ double current_position;
 double previous_position;
 std::vector<Point3D> laserscan;
 std::deque<pcl_data> SendPoints;
+int globMotorSpeed = 0;
+bool globFoundUpdate = false;
 
 using namespace Pidar;
 using namespace PointCloud;
@@ -33,8 +35,10 @@ timespec diff(timespec start, timespec end)
 }
 timespec t1, t2;
 int i = 0;
+
 void InterruptService(void)
 {
+
     //clock_gettime(CLOCK_THREAD_CPUTIME_ID, &t1);
     //Get Current and Previous Positions
     current_position = maincontrol->GetMotorPositionDegrees();
@@ -126,7 +130,7 @@ bool Control::Initialize()
     bool enableLaser = true;
     bool enableMotor = true;
     bool enableCOM = false; //Now in main, true here will take over main thread
-    bool enableISR = true;
+    bool enableISR = false;
 
 //    ///******* TESTING ONLY **********************************
     //This is for testing only (remove when not testing)

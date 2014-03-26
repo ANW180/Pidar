@@ -62,4 +62,9 @@ extern std::deque<pcl_data> SendPoints;
 extern bool lock_write;
 extern bool lock_clear;
 extern bool lock_read;
+extern int globMotorSpeed;
+extern bool globFoundUpdate;
+
+
+
 #endif

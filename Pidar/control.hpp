@@ -9,6 +9,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 #ifndef CONTROL_HPP
 #define CONTROL_HPP
+#include "commands.cpp"
 #include "server.cpp"
 #include "hokuyo.hpp"
 #include "dynamixel.hpp"

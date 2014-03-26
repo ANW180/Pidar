@@ -81,6 +81,7 @@ const int max_message_count = 1000;
       std::vector<pcl_data> clouds_;
     };
 
+
 }
 
 #endif
