@@ -15,7 +15,7 @@ std::vector<Point3D> laserscan;
 std::deque<pcl_data> SendPoints;
 int globMotorSpeed = 0;
 bool globFoundUpdate = false;
-
+bool ISRrunning = true;
 using namespace Pidar;
 using namespace PointCloud;
 timespec diff(timespec start, timespec end)
@@ -38,29 +38,36 @@ int i = 0;
 
 void InterruptService(void)
 {
-
+    ISRrunning = true;
     //clock_gettime(CLOCK_THREAD_CPUTIME_ID, &t1);
     //Get Current and Previous Positions
-    current_position = maincontrol->GetMotorPositionDegrees();
-    previous_position = maincontrol->GetMotorPreviousPositionDegrees();
-    if(fabs(current_position - previous_position) < 0.0001)
-    {
-        std::cout << "Bad Servo Read ISR #: " << i << std::endl;
-        i++;
-        return;
+    //isMotorConnected also acts as a keepalive signal
+    if(maincontrol->isMotorConnected()){
+        current_position = maincontrol->GetMotorPositionDegrees();
+        previous_position = maincontrol->GetMotorPreviousPositionDegrees();
+        if(fabs(current_position - previous_position) < 0.0001)
+        {
+            //std::cout << "Bad Servo Read ISR #: " << i << std::endl;
+            i++;
+            return;
+        }
+        //Update Previous Motor Position
+        maincontrol->SetMotorPreviousPositionDegrees(current_position);
+
+        //Get Values to send for construction
+        laserscan = maincontrol->GetLaserScan();
+
+        //Send values and get newly constructed incompletescan
+        //this will update values as needed
+        maincontrol->AddToScanQueue(laserscan,
+                                          current_position,previous_position);
+        //clock_gettime(CLOCK_THREAD_CPUTIME_ID, &t2);
+        //std::cout << diff(t1, t2).tv_sec << " " << diff(t1, t2).tv_nsec << std::endl;
     }
-    //Update Previous Motor Position
-    maincontrol->SetMotorPreviousPositionDegrees(current_position);
-
-    //Get Values to send for construction
-    laserscan = maincontrol->GetLaserScan();
-
-    //Send values and get newly constructed incompletescan
-    //this will update values as needed
-    maincontrol->AddToScanQueue(laserscan,
-                                      current_position,previous_position);
-    //clock_gettime(CLOCK_THREAD_CPUTIME_ID, &t2);
-    //std::cout << diff(t1, t2).tv_sec << " " << diff(t1, t2).tv_nsec << std::endl;
+    else
+    {
+        std::cout<<"Motor is disconnected"<<std::endl;
+    }
 }
 
 
@@ -130,7 +137,7 @@ bool Control::Initialize()
     bool enableLaser = true;
     bool enableMotor = true;
     bool enableCOM = false; //Now in main, true here will take over main thread
-    bool enableISR = false;
+    bool enableISR = true;
 
 //    ///******* TESTING ONLY **********************************
     //This is for testing only (remove when not testing)
@@ -223,6 +230,11 @@ bool Control::Initialize()
     void Control::SetMotorPreviousPositionDegrees(double val)
     {
         motor->SetPreviousPositionDegrees(val);
+    }
+
+    bool Control::isMotorConnected()
+    {
+        return motor->IsConnected();
     }
 
     void Control::StartMotor(int rpm)

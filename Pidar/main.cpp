@@ -395,9 +395,18 @@ int main()
     commandserver cmdsrv(io_service_cmds,10001);
     boost::thread bt2(boost::bind(&boost::asio::io_service::run, &io_service_cmds));
 
+
     while(1)
     {
-
+    if(ISRrunning)
+    {
+        std::cout<<"ISR is running"<<std::endl;
+        ISRrunning = false;
+    }
+    else
+    {
+        std::cout<<"ISR NOT running"<<std::endl;
+    }
 //        //Generate Random Points
 //        for(int i = 0;i<20;i++)
 //        {

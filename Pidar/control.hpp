@@ -75,6 +75,7 @@ namespace Pidar
         double GetMotorPositionDegrees();
         double GetMotorPreviousPositionDegrees();
         void SetMotorPreviousPositionDegrees(double val);
+        bool isMotorConnected();
         void StartMotor(int rpm);
         void StopMotor();
 

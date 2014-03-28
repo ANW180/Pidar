@@ -14,6 +14,7 @@ namespace PointCloud
 {
 const short multicast_port = 30001;
 const int max_message_count = 1000;
+const int transmission_delay = 5; //milliseconds
 
     class server
     {
@@ -45,7 +46,7 @@ const int max_message_count = 1000;
         if (!error)
         {
           //wait one millisecond
-          timer_.expires_from_now(boost::posix_time::milliseconds(1));
+          timer_.expires_from_now(boost::posix_time::milliseconds(transmission_delay));
           timer_.async_wait(
               boost::bind(&server::handle_timeout, this,
                 boost::asio::placeholders::error));

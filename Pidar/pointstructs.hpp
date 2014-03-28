@@ -64,6 +64,7 @@ extern bool lock_clear;
 extern bool lock_read;
 extern int globMotorSpeed;
 extern bool globFoundUpdate;
+extern bool ISRrunning;
 
 
 
