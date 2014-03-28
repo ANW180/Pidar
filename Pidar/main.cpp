@@ -362,6 +362,21 @@ int main()
 
 #define TESTIMAGEGENERATION
 #ifdef TESTIMAGEGENERATION
+pcl_data getRandomData()
+{
+    pcl_data d;
+    for(int i = 0;i<1081;i++)
+    {
+        pcl_point x;
+        x.r = (float(rand()%1000))/1000;
+        x.theta = (float(rand()%50))/10;
+        x.phi = (float(rand()%360));
+        d.points.push_back(x);
+
+    }
+    return d;
+}
+
 int main()
 {
     maincontrol = new Pidar::Control();
@@ -382,6 +397,14 @@ int main()
 
     while(1)
     {
+
+//        //Generate Random Points
+//        for(int i = 0;i<20;i++)
+//        {
+//        SendPoints.push_back(getRandomData());
+//        }
+
+
         //Check for updates from client
         if(globFoundUpdate){
             maincontrol->StartMotor(globMotorSpeed);
@@ -392,7 +415,7 @@ int main()
                 return 0;
         }
         std::cout<<"Current Speed: "<<globMotorSpeed<<std::endl;
-        sleep(5);
+        sleep(1);
 
     }
    return 0;
