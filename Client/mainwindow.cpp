@@ -3,9 +3,10 @@
 
 
 pcl::visualization::PCLVisualizer visualizer("Dont Show", false);
-
-unsigned int i = 0;
+std::string address = "192.168.1.71";
+std::string port = "10001";
 unsigned int pointcount = 0;
+
 MainWindow::MainWindow()
 {
     mUi = new Ui_MainWindow;
@@ -48,44 +49,44 @@ void MainWindow::ShowPointCloud()
         mMutex.lock();
         mPointCloud->clear();
 
-//        for(int i = 0; i < 50; i++)
-//        {
-//            mPointCloud->push_back(pcl::PointXYZ(100.0 * float(rand()) / float(RAND_MAX),
-//                                                 100.0 * float(rand()) / float(RAND_MAX),
-//                                                 100.0 * float(rand()) / float(RAND_MAX)));
-//        }
 
         pcl_data temp;
         if(!PointQueue.empty()){
+
+            globMutex.lock();
             int amt = PointQueue.size();
+            globMutex.unlock();
+
             for(int j=0;j<amt;j++)
             {
-                if(!lock_clear || !lock_write)
-                {
-                    lock_read = true;
+                globMutex.lock();
                     pcl_data buff = PointQueue[j];
-                    lock_read = false;
+                globMutex.unlock();
 
                     for(int i = 0;i<buff.points.size();i++)
                     {
                         temp.points.push_back(buff.points[i]);
                     }
-                }
+
             }
 
-           mPointCloud = convertPointsToPTR(temp.points);
-           pointcount += temp.points.size();
-           if(!lock_clear || !lock_write || !lock_read)
-           {
-                PointQueue.clear();
-           }
+            for(int j =0;j<temp.points.size();j++)
+            {
+                displayData.points.push_back(temp.points[j]);
+            }
 
-           i++;
+           mPointCloud = convertPointsToPTR(displayData.points);
+           pointcount = displayData.points.size();
+
+           globMutex.lock();
+                PointQueue.clear();
+           globMutex.unlock();
+
+
+        visualizer.updatePointCloud(mPointCloud);
 
         }
 
-        std::string str = boost::lexical_cast<std::string> (i);
-        visualizer.addPointCloud<pcl::PointXYZ>(mPointCloud,str);
         mPointCloud->clear();
         QString label = QString::number(pointcount);
         mUi->labelPointCount->setText(label);
@@ -127,16 +128,16 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr MainWindow::convertPointsToPTR(std::vector<p
 void MainWindow::on_btnClear_clicked()
 {
     mMutex.lock();
-    pointcount = 0;
-    visualizer.removeAllPointClouds();
+    displayData.points.clear();
+    mPointCloud->clear();
+    visualizer.updatePointCloud(mPointCloud);
     mMutex.unlock();
     mUi->vtkWidget->update();
 }
 
 void MainWindow::on_btnSetSpeed_clicked()
 {
-    std::string address = "localhost";
-    std::string port = "10001";
+
     boost::asio::io_service io_service;
     udp::socket s(io_service, udp::endpoint(udp::v4(), 0));
     udp::resolver resolver(io_service);

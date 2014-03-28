@@ -14,6 +14,7 @@
 #include <vector>
 #include <string>
 #include <deque>
+#include <boost/thread.hpp>
 
 typedef struct pcl_point
 {
@@ -64,7 +65,7 @@ extern std::deque<pcl_data> PointQueue;
 extern bool lock_write;
 extern bool lock_clear;
 extern bool lock_read;
-
+extern boost::mutex globMutex;
 
 
 #endif // RECEIVER_H

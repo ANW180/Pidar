@@ -20,6 +20,7 @@ std::deque<pcl_data> PointQueue;
 bool lock_write;
 bool lock_clear;
 bool lock_read;
+boost::mutex globMutex;
 const short multicast_port = 30001;
 
 class receiver
@@ -84,11 +85,9 @@ public:
           dat.points.push_back(tmp);
       }
 
-      if(!lock_clear || !lock_read)
-      {
-          lock_write = true;
+      globMutex.lock();
           PointQueue.push_back(dat);
-          lock_write = false;
+      globMutex.unlock();
       }
 
 
@@ -97,7 +96,7 @@ public:
           boost::bind(&receiver::handle_receive_from, this,
             boost::asio::placeholders::error,
             boost::asio::placeholders::bytes_transferred));
-    }
+
   }
 
 private:
