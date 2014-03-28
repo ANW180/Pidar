@@ -12,18 +12,8 @@ MainWindow::MainWindow()
     mUi = new Ui_MainWindow;
     mUi->setupUi(this);
     mPointCloud = (pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>));
-
-//    for(int i = 0; i < 50; i++)
-//    {
-//        mPointCloud->push_back(pcl::PointXYZ(100.0 * float(rand()) / float(RAND_MAX),
-//                                             100.0 * float(rand()) / float(RAND_MAX),
-//                                             100.0 * float(rand()) / float(RAND_MAX)));
-//    }
-
     visualizer.setShowFPS(false);
     visualizer.addPointCloud<pcl::PointXYZ>(mPointCloud);
-    //mRenderer = visualizer.getRendererCollection()->GetFirstRenderer();
-//    mUi->vtkWidget->GetRenderWindow()->AddRenderer(mRenderer);
     mUi->vtkWidget->SetRenderWindow(visualizer.getRenderWindow());
 }
 
@@ -68,6 +58,26 @@ void MainWindow::ShowPointCloud()
                         temp.points.push_back(buff.points[i]);
                     }
 
+            }
+
+            //TODO: Seperate into function
+            //Scan Methods
+            if(mUi->radioClearing->isChecked())
+            {
+                if(displayData.points.size()>50000)
+                {
+                    displayData.points.clear();
+                }
+            }
+
+            if(mUi->radioContinuous->isChecked())
+            {
+                //do nothing
+            }
+
+            if(mUi->radioSingle->isChecked())
+            {
+                displayData.points.clear();
             }
 
             for(int j =0;j<temp.points.size();j++)

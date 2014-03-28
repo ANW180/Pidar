@@ -80,6 +80,67 @@
       </item>
      </layout>
     </item>
+    <item>
+     <widget class="QGroupBox" name="groupBox">
+      <property name="minimumSize">
+       <size>
+        <width>350</width>
+        <height>50</height>
+       </size>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>350</width>
+        <height>50</height>
+       </size>
+      </property>
+      <property name="title">
+       <string>Scan Method</string>
+      </property>
+      <widget class="QRadioButton" name="radioClearing">
+       <property name="geometry">
+        <rect>
+         <x>20</x>
+         <y>20</y>
+         <width>98</width>
+         <height>21</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Clearing</string>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
+       </property>
+      </widget>
+      <widget class="QRadioButton" name="radioContinuous">
+       <property name="geometry">
+        <rect>
+         <x>110</x>
+         <y>20</y>
+         <width>98</width>
+         <height>21</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Continuous</string>
+       </property>
+      </widget>
+      <widget class="QRadioButton" name="radioSingle">
+       <property name="geometry">
+        <rect>
+         <x>240</x>
+         <y>20</y>
+         <width>98</width>
+         <height>21</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Single</string>
+       </property>
+      </widget>
+     </widget>
+    </item>
    </layout>
   </widget>
   <widget class="QMenuBar" name="menuBar">
