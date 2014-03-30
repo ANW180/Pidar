@@ -202,39 +202,51 @@ void Dynamixel::ProcessingThread()
     {
         if(IsConnected())
         {
-            int CommStatus;
+            int CommStatus = 0;
             // Write target speed (if there is a new speed)
-            mMutex.lock();
-            if(mCommandSpeedFlag)
             {
-                dxl_write_word(mID, P_MOVING_SPEED_L, mCommandSpeedRpm);
-                CommStatus = dxl_get_result();
-                if(CommStatus != COMM_RXSUCCESS)
+                boost::mutex::scoped_lock lock (mMutex);
+                if(mCommandSpeedFlag)
                 {
-                    //PrintCommStatus(CommStatus);
+                    dxl_write_word(mID, P_MOVING_SPEED_L, mCommandSpeedRpm);
+                    CommStatus = dxl_get_result();
+                    if(CommStatus == COMM_RXSUCCESS)
+                    {
+                        PrintCommStatus(CommStatus);
+                    }
+                    else
+                    {
+                        mCommandSpeedFlag = false;
+                    }
                 }
             }
-            mMutex.unlock();
             // Read present position
             bool read = false;
-            int recv = dxl_read_word(mID, P_PRESENT_POSITION_L );
-            CommStatus = dxl_get_result();
-            if( CommStatus == COMM_RXSUCCESS )
+            try
             {
-                mMutex.lock();
-                mPresentPositionDegrees = recv * MX28_DEG_PER_UNIT;
-                mMutex.unlock();
-                read = true;
+                int recv = dxl_read_word(mID, P_PRESENT_POSITION_L );
+                CommStatus = dxl_get_result();
+                if(CommStatus == COMM_RXSUCCESS)
+                {
+                    boost::mutex::scoped_lock lock (mMutex);
+                    mPresentPositionDegrees = recv * MX28_DEG_PER_UNIT;
+                    read = true;
+                }
+                else
+                {
+    //                PrintCommStatus(CommStatus);
+                }
             }
-            else
+            catch(std::exception e)
             {
-                //PrintCommStatus(CommStatus);
+                std::cout << e.what() << std::endl;
             }
+
             // Trigger callbacks (if there is a read)
             if(read)
             {
+                boost::mutex::scoped_lock lock (mMutex);
                 Callback::Set::iterator callback;
-                mMutex.lock();
                 for(callback = mCallbacks.begin();
                     callback != mCallbacks.end();
                     callback++)
@@ -243,7 +255,6 @@ void Dynamixel::ProcessingThread()
                     (*callback)->ProcessServoData(mPresentPositionDegrees,
                                                   t2);
                 }
-                mMutex.unlock();
             }
             else
             {
@@ -252,9 +263,9 @@ void Dynamixel::ProcessingThread()
         }
 //        timespec sleep, remaining;
 //        sleep.tv_sec = remaining.tv_sec = 0;
-//        sleep.tv_nsec = 25000L; //25 microseconds
+//        sleep.tv_nsec = 100000L; //100 microseconds
 //        nanosleep(&sleep, &remaining);
-        boost::this_thread::sleep(boost::posix_time::millisec(20));
+        boost::this_thread::sleep(boost::posix_time::millisec(10));
     }
 }
 

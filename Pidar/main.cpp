@@ -382,6 +382,7 @@ int main()
     maincontrol = new Pidar::Control();
     maincontrol->Initialize();
     globMotorSpeed = 10;
+    int restartCnt = 0;
     maincontrol->StartMotor(globMotorSpeed);
     sleep(1);
 
@@ -398,24 +399,27 @@ int main()
 
     while(1)
     {
-    if(ISRrunning)
-    {
-        std::cout<<"ISR is running"<<std::endl;
-        ISRrunning = false;
-    }
-    else
-    {
-        std::cout<<"ISR NOT running"<<std::endl;
-    }
-//        //Generate Random Points
-//        for(int i = 0;i<20;i++)
-//        {
-//        SendPoints.push_back(getRandomData());
-//        }
-
-
+        if(ISRrunning)
+        {
+            //std::cout<<"ISR restarted "<< restartCnt << " times" << std::endl;
+            if(restartCnt > 0)
+            {
+                std::cout << "ISR restarted " << restartCnt << " times" << std::endl;
+            }
+            ISRrunning = false;
+        }
+        else
+        {
+            std::cout << "ISR NOT running, restarting " << restartCnt
+                      << " restart attempts made." << std::endl;
+            maincontrol->StartISR();
+            boost::this_thread::sleep(
+                        boost::posix_time::millisec(1000));
+            restartCnt++;
+        }
         //Check for updates from client
-        if(globFoundUpdate){
+        if(globFoundUpdate)
+        {
             maincontrol->StartMotor(globMotorSpeed);
             globFoundUpdate = false;
 
@@ -423,9 +427,20 @@ int main()
             if(globMotorSpeed == 0)
                 return 0;
         }
-        std::cout<<"Current Speed: "<<globMotorSpeed<<std::endl;
+        // Fix for laser disconnecting on slipring?
+        // Shutdown thread and serial connection, sleep, then
+        // restart both to resume data output.
+        if(maincontrol->GetLaserPtr()->GetErrorCount() > 5)
+        {
+            std::cout << "Restarting Laser Connection" << std::endl;
+            maincontrol->GetLaserPtr()->Shutdown();
+            sleep(2);
+            maincontrol->GetLaserPtr()->Initialize();
+            sleep(2);
+        }
+        //std::cout<<"Current Speed: "<<globMotorSpeed<<std::endl;
+        //std::cout << "Buffer Size: " << SendPoints.size() << std::endl;
         sleep(1);
-
     }
    return 0;
 }

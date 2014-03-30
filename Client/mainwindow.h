@@ -52,6 +52,6 @@ private:
     boost::mutex mMutex;
     bool mThreadQuitFlag;
     unsigned int mLoopCount;
-    pcl_data displayData;
+    pcl_data mDisplayData;
 };
 #endif // MAINWINDOW_H

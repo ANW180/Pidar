@@ -42,7 +42,8 @@ void InterruptService(void)
     //clock_gettime(CLOCK_THREAD_CPUTIME_ID, &t1);
     //Get Current and Previous Positions
     //isMotorConnected also acts as a keepalive signal
-    if(maincontrol->isMotorConnected()){
+    if(maincontrol->isMotorConnected())
+    {
         current_position = maincontrol->GetMotorPositionDegrees();
         previous_position = maincontrol->GetMotorPreviousPositionDegrees();
         if(fabs(current_position - previous_position) < 0.0001)
@@ -132,39 +133,10 @@ Control::~Control()
 
 bool Control::Initialize()
 {
-
     //Test Switches
     bool enableLaser = true;
     bool enableMotor = true;
-    bool enableCOM = false; //Now in main, true here will take over main thread
     bool enableISR = true;
-
-//    ///******* TESTING ONLY **********************************
-    //This is for testing only (remove when not testing)
-//    if(!enableISR)
-//    {
-//        pcl_data tmpscan = GetSampleTXTFileData();
-//        tmpscan.id = 1; //initialization
-//        tmpscan.speed = 88;
-//        for(int i = 0; i<tmpscan.points.size()-1080;i+=1080)
-//        {
-//            pcl_data x;
-//            for(int j = 0;j<1080;j++)
-//            {
-//             pcl_point y = tmpscan.points[i+j];
-//             x.points.push_back(y);
-//            }
-//            SendPoints.push_back(x);
-//        }
-//        std::cout<<"Queue Length: "<<SendPoints.size()<<std::endl;
-//        std::cout<<"control.cpp: ID: "<<tmpscan.id<<std::endl;
-//        std::cout<<"control.cpp: r: "<<tmpscan.points[0].r<<std::endl;
-//        std::cout<<"control.cpp: theta: "<<tmpscan.points[0].theta<<std::endl;
-//        std::cout<<"control.cpp: phi: "<<tmpscan.points[0].phi<<std::endl;
-//    }
-
-//    ///******** END TESTING LINES ****************************
-
 
     if(enableLaser)
     {
@@ -177,7 +149,7 @@ bool Control::Initialize()
         motor->RegisterCallback(&mpMotorcallback);
         motor->Initialize();
     }
-
+    sleep(1);
     if(enableISR)
     {
         if (wiringPiSetupSys () < 0)
@@ -187,27 +159,10 @@ bool Control::Initialize()
         }
         // set Pin 17/0 generate an interrupt on low-to-high transitions
         // and attach myInterrupt() to the interrupt
-        if ( wiringPiISR (HOKUYOSYNCPIN, INT_EDGE_FALLING, InterruptService) < 0 )
+        if ( wiringPiISR (HOKUYOSYNCPIN, INT_EDGE_RISING, InterruptService) < 0 )
         {
             fprintf (stderr, "Unable to setup ISR: %s\n", strerror (errno));
             //   return 1;
-        }
-
-    }
-
-    if(enableCOM)
-    {
-        try
-        {
-            //Start Web Server Thread
-            boost::asio::io_service io_service;
-            PointCloud::server s(io_service, boost::asio::ip::address::from_string("239.255.0.1"));
-            boost::thread bt(boost::bind(&boost::asio::io_service::run, &io_service));
-
-        }
-        catch (std::exception& e)
-        {
-            std::cerr << e.what() << std::endl;
         }
     }
     return true;
@@ -273,11 +228,12 @@ bool Control::Initialize()
         double delta_position = 0.0;
         if (previousMotorPosition < currentMotorPosition)
         {
-            delta_position = ((360-previousMotorPosition)-currentMotorPosition);
+            delta_position = ((360 - previousMotorPosition) -
+                             currentMotorPosition);
         }
         else
         {
-            delta_position = fabs(currentMotorPosition-previousMotorPosition);
+            delta_position = fabs(currentMotorPosition - previousMotorPosition);
         }
 
         pcl_data tmp;
@@ -288,12 +244,33 @@ bool Control::Initialize()
                 pcl_point point;
                 point.r = (laserscan[i]).GetX();
                 point.theta = (laserscan[i]).GetY();
-                point.phi = previousMotorPosition + (i*(delta_position/scancnt));
+                point.phi = 360 - (previousMotorPosition +
+                                  (i * (delta_position / scancnt)));
                 tmp.points.push_back(point);
             }
             //Add scan to queue
             SendPoints.push_back(tmp);
         }
+}
+
+bool Control::StartISR()
+{
+    bool result = true;
+    if (wiringPiSetupSys () < 0)
+    {
+        fprintf (stderr, "Unable to setup wiringPi: %s\n", strerror (errno));
+        result = false;
+        //   return 1;
+    }
+    // set Pin 17/0 generate an interrupt on low-to-high transitions
+    // and attach myInterrupt() to the interrupt
+    if ( wiringPiISR (HOKUYOSYNCPIN, INT_EDGE_RISING, InterruptService) < 0 )
+    {
+        fprintf (stderr, "Unable to setup ISR: %s\n", strerror (errno));
+        result = false;
+        //   return 1;
+    }
+    return result;
 }
 
 

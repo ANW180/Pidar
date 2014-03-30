@@ -11,13 +11,15 @@ MainWindow::MainWindow()
 {
     mUi = new Ui_MainWindow;
     mUi->setupUi(this);
-    mPointCloud = (pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>));
+    mPointCloud = (pcl::PointCloud<pcl::PointXYZ>::Ptr
+                   (new pcl::PointCloud<pcl::PointXYZ>));
     visualizer.setShowFPS(false);
     visualizer.addPointCloud<pcl::PointXYZ>(mPointCloud);
     mUi->vtkWidget->SetRenderWindow(visualizer.getRenderWindow());
 }
 
-MainWindow::~MainWindow(){
+MainWindow::~MainWindow()
+{
     mUpdateThread.join();
     mUpdateThread.detach();
 }
@@ -38,65 +40,58 @@ void MainWindow::ShowPointCloud()
     {
         mMutex.lock();
         mPointCloud->clear();
-
-
         pcl_data temp;
-        if(!PointQueue.empty()){
-
+        if(!PointQueue.empty())
+        {
             globMutex.lock();
             int amt = PointQueue.size();
             globMutex.unlock();
-
             for(int j=0;j<amt;j++)
             {
                 globMutex.lock();
-                    pcl_data buff = PointQueue[j];
+                pcl_data buff = PointQueue[j];
                 globMutex.unlock();
-
-                    for(int i = 0;i<buff.points.size();i++)
-                    {
-                        temp.points.push_back(buff.points[i]);
-                    }
-
+                for(int i = 0; i<buff.points.size(); i++)
+                {
+                    temp.points.push_back(buff.points[i]);
+                }
             }
-
             //TODO: Seperate into function
             //Scan Methods
             if(mUi->radioClearing->isChecked())
             {
-                if(displayData.points.size()>50000)
+                int maxVal = 300000;
+                if(mDisplayData.points.size() > maxVal)
                 {
-                    displayData.points.clear();
+                    pcl_data temp = mDisplayData;
+                    mDisplayData.points.clear();
+                    for(int i = temp.points.size() - maxVal;
+                        i < temp.points.size();
+                        i++)
+                    {
+                        mDisplayData.points.push_back(temp.points[i]);
+                    }
                 }
             }
-
             if(mUi->radioContinuous->isChecked())
             {
                 //do nothing
             }
-
             if(mUi->radioSingle->isChecked())
             {
-                displayData.points.clear();
+                mDisplayData.points.clear();
             }
-
             for(int j =0;j<temp.points.size();j++)
             {
-                displayData.points.push_back(temp.points[j]);
+                mDisplayData.points.push_back(temp.points[j]);
             }
-
-           mPointCloud = convertPointsToPTR(displayData.points);
-           pointcount = displayData.points.size();
-
-           globMutex.lock();
-                PointQueue.clear();
-           globMutex.unlock();
-
-
-        visualizer.updatePointCloud(mPointCloud);
-
+            globMutex.lock();
+            mPointCloud = convertPointsToPTR(mDisplayData.points);
+            pointcount = mDisplayData.points.size();
+            PointQueue.clear();
+            visualizer.updatePointCloud(mPointCloud);
+            globMutex.unlock();
         }
-
         mPointCloud->clear();
         QString label = QString::number(pointcount);
         mUi->labelPointCount->setText(label);
@@ -107,7 +102,8 @@ void MainWindow::ShowPointCloud()
     }
 }
 
-pcl::PointCloud<pcl::PointXYZ>::Ptr MainWindow::convertPointsToPTR(std::vector<pcl_point> points)
+pcl::PointCloud<pcl::PointXYZ>::Ptr MainWindow::convertPointsToPTR
+                                (std::vector<pcl_point> points)
 {
     pcl::PointCloud<pcl::PointXYZ>::Ptr point_cloud_ptr
             (new pcl::PointCloud<pcl::PointXYZ>);
@@ -138,7 +134,7 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr MainWindow::convertPointsToPTR(std::vector<p
 void MainWindow::on_btnClear_clicked()
 {
     mMutex.lock();
-    displayData.points.clear();
+    mDisplayData.points.clear();
     mPointCloud->clear();
     visualizer.updatePointCloud(mPointCloud);
     mMutex.unlock();

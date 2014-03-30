@@ -18,7 +18,7 @@ Hokuyo::Hokuyo()
     mConnectedFlag = false;
     mProcessingThreadFlag = false;
     mpHokuyoScan = NULL;
-    mHokuyoMinStep = mHokuyoMaxStep = 0;
+    mHokuyoMinStep = mHokuyoMaxStep = mErrorCount = 0;
     mBaudRate = 115200;
     mSerialPort = "/dev/ttyACM0";
     mpDocument = new TiXmlDocument();
@@ -141,7 +141,10 @@ void Hokuyo::ProcessingThread()
                                              &timestamp);
             if(scanCount <= 0)
             {
+                boost::mutex::scoped_lock lock(mMutex);
                 std::cout << "Scanning Error: " << urg_error(urg) << std::endl;
+                mErrorCount++;
+                continue;
             }
             // Iterate over all steps in the scan (1080).
             for(int i = mHokuyoMinStep;
@@ -161,18 +164,19 @@ void Hokuyo::ProcessingThread()
             }
             // Size of a full scan in 3D data structure is 553472 bytes.
             //TODO add mutex lock
-            mMutex.lock();
-            mLaserScan = scan;
-            mMutex.unlock();
+            {
+                boost::mutex::scoped_lock lock(mMutex);
+                mLaserScan = scan;
+                mErrorCount = 0;
+            }
             //Trigger Callbacks
             Callback::Set::iterator iter;
             for(iter = mCallbacks.begin();
                 iter != mCallbacks.end();
                 iter++)
             {
-                mMutex.lock();
+                boost::mutex::scoped_lock lock(mMutex);
                 (*iter)->ProcessLaserData(mLaserScan, timestamp);
-                mMutex.unlock();
             }
         }
     }

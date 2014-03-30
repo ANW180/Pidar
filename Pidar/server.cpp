@@ -14,7 +14,7 @@ namespace PointCloud
 {
 const short multicast_port = 30001;
 const int max_message_count = 1000;
-const int transmission_delay = 5; //milliseconds
+const int transmission_delay = 2; //milliseconds
 
     class server
     {
@@ -55,10 +55,15 @@ const int transmission_delay = 5; //milliseconds
 
       void handle_timeout(const boost::system::error_code& error)
       {
-        if (!error)
+        if(!error)
         {
           clouds_.clear();
-          if(!SendPoints.empty()){
+          if(SendPoints.size() > 5)
+          {
+              SendPoints.clear();
+          }
+          if(!SendPoints.empty())
+          {
               clouds_.push_back(SendPoints.front());
               SendPoints.pop_front();
 //              std::cout<<"Sending Public Scan"<<std::endl;

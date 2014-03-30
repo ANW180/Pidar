@@ -92,6 +92,12 @@ namespace Pidar
         void AddToScanQueue(std::vector<Point3D> laserscan,
                                    double currentMotorPosition,
                                    double previousMotorPosition);
+        bool StartISR();
+        Laser::Hokuyo* GetLaserPtr()
+        {
+            return laser;
+        }
+
     protected:
         Motor::Dynamixel* motor;
         Laser::Hokuyo *laser;

@@ -94,6 +94,11 @@ namespace Laser
             //TODO add mutex lock
             mCallbacks.clear();
         }
+        int GetErrorCount()
+        {
+            boost::mutex::scoped_lock lock(mMutex);
+            return mErrorCount;
+        }
 
     protected:
         virtual void ProcessingThread();
@@ -105,6 +110,7 @@ namespace Laser
         long* mpHokuyoScan;
         int mHokuyoMinStep;
         int mHokuyoMaxStep;
+        int mErrorCount;
         std::string mSerialPort;
         boost::mutex mMutex;
         TiXmlDocument* mpDocument;
