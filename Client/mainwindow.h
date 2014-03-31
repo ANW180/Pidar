@@ -32,7 +32,7 @@ public:
     ~MainWindow();
     virtual void StartThread();
     virtual void ShowPointCloud();
-    pcl::PointCloud<pcl::PointXYZ>::Ptr convertPointsToPTR(std::vector<pcl_point> points);
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr convertPointsToPTR(std::vector<pcl_point> points);
 
 public slots:
 
@@ -42,15 +42,21 @@ private slots:
 
     void on_btnSetSpeed_clicked();
 
+    void on_horizontalSlider_valueChanged(int value);
+
+    void on_pushPauseResume_clicked();
+
 private:
     vtkSmartPointer<vtkRenderer> mRenderer;
     vtkSmartPointer<vtkRenderWindow> mRenderWindow;
-    pcl::PointCloud<pcl::PointXYZ>::Ptr mPointCloud;
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr mPointCloud;
     Ui_MainWindow *mUi;
     Ui::MainWindow *ui;
     boost::thread mUpdateThread;
     boost::mutex mMutex;
+    unsigned int mPointCount;
     bool mThreadQuitFlag;
+    bool mPauseScan;
     unsigned int mLoopCount;
     pcl_data mDisplayData;
 };
