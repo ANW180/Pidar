@@ -24,9 +24,9 @@ int GetRGBValue(double position)
 
     int R, G, B;// byte
     int nmax=6;// number of color bars
-    double m=nmax* position;
-    int n=int(m); // integer of m
-    double f=m-n;  // fraction of m
+    double m = nmax * position;
+    int n= int(m); // integer of m
+    double f = m - n;  // fraction of m
     int t=int(f*255);
 
 
@@ -187,6 +187,11 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr MainWindow::convertPointsToPTR
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr point_cloud_ptr
             (new pcl::PointCloud<pcl::PointXYZRGB>);
 
+    if(mUi->radioDispLive->isChecked())
+    {
+        //Capture data here first and use it in the for loop
+    }
+
     pcl::PointXYZRGB point;
     for(unsigned int i = 0; i < points.size(); i++)
     {
@@ -199,7 +204,21 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr MainWindow::convertPointsToPTR
             point.y = r * sin(theta) * sin(phi);
             point.z = r * cos(theta);
 
-            point.rgb = GetRGBValue(r);
+            point.rgb = 16777215; //default to white
+            if(mUi->radioDispRGB->isChecked())
+            {
+                point.rgb = GetRGBValue(r);
+            }
+            else if(mUi->radioDispSolid->isChecked())
+            {
+                point.rgb = 16777215;
+            }
+            else if(mUi->radioDispLive->isChecked())
+            {
+                //go through captured data and
+                //assign RGB values
+            }
+
         point_cloud_ptr->points.push_back (point);
 
     }

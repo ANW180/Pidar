@@ -13,6 +13,7 @@
 #include <cstring>
 #include <iostream>
 #include <boost/asio.hpp>
+#include "imagecapture.h"
 
 using boost::asio::ip::udp;
 enum { max_length = 1024 };

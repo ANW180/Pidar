@@ -122,63 +122,161 @@
      </layout>
     </item>
     <item>
-     <widget class="QGroupBox" name="groupBox">
+     <widget class="QFrame" name="frame_2">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+        <horstretch>1</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
       <property name="minimumSize">
        <size>
-        <width>350</width>
+        <width>0</width>
         <height>50</height>
        </size>
       </property>
-      <property name="maximumSize">
-       <size>
-        <width>350</width>
-        <height>50</height>
-       </size>
+      <property name="frameShape">
+       <enum>QFrame::StyledPanel</enum>
       </property>
-      <property name="title">
-       <string>Scan Method</string>
+      <property name="frameShadow">
+       <enum>QFrame::Raised</enum>
       </property>
-      <widget class="QRadioButton" name="radioClearing">
+      <widget class="QGroupBox" name="groupBox">
        <property name="geometry">
         <rect>
-         <x>20</x>
-         <y>20</y>
-         <width>98</width>
-         <height>21</height>
+         <x>-10</x>
+         <y>0</y>
+         <width>325</width>
+         <height>50</height>
         </rect>
        </property>
-       <property name="text">
-        <string>Clearing</string>
+       <property name="minimumSize">
+        <size>
+         <width>325</width>
+         <height>50</height>
+        </size>
        </property>
-       <property name="checked">
-        <bool>true</bool>
+       <property name="maximumSize">
+        <size>
+         <width>16777215</width>
+         <height>50</height>
+        </size>
        </property>
+       <property name="title">
+        <string>Scan Method</string>
+       </property>
+       <widget class="QRadioButton" name="radioClearing">
+        <property name="geometry">
+         <rect>
+          <x>20</x>
+          <y>20</y>
+          <width>81</width>
+          <height>21</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Clearing</string>
+        </property>
+        <property name="checked">
+         <bool>true</bool>
+        </property>
+       </widget>
+       <widget class="QRadioButton" name="radioContinuous">
+        <property name="geometry">
+         <rect>
+          <x>110</x>
+          <y>20</y>
+          <width>98</width>
+          <height>21</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Continuous</string>
+        </property>
+       </widget>
+       <widget class="QRadioButton" name="radioSingle">
+        <property name="geometry">
+         <rect>
+          <x>220</x>
+          <y>20</y>
+          <width>71</width>
+          <height>21</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Single</string>
+        </property>
+       </widget>
       </widget>
-      <widget class="QRadioButton" name="radioContinuous">
+      <widget class="QGroupBox" name="groupBox_2">
        <property name="geometry">
         <rect>
-         <x>110</x>
-         <y>20</y>
-         <width>98</width>
-         <height>21</height>
+         <x>320</x>
+         <y>0</y>
+         <width>231</width>
+         <height>50</height>
         </rect>
        </property>
-       <property name="text">
-        <string>Continuous</string>
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>10</height>
+        </size>
        </property>
-      </widget>
-      <widget class="QRadioButton" name="radioSingle">
-       <property name="geometry">
-        <rect>
-         <x>240</x>
-         <y>20</y>
-         <width>98</width>
-         <height>21</height>
-        </rect>
+       <property name="maximumSize">
+        <size>
+         <width>16777215</width>
+         <height>16777215</height>
+        </size>
        </property>
-       <property name="text">
-        <string>Single</string>
+       <property name="layoutDirection">
+        <enum>Qt::LeftToRight</enum>
        </property>
+       <property name="title">
+        <string>Display</string>
+       </property>
+       <widget class="QRadioButton" name="radioDispRGB">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>20</y>
+          <width>61</width>
+          <height>21</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>RGB</string>
+        </property>
+        <property name="checked">
+         <bool>true</bool>
+        </property>
+       </widget>
+       <widget class="QRadioButton" name="radioDispSolid">
+        <property name="geometry">
+         <rect>
+          <x>80</x>
+          <y>20</y>
+          <width>71</width>
+          <height>21</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Solid</string>
+        </property>
+       </widget>
+       <widget class="QRadioButton" name="radioDispLive">
+        <property name="geometry">
+         <rect>
+          <x>160</x>
+          <y>20</y>
+          <width>51</width>
+          <height>21</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Live</string>
+        </property>
+       </widget>
       </widget>
      </widget>
     </item>
