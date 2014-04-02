@@ -5,12 +5,11 @@
 pcl::visualization::PCLVisualizer visualizer("Dont Show", false);
 std::string address = "192.168.1.71";
 std::string port = "10001";
-
-
-int GetRGBValue(double position)
+int normalvalues = 0;
+int GetRGBValue(double position, int scaleposition)
 {
-    double maxdistance = 50.0;
-    double scale = 1.0;
+    double maxdistance = 30;
+    double scale = scaleposition/maxdistance;
     position *=scale;
 
     //Don't allow higher than maximum values
@@ -75,8 +74,45 @@ int GetRGBValue(double position)
   return (R << 16) | (G << 8) | B;
 }
 
+int MainWindow::GetCameraRGBValue(IplImage* image, double x, double y){
+
+//    if(ally>image->height)
+//    {
+//        ally=0;
+//    }
+//    else
+//    {
+//        ally++;
+//    }
+//    if(allx>image->widthStep)
+//    {
+//        allx = 0;
+//    }
+//    else
+//    {
+//        allx++;
+//    }
+    //Need to normalize values
+
+    unsigned char* BGR = mImage.getPixelData(image,(int)x,(int)y);
+
+    int R = BGR[2];
+    int G = BGR[1];
+    int B = BGR[0];
+
+
+    if(R == '-' && G == '-' && B == '-')
+    {
+        return 0;
+    }
+    return (R << 16) | (G << 8) | B;
+}
+
 MainWindow::MainWindow()
 {
+    //Start Webcam Feed
+ //   mImage.CaptureImage();
+
     mUi = new Ui_MainWindow;
     mPauseScan = false;
     mPointCount = 0;
@@ -106,6 +142,7 @@ void MainWindow::StartThread()
 // Slot for arrival scans.
 void MainWindow::ShowPointCloud()
 {
+
     while(!mThreadQuitFlag)
     {
         if(!mPauseScan)
@@ -113,6 +150,7 @@ void MainWindow::ShowPointCloud()
             mMutex.lock();
             mPointCloud->clear();
             pcl_data temp;
+
             if(!PointQueue.empty())
             {
                 globMutex.lock();
@@ -128,6 +166,7 @@ void MainWindow::ShowPointCloud()
                         temp.points.push_back(buff.points[i]);
                     }
                 }
+
                 //TODO: Seperate into function
                 //Scan Methods
                 if(mUi->radioClearing->isChecked())
@@ -135,13 +174,13 @@ void MainWindow::ShowPointCloud()
                     int maxVal = 300000;
                     if(mDisplayData.points.size() > maxVal)
                     {
-                        pcl_data temp = mDisplayData;
+                        pcl_data temp2 = mDisplayData;
                         mDisplayData.points.clear();
-                        for(int i = temp.points.size() - maxVal;
-                            i < temp.points.size();
+                        for(int i = temp2.points.size() - maxVal;
+                            i < temp2.points.size();
                             i++)
                         {
-                            mDisplayData.points.push_back(temp.points[i]);
+                            mDisplayData.points.push_back(temp2.points[i]);
                         }
                     }
                 }
@@ -153,10 +192,33 @@ void MainWindow::ShowPointCloud()
                 {
                     mDisplayData.points.clear();
                 }
+                if(mUi->radioFullScan->isChecked())
+                {
+                    //TODO: algorithm to find full scan
+                    int maxVal = 63500;
+//                    if(mDisplayData.points.size() > maxVal)
+//                    {
+//                        pcl_data temp2 = mDisplayData;
+//                        mDisplayData.points.clear();
+//                        for(int i = temp2.points.size() - maxVal;
+//                            i < temp2.points.size();
+//                            i++)
+//                        {
+//                            mDisplayData.points.push_back(temp2.points[i]);
+//                        }
+//                    }
+                    if(mDisplayData.points.size() > maxVal)
+                    {
+                        mDisplayData.points.clear();
+                    }
+                }
+
+                //Add points to display
                 for(int j =0;j<temp.points.size();j++)
                 {
                     mDisplayData.points.push_back(temp.points[j]);
                 }
+
                 globMutex.lock();
                 mPointCloud = convertPointsToPTR(mDisplayData.points);
                 mPointCount = mDisplayData.points.size();
@@ -181,6 +243,7 @@ void MainWindow::ShowPointCloud()
     }
 }
 
+
 pcl::PointCloud<pcl::PointXYZRGB>::Ptr MainWindow::convertPointsToPTR
                                 (std::vector<pcl_point> points)
 {
@@ -193,6 +256,7 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr MainWindow::convertPointsToPTR
     }
 
     pcl::PointXYZRGB point;
+  //  IplImage* image = mImage.ObtainImage();
     for(unsigned int i = 0; i < points.size(); i++)
     {
 
@@ -207,7 +271,7 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr MainWindow::convertPointsToPTR
             point.rgb = 16777215; //default to white
             if(mUi->radioDispRGB->isChecked())
             {
-                point.rgb = GetRGBValue(r);
+                point.rgb = GetRGBValue(r,mUi->slideScale->value());
             }
             else if(mUi->radioDispSolid->isChecked())
             {
@@ -215,8 +279,14 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr MainWindow::convertPointsToPTR
             }
             else if(mUi->radioDispLive->isChecked())
             {
+                point.rgb = 16777215;
                 //go through captured data and
                 //assign RGB values
+             //   point.rgb = GetCameraRGBValue(image,point.x,point.y);
+                if(point.rgb == 0)
+                {
+                    point.rgb = GetRGBValue(r,mUi->slideScale->value());
+                }
             }
 
         point_cloud_ptr->points.push_back (point);
@@ -290,4 +360,12 @@ void MainWindow::on_pushPauseResume_clicked()
         std::cout<<"Scan Resumed"<<std::endl;
     }
 
+}
+
+
+
+
+void MainWindow::on_slideScale_valueChanged(int value)
+{
+    //nothing
 }

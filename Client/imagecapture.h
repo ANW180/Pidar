@@ -12,8 +12,12 @@ public:
     ImageCapture();
     bool CaptureImage();
     int DisplayImage();
-
+    IplImage* ObtainImage();
+    unsigned char* getColorData(IplImage* image);
+    unsigned char* getPixelData(IplImage* image, int x, int y);
+    IplImage* getStoredImage();
 private:
+    IplImage* mImage;
     CvCapture* mCapture;
     boost::mutex mMutex;
 };

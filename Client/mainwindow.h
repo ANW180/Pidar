@@ -34,7 +34,7 @@ public:
     virtual void StartThread();
     virtual void ShowPointCloud();
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr convertPointsToPTR(std::vector<pcl_point> points);
-
+    int GetCameraRGBValue(IplImage* image, double x, double y);
 public slots:
 
 
@@ -46,6 +46,8 @@ private slots:
     void on_horizontalSlider_valueChanged(int value);
 
     void on_pushPauseResume_clicked();
+
+    void on_slideScale_valueChanged(int value);
 
 private:
     vtkSmartPointer<vtkRenderer> mRenderer;
@@ -60,5 +62,6 @@ private:
     bool mPauseScan;
     unsigned int mLoopCount;
     pcl_data mDisplayData;
+    ImageCapture mImage;
 };
 #endif // MAINWINDOW_H
