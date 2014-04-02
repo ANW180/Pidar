@@ -7,6 +7,7 @@
 #include <vtkRenderWindow.h>
 #include <vtkSmartPointer.h>
 #include <QMainWindow>
+#include <QFileDialog>
 #include <boost/thread.hpp>
 #include "receiver.h"
 #include <cstdlib>
@@ -35,6 +36,9 @@ public:
     virtual void ShowPointCloud();
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr convertPointsToPTR(std::vector<pcl_point> points);
     int GetCameraRGBValue(IplImage* image, double x, double y);
+    void TogglePauseScan();
+    void WritePointsToFile(pcl_data data, std::string filename);
+    pcl_data OpenFileData(std::string filepath);
 public slots:
 
 
@@ -48,6 +52,10 @@ private slots:
     void on_pushPauseResume_clicked();
 
     void on_slideScale_valueChanged(int value);
+
+    void on_actionSave_triggered();
+
+    void on_actionOpen_triggered();
 
 private:
     vtkSmartPointer<vtkRenderer> mRenderer;

@@ -233,26 +233,6 @@ void MainWindow::ShowPointCloud()
                        temp.points.push_back(swap.points[i]);
                    }
 
-
-
-
-                    //TODO: algorithm to find full scan
-                  //  int maxVal = 63500;
-//                    if(mDisplayData.points.size() > maxVal)
-//                    {
-//                        pcl_data temp2 = mDisplayData;
-//                        mDisplayData.points.clear();
-//                        for(int i = temp2.points.size() - maxVal;
-//                            i < temp2.points.size();
-//                            i++)
-//                        {
-//                            mDisplayData.points.push_back(temp2.points[i]);
-//                        }
-//                    }
-//                    if(mDisplayData.points.size() > maxVal)
-//                    {
-//                        mDisplayData.points.clear();
-//                    }
                 }
 
                 //Add points to display
@@ -389,6 +369,11 @@ void MainWindow::on_horizontalSlider_valueChanged(int value)
 
 void MainWindow::on_pushPauseResume_clicked()
 {
+    TogglePauseScan();
+}
+
+void MainWindow::TogglePauseScan()
+{
     if(!mPauseScan)
     {
         mPauseScan = true;
@@ -401,7 +386,6 @@ void MainWindow::on_pushPauseResume_clicked()
         mUi->pushPauseResume->setText("Pause");
         std::cout<<"Scan Resumed"<<std::endl;
     }
-
 }
 
 
@@ -410,4 +394,128 @@ void MainWindow::on_pushPauseResume_clicked()
 void MainWindow::on_slideScale_valueChanged(int value)
 {
     //nothing
+}
+
+void MainWindow::WritePointsToFile(pcl_data data, std::string filename)
+{
+    std::ofstream outputFile;
+    outputFile.open(filename.c_str());
+
+    for(int i = 0;i<data.points.size();i++)
+    {
+        outputFile << data.points[i].r << ","
+                   << data.points[i].theta <<","
+                   << data.points[i].phi << endl;
+    }
+
+    outputFile.close();
+    std::cout << "Wrote "<<data.points.size() <<" points, to file: "<<filename<<std::endl;
+}
+
+void MainWindow::on_actionSave_triggered()
+{
+    bool resume = false;
+    if(!mPauseScan)
+    {
+        mPauseScan = true;
+        mUi->pushPauseResume->setText("Resume");
+        std::cout<<"Scan Paused"<<std::endl;
+        resume = true;
+    }
+
+    QString qs = QFileDialog::getSaveFileName(this,tr("Select Save Location"),
+                                 "/home",tr("CSV Files (*.csv)"));
+
+    std::string SaveLocation = qs.toUtf8().constData();
+    if(SaveLocation != "")
+    {
+        WritePointsToFile(mDisplayData,SaveLocation);
+    }
+
+    if(resume)
+    {
+        mPauseScan = false;
+        mUi->pushPauseResume->setText("Pause");
+        std::cout<<"Scan Resumed"<<std::endl;
+        resume = true;
+    }
+
+    //ui->File2Path->setText(file2Name);
+}
+
+
+
+pcl_data MainWindow::OpenFileData(std::string filepath)
+{
+    std::ifstream infile(filepath.c_str());
+    pcl_data Scan;
+    double a, b, c = 0.0;
+    std::string str;
+    int linecnt = 0;
+    std::string delimiter = ",";
+    std::string val;
+    while (std::getline(infile, str))
+    {
+         int x = 0;
+         size_t pos = 0;
+         //while ((pos = str.find(delimiter)) != std::string::npos)
+         for(int i = 0;i<3;i++)
+         {
+             pos = str.find(delimiter);
+             val = str.substr(0, pos);
+             if(x == 0)
+             {
+                 a = atof(val.c_str());
+                 x++;
+             }
+             else if(x == 1)
+             {
+                 b = atof(val.c_str());
+                 x++;
+             }
+             else if(x == 2)
+             {
+                 c = atof(val.c_str());
+                 x = 0;
+             }
+             str.erase(0, val.length() + delimiter.length());
+         }
+        pcl_point point;
+        point.r = a;
+        point.theta = b;
+        point.phi = c;
+        Scan.points.push_back(point);
+        linecnt++;
+    }
+    linecnt;
+    return Scan;
+}
+
+void MainWindow::on_actionOpen_triggered()
+{
+        mPauseScan = true;
+        mUi->pushPauseResume->setText("Resume");
+        std::cout<<"Scan Paused"<<std::endl;
+
+    QString qs = QFileDialog::getOpenFileName(this,tr("Open CSV file"),
+                                 "/home",tr("CSV Files (*.csv)"));
+
+    std::string OpenLocation = qs.toUtf8().constData();
+    if(OpenLocation!="")
+    {
+
+        mDisplayData = OpenFileData(OpenLocation);
+        globMutex.lock();
+        mPointCloud = convertPointsToPTR(mDisplayData.points);
+        mPointCount = mDisplayData.points.size();
+        visualizer.updatePointCloud(mPointCloud);
+        globMutex.unlock();
+
+        mPointCloud->clear();
+        QString label = QString::number(mPointCount);
+        mUi->labelPointCount->setText(label);
+        mMutex.unlock();
+        mUi->vtkWidget->update();
+    }
+
 }
