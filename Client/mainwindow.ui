@@ -212,12 +212,12 @@
          <rect>
           <x>20</x>
           <y>50</y>
-          <width>261</width>
+          <width>131</width>
           <height>21</height>
          </rect>
         </property>
         <property name="text">
-         <string>1 x Full Scan (@63500 points for now)</string>
+         <string>2 x  Full Scan</string>
         </property>
        </widget>
       </widget>

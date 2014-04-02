@@ -143,6 +143,8 @@ void MainWindow::StartThread()
 void MainWindow::ShowPointCloud()
 {
 
+    double lastKnownAngle = -99;
+    double degeesTraversed = 0;
     while(!mThreadQuitFlag)
     {
         if(!mPauseScan)
@@ -194,8 +196,48 @@ void MainWindow::ShowPointCloud()
                 }
                 if(mUi->radioFullScan->isChecked())
                 {
+                    pcl_data cachedData = mDisplayData;
+                    mDisplayData.points.clear();
+                    for(int i = 0;i<temp.points.size();i++)
+                    {
+                        cachedData.points.push_back(temp.points[i]);
+                    }
+
+                    int cacheSize = cachedData.points.size()-1;
+                    pcl_data swap;
+
+                    //Get Last Angle
+                    if(lastKnownAngle == -99)
+                    {
+                        lastKnownAngle = cachedData.points[cacheSize].phi;
+                    }
+
+                    for(int i = cacheSize;i>0;i--)
+                    {
+                        double delta = std::abs(lastKnownAngle - cachedData.points[i].phi);
+                        if(delta > 350)
+                        {
+                            break;
+                        }
+
+                        swap.points.push_back(cachedData.points[i]); //added in reverse
+                    }
+
+                    //set last angle
+                    lastKnownAngle =  cachedData.points[cacheSize].phi;
+
+                   temp.points.clear();
+                   int swapSize = swap.points.size()-1;
+                   for(int i = swapSize;i>0;i--)
+                   {
+                       temp.points.push_back(swap.points[i]);
+                   }
+
+
+
+
                     //TODO: algorithm to find full scan
-                    int maxVal = 63500;
+                  //  int maxVal = 63500;
 //                    if(mDisplayData.points.size() > maxVal)
 //                    {
 //                        pcl_data temp2 = mDisplayData;
@@ -207,10 +249,10 @@ void MainWindow::ShowPointCloud()
 //                            mDisplayData.points.push_back(temp2.points[i]);
 //                        }
 //                    }
-                    if(mDisplayData.points.size() > maxVal)
-                    {
-                        mDisplayData.points.clear();
-                    }
+//                    if(mDisplayData.points.size() > maxVal)
+//                    {
+//                        mDisplayData.points.clear();
+//                    }
                 }
 
                 //Add points to display
