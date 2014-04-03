@@ -31,7 +31,7 @@
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_2">
        <item>
-        <widget class="QVTKWidget" name="vtkWidget" native="true"/>
+        <widget class="QVTKWidget" name="vtkWidget"/>
        </item>
       </layout>
      </widget>
@@ -234,9 +234,6 @@
            </layout>
           </item>
          </layout>
-         <zorder>groupBox_2</zorder>
-         <zorder>groupBox_2</zorder>
-         <zorder>verticalLayoutWidget</zorder>
         </widget>
        </item>
        <item>
@@ -338,7 +335,7 @@
      <x>0</x>
      <y>0</y>
      <width>640</width>
-     <height>20</height>
+     <height>23</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -347,17 +344,24 @@
     </property>
     <addaction name="actionSave"/>
     <addaction name="actionOpen"/>
+    <addaction name="separator"/>
+    <addaction name="actionExit"/>
    </widget>
    <addaction name="menuFile"/>
   </widget>
   <action name="actionSave">
    <property name="text">
-    <string>Save</string>
+    <string>Save As</string>
    </property>
   </action>
   <action name="actionOpen">
    <property name="text">
     <string>Open</string>
+   </property>
+  </action>
+  <action name="actionExit">
+   <property name="text">
+    <string>Exit</string>
    </property>
   </action>
  </widget>

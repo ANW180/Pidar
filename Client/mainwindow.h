@@ -32,6 +32,7 @@ class MainWindow : public QMainWindow
 public:
     MainWindow();
     ~MainWindow();
+    void shutdown();
     virtual void StartThread();
     virtual void ShowPointCloud();
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr convertPointsToPTR(std::vector<pcl_point> points);
@@ -47,8 +48,6 @@ public slots:
 private slots:
     void on_btnClear_clicked();
 
-    void on_btnSetSpeed_clicked();
-
     void on_horizontalSlider_valueChanged(int value);
 
     void on_pushPauseResume_clicked();
@@ -58,6 +57,8 @@ private slots:
     void on_actionSave_triggered();
 
     void on_actionOpen_triggered();
+
+    void on_actionExit_triggered();
 
 private:
     vtkSmartPointer<vtkRenderer> mRenderer;

@@ -11,6 +11,7 @@ class ImageCapture
 public:
     ImageCapture();
     bool CaptureImage();
+    bool IsCameraValid();
     int DisplayImage();
     IplImage* ObtainImage();
     unsigned char* getColorData(IplImage* image);

@@ -74,24 +74,33 @@ int GetRGBValue(double position, int scaleposition)
   return (R << 16) | (G << 8) | B;
 }
 
+int GetSolidRGBValue(double position, int scaleposition)
+{
+    int R, G, B;
+
+    double max_scale = 100;
+    double normal_scale = 10;
+    double normalized_scale = (scaleposition/max_scale)*10;
+    position *=normalized_scale;
+
+    //Don't allow lower than visible values
+    if (position > 200)
+    {
+        position = position * position/200;
+        if(position>239)
+        {
+            position = 240;
+        }
+    }
+          R = 255-position;
+          G = 255-position;
+          B = 255-position;
+
+  return (R << 16) | (G << 8) | B;
+}
+
 int MainWindow::GetCameraRGBValue(IplImage* image, double x, double y){
 
-//    if(ally>image->height)
-//    {
-//        ally=0;
-//    }
-//    else
-//    {
-//        ally++;
-//    }
-//    if(allx>image->widthStep)
-//    {
-//        allx = 0;
-//    }
-//    else
-//    {
-//        allx++;
-//    }
     //Need to normalize values
 
     unsigned char* BGR = mImage.getPixelData(image,(int)x,(int)y);
@@ -111,7 +120,7 @@ int MainWindow::GetCameraRGBValue(IplImage* image, double x, double y){
 MainWindow::MainWindow()
 {
     //Start Webcam Feed
- //   mImage.CaptureImage();
+    mImage.CaptureImage();
 
     mUi = new Ui_MainWindow;
     mPauseScan = false;
@@ -125,12 +134,18 @@ MainWindow::MainWindow()
     mUi->vtkWidget->SetRenderWindow(visualizer.getRenderWindow());
 }
 
-MainWindow::~MainWindow()
+void MainWindow::shutdown()
 {
     mThreadQuitFlag = true;
     mUpdateThread.join();
     mUpdateThread.detach();
     mWebThread.interrupt();
+    QCoreApplication::instance()->exit();
+}
+
+MainWindow::~MainWindow()
+{
+    shutdown();
 }
 
 void MainWindow::StartThread()
@@ -145,9 +160,7 @@ void MainWindow::StartThread()
 // Slot for arrival scans.
 void MainWindow::ShowPointCloud()
 {
-
     double lastKnownAngle = -99;
-    double degeesTraversed = 0;
     while(!mThreadQuitFlag)
     {
         if(!mPauseScan)
@@ -241,7 +254,10 @@ void MainWindow::ShowPointCloud()
                 //Add points to display
                 for(int j =0;j<temp.points.size();j++)
                 {
-                    mDisplayData.points.push_back(temp.points[j]);
+                    if(temp.points[j].r > 0.001)
+                    {
+                        mDisplayData.points.push_back(temp.points[j]);
+                    }
                 }
 
                 globMutex.lock();
@@ -281,7 +297,7 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr MainWindow::convertPointsToPTR
     }
 
     pcl::PointXYZRGB point;
-  //  IplImage* image = mImage.ObtainImage();
+    IplImage* image = mImage.ObtainImage();
     for(unsigned int i = 0; i < points.size(); i++)
     {
 
@@ -300,17 +316,17 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr MainWindow::convertPointsToPTR
             }
             else if(mUi->radioDispSolid->isChecked())
             {
-                point.rgb = 16777215;
+                //point.rgb = 16777215;
+                point.rgb = GetSolidRGBValue(r,mUi->slideScale->value());
             }
             else if(mUi->radioDispLive->isChecked())
             {
                 point.rgb = 16777215;
                 //go through captured data and
                 //assign RGB values
-             //   point.rgb = GetCameraRGBValue(image,point.x,point.y);
-                if(point.rgb == 0)
+                if(mImage.IsCameraValid())
                 {
-                    point.rgb = GetRGBValue(r,mUi->slideScale->value());
+                    point.rgb = GetCameraRGBValue(image,point.x,point.y);
                 }
             }
 
@@ -324,6 +340,7 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr MainWindow::convertPointsToPTR
 
 void MainWindow::on_btnClear_clicked()
 {
+
     mMutex.lock();
     mDisplayData.points.clear();
     mPointCloud->clear();
@@ -332,12 +349,6 @@ void MainWindow::on_btnClear_clicked()
     visualizer.updatePointCloud(mPointCloud);
     mMutex.unlock();
     mUi->vtkWidget->update();
-}
-
-void MainWindow::on_btnSetSpeed_clicked()
-{
-//deleting this breaks the code
-
 }
 
 void MainWindow::on_horizontalSlider_valueChanged(int value)
@@ -400,11 +411,17 @@ void MainWindow::WritePointsToFile(pcl_data data, std::string filename)
 {
     std::ofstream outputFile;
     outputFile.open(filename.c_str());
+    std::string delimit = ",";
+    if(filename.substr(filename.find_last_of(".") + 1) == "xyz")
+    {
+        delimit = " ";
+    }
 
     for(int i = 0;i<data.points.size();i++)
     {
-        outputFile << data.points[i].r << ","
-                   << data.points[i].theta <<","
+
+        outputFile << data.points[i].r << delimit
+                   << data.points[i].theta << delimit
                    << data.points[i].phi << endl;
     }
 
@@ -424,12 +441,35 @@ void MainWindow::on_actionSave_triggered()
     }
 
     QString qs = QFileDialog::getSaveFileName(this,tr("Select Save Location"),
-                                 "/home",tr("CSV Files (*.csv)"));
+                                              "/home",tr("Raw PointCloud (*.csv);;MeshLabXYZ (*.xyz)"));
 
     std::string SaveLocation = qs.toUtf8().constData();
     if(SaveLocation != "")
     {
-        WritePointsToFile(mDisplayData,SaveLocation);
+        if(SaveLocation.substr(SaveLocation.find_last_of(".") + 1) == "xyz")
+        {
+            pcl_data Cartesian;
+            for(unsigned int i = 0; i < mDisplayData.points.size(); i++)
+            {
+                pcl_point tmp;
+                    //Convert these to cartesian
+                    double r = mDisplayData.points[i].r;
+                    double theta = mDisplayData.points[i].theta;
+                    double phi = DEG2RAD(mDisplayData.points[i].phi);
+
+                    tmp.r = r * sin(theta) * cos(phi);      //actually X
+                    tmp.theta = r * sin(theta) * sin(phi);  //actually Y
+                    tmp.phi = r * cos(theta);               //actually Z
+
+                    Cartesian.points.push_back(tmp);
+            }
+             WritePointsToFile(Cartesian,SaveLocation);
+
+        }
+        else
+        {
+            WritePointsToFile(mDisplayData,SaveLocation);
+        }
     }
 
     if(resume)
@@ -450,6 +490,12 @@ pcl_data MainWindow::OpenFileData(std::string filepath)
     std::string str;
     int linecnt = 0;
     std::string delimiter = ",";
+
+//    if(filepath.substr(filepath.find_last_of(".") + 1) == "xyz")
+//    {
+//        delimiter = " ";
+//    }
+
     std::string val;
     while (std::getline(infile, str))
     {
@@ -481,7 +527,12 @@ pcl_data MainWindow::OpenFileData(std::string filepath)
         point.r = a;
         point.theta = b;
         point.phi = c;
-        Scan.points.push_back(point);
+
+        if(a > 0.001)
+        {
+         Scan.points.push_back(point);
+        }
+
         linecnt++;
     }
     linecnt;
@@ -517,3 +568,8 @@ void MainWindow::on_actionOpen_triggered()
 
 }
 
+
+void MainWindow::on_actionExit_triggered()
+{
+    shutdown();
+}

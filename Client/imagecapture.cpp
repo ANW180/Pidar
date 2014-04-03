@@ -128,7 +128,12 @@ unsigned char* ImageCapture::getPixelData(IplImage* image, int x, int y){
 }
 
 
-
+bool ImageCapture::IsCameraValid(){
+    if(mCapture)
+        return true;
+    else
+        return false;
+}
 
 
 
