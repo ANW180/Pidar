@@ -94,6 +94,7 @@ namespace Laser
             //TODO add mutex lock
             mCallbacks.clear();
         }
+        /** Returns number of read errors of serial data */
         int GetErrorCount()
         {
             boost::mutex::scoped_lock lock(mMutex);

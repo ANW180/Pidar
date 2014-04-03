@@ -430,7 +430,7 @@ int main()
         // Fix for laser disconnecting on slipring?
         // Shutdown thread and serial connection, sleep, then
         // restart both to resume data output.
-        if(maincontrol->GetLaserPtr()->GetErrorCount() > 5)
+        if(maincontrol->GetLaserPtr()->GetErrorCount() > 3)
         {
             std::cout << "Restarting Laser Connection" << std::endl;
             maincontrol->GetLaserPtr()->Shutdown();

@@ -86,8 +86,6 @@ const int transmission_delay = 2; //milliseconds
       boost::asio::deadline_timer timer_;
       std::vector<pcl_data> clouds_;
     };
-
-
 }
 
 #endif

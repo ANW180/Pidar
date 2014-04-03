@@ -163,7 +163,6 @@ void Hokuyo::ProcessingThread()
                 index++;
             }
             // Size of a full scan in 3D data structure is 553472 bytes.
-            //TODO add mutex lock
             {
                 boost::mutex::scoped_lock lock(mMutex);
                 mLaserScan = scan;

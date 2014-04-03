@@ -23,7 +23,7 @@ Dynamixel::Dynamixel()
     mSerialPort = "/dev/ttyUSB0";
     mpDocument = new TiXmlDocument();
     mCommandSpeedRpm = mPresentPositionDegrees = mPreviousPositionDegrees = 0.0;
-    mBaudRate = 0; // 34 ~ 57142.9 for 57600 connection
+    mBaudRate = 0; // 2Mbps connection, fastest is 3Mbps.
 }
 
 
@@ -150,20 +150,31 @@ void Dynamixel::SetSpeedRpm(const double rpm, const bool clockwise)
 
 
 /** Get current position of servo
-    \returns Position of motor in degrees*/
+    \returns Position of motor in degrees */
 double Dynamixel::GetPositionDegrees()
 {
     boost::mutex::scoped_lock scopedLock(mMutex);
     return mPresentPositionDegrees;
 }
 
-double Dynamixel::GetPreviousPositionDegrees(){
+
+/** Get previous position of servo
+    \returns Previous position of motor in degrees */
+double Dynamixel::GetPreviousPositionDegrees()
+{
+    boost::mutex::scoped_lock scopedLock(mMutex);
     return mPreviousPositionDegrees;
 }
 
-void Dynamixel::SetPreviousPositionDegrees(double val){
+
+/** Sets previous position of servo at some earlier time.
+    \param[in] Previous position of motor in degrees */
+void Dynamixel::SetPreviousPositionDegrees(double val)
+{
+    boost::mutex::scoped_lock scopedLock(mMutex);
     mPreviousPositionDegrees = val;
 }
+
 
 /** Prints to screen the result of a wirte/read to the dynamixel */
 void Dynamixel::PrintCommStatus(int CommStatus)
@@ -210,10 +221,13 @@ void Dynamixel::ProcessingThread()
                 {
                     dxl_write_word(mID, P_MOVING_SPEED_L, mCommandSpeedRpm);
                     CommStatus = dxl_get_result();
-                    if(CommStatus == COMM_RXSUCCESS)
+                    // Print reason of unsuccessful command.
+                    if(CommStatus != COMM_RXSUCCESS)
                     {
                         PrintCommStatus(CommStatus);
                     }
+                    // Reset command flag to false if sending command
+                    // succeeded so as to not flood serial commands.
                     else
                     {
                         mCommandSpeedFlag = false;
@@ -232,16 +246,16 @@ void Dynamixel::ProcessingThread()
                     mPresentPositionDegrees = recv * MX28_DEG_PER_UNIT;
                     read = true;
                 }
+                // Print reason of unsuccessful read command.
                 else
                 {
-    //                PrintCommStatus(CommStatus);
+//                    PrintCommStatus(CommStatus);
                 }
             }
             catch(std::exception e)
             {
                 std::cout << e.what() << std::endl;
             }
-
             // Trigger callbacks (if there is a read)
             if(read)
             {
