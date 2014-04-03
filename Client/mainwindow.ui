@@ -6,12 +6,12 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>576</width>
-    <height>453</height>
+    <width>577</width>
+    <height>510</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>Pidar</string>
   </property>
   <widget class="QWidget" name="centralWidget">
    <layout class="QVBoxLayout" name="verticalLayout">
@@ -39,6 +39,20 @@
     <item>
      <layout class="QHBoxLayout" name="horizontalLayout">
       <item>
+       <widget class="QPushButton" name="pushPauseResume">
+        <property name="text">
+         <string>Pause</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="btnClear">
+        <property name="text">
+         <string>Clear</string>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="QLabel" name="labelPointCount">
         <property name="sizePolicy">
          <sizepolicy hsizetype="MinimumExpanding" vsizetype="Preferred">
@@ -52,11 +66,45 @@
        </widget>
       </item>
       <item>
-       <widget class="QLineEdit" name="txtSpeed">
+       <widget class="QSlider" name="horizontalSlider">
+        <property name="minimumSize">
+         <size>
+          <width>150</width>
+          <height>20</height>
+         </size>
+        </property>
         <property name="maximumSize">
          <size>
-          <width>25</width>
-          <height>16777215</height>
+          <width>150</width>
+          <height>20</height>
+         </size>
+        </property>
+        <property name="minimum">
+         <number>1</number>
+        </property>
+        <property name="maximum">
+         <number>60</number>
+        </property>
+        <property name="value">
+         <number>10</number>
+        </property>
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="labelSpeed">
+        <property name="minimumSize">
+         <size>
+          <width>18</width>
+          <height>18</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>18</width>
+          <height>18</height>
          </size>
         </property>
         <property name="text">
@@ -65,79 +113,214 @@
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="btnSetSpeed">
+       <widget class="QLabel" name="labelRPM">
         <property name="text">
-         <string>Set Speed</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QPushButton" name="btnClear">
-        <property name="text">
-         <string>Clear</string>
+         <string>RPM</string>
         </property>
        </widget>
       </item>
      </layout>
     </item>
     <item>
-     <widget class="QGroupBox" name="groupBox">
+     <widget class="QFrame" name="frame_2">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
       <property name="minimumSize">
        <size>
-        <width>350</width>
-        <height>50</height>
+        <width>0</width>
+        <height>80</height>
        </size>
       </property>
-      <property name="maximumSize">
-       <size>
-        <width>350</width>
-        <height>50</height>
-       </size>
+      <property name="frameShape">
+       <enum>QFrame::StyledPanel</enum>
       </property>
-      <property name="title">
-       <string>Scan Method</string>
+      <property name="frameShadow">
+       <enum>QFrame::Raised</enum>
       </property>
-      <widget class="QRadioButton" name="radioClearing">
+      <widget class="QGroupBox" name="groupBox">
        <property name="geometry">
         <rect>
-         <x>20</x>
-         <y>20</y>
-         <width>98</width>
-         <height>21</height>
+         <x>-10</x>
+         <y>0</y>
+         <width>325</width>
+         <height>75</height>
         </rect>
        </property>
-       <property name="text">
-        <string>Clearing</string>
+       <property name="minimumSize">
+        <size>
+         <width>325</width>
+         <height>75</height>
+        </size>
        </property>
-       <property name="checked">
-        <bool>true</bool>
+       <property name="maximumSize">
+        <size>
+         <width>16777215</width>
+         <height>75</height>
+        </size>
        </property>
+       <property name="title">
+        <string>  Scan Method</string>
+       </property>
+       <widget class="QRadioButton" name="radioClearing">
+        <property name="geometry">
+         <rect>
+          <x>20</x>
+          <y>20</y>
+          <width>91</width>
+          <height>21</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Clearing</string>
+        </property>
+        <property name="checked">
+         <bool>true</bool>
+        </property>
+       </widget>
+       <widget class="QRadioButton" name="radioContinuous">
+        <property name="geometry">
+         <rect>
+          <x>120</x>
+          <y>20</y>
+          <width>111</width>
+          <height>21</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Continuous</string>
+        </property>
+       </widget>
+       <widget class="QRadioButton" name="radioSingle">
+        <property name="geometry">
+         <rect>
+          <x>240</x>
+          <y>20</y>
+          <width>81</width>
+          <height>21</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Single</string>
+        </property>
+       </widget>
+       <widget class="QRadioButton" name="radioFullScan">
+        <property name="geometry">
+         <rect>
+          <x>20</x>
+          <y>50</y>
+          <width>131</width>
+          <height>21</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>2 x  Full Scan</string>
+        </property>
+       </widget>
       </widget>
-      <widget class="QRadioButton" name="radioContinuous">
+      <widget class="QGroupBox" name="groupBox_2">
        <property name="geometry">
         <rect>
-         <x>110</x>
-         <y>20</y>
-         <width>98</width>
-         <height>21</height>
+         <x>320</x>
+         <y>0</y>
+         <width>231</width>
+         <height>75</height>
         </rect>
        </property>
-       <property name="text">
-        <string>Continuous</string>
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>75</height>
+        </size>
        </property>
-      </widget>
-      <widget class="QRadioButton" name="radioSingle">
-       <property name="geometry">
-        <rect>
-         <x>240</x>
-         <y>20</y>
-         <width>98</width>
-         <height>21</height>
-        </rect>
+       <property name="maximumSize">
+        <size>
+         <width>16777215</width>
+         <height>75</height>
+        </size>
        </property>
-       <property name="text">
-        <string>Single</string>
+       <property name="layoutDirection">
+        <enum>Qt::LeftToRight</enum>
        </property>
+       <property name="title">
+        <string>Display</string>
+       </property>
+       <widget class="QRadioButton" name="radioDispRGB">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>20</y>
+          <width>61</width>
+          <height>21</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>RGB</string>
+        </property>
+        <property name="checked">
+         <bool>true</bool>
+        </property>
+       </widget>
+       <widget class="QRadioButton" name="radioDispSolid">
+        <property name="geometry">
+         <rect>
+          <x>80</x>
+          <y>20</y>
+          <width>71</width>
+          <height>21</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Solid</string>
+        </property>
+       </widget>
+       <widget class="QRadioButton" name="radioDispLive">
+        <property name="geometry">
+         <rect>
+          <x>160</x>
+          <y>20</y>
+          <width>61</width>
+          <height>21</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Live</string>
+        </property>
+       </widget>
+       <widget class="QSlider" name="slideScale">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>40</y>
+          <width>211</width>
+          <height>16</height>
+         </rect>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>0</width>
+          <height>0</height>
+         </size>
+        </property>
+        <property name="minimum">
+         <number>1</number>
+        </property>
+        <property name="maximum">
+         <number>100</number>
+        </property>
+        <property name="value">
+         <number>25</number>
+        </property>
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+       </widget>
       </widget>
      </widget>
     </item>
@@ -148,11 +331,29 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>576</width>
+     <width>577</width>
      <height>23</height>
     </rect>
    </property>
+   <widget class="QMenu" name="menuFile">
+    <property name="title">
+     <string>File</string>
+    </property>
+    <addaction name="actionSave"/>
+    <addaction name="actionOpen"/>
+   </widget>
+   <addaction name="menuFile"/>
   </widget>
+  <action name="actionSave">
+   <property name="text">
+    <string>Save</string>
+   </property>
+  </action>
+  <action name="actionOpen">
+   <property name="text">
+    <string>Open</string>
+   </property>
+  </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <customwidgets>

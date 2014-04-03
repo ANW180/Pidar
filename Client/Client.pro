@@ -33,6 +33,13 @@ LIBS += -LC/usr/lib \
 -lvtkIO \
 -lvtkRendering \
 
+
+#OpenCV
+LIBS += -LC/usr/local/lib \
+ -lopencv_core \
+ -lopencv_calib3d \
+ -lopencv_highgui \
+
 INCLUDEPATH += /usr/include/boost \
                /usr/include/pcl-1.7 \
                /usr/include/eigen3 \
@@ -43,9 +50,11 @@ INCLUDEPATH += /usr/include/boost \
 
 SOURCES += main.cpp\
         mainwindow.cpp \
-        receiver.cpp
+        receiver.cpp \
+    imagecapture.cpp
 
 HEADERS  += mainwindow.h \
-    receiver.h
+    receiver.h \
+    imagecapture.h
 
 FORMS    += mainwindow.ui
