@@ -39,6 +39,8 @@ public:
     void TogglePauseScan();
     void WritePointsToFile(pcl_data data, std::string filename);
     pcl_data OpenFileData(std::string filepath);
+    boost::thread mWebThread;
+
 public slots:
 
 

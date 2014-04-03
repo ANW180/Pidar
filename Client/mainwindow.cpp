@@ -120,14 +120,17 @@ MainWindow::MainWindow()
     mPointCloud = (pcl::PointCloud<pcl::PointXYZRGB>::Ptr
                    (new pcl::PointCloud<pcl::PointXYZRGB>));
     visualizer.setShowFPS(false);
+    visualizer.setCameraPosition(0,-1,-14,-16,-96,-17);
     visualizer.addPointCloud<pcl::PointXYZRGB>(mPointCloud);
     mUi->vtkWidget->SetRenderWindow(visualizer.getRenderWindow());
 }
 
 MainWindow::~MainWindow()
 {
+    mThreadQuitFlag = true;
     mUpdateThread.join();
     mUpdateThread.detach();
+    mWebThread.interrupt();
 }
 
 void MainWindow::StartThread()
@@ -207,7 +210,7 @@ void MainWindow::ShowPointCloud()
                     pcl_data swap;
 
                     //Get Last Angle
-                    if(lastKnownAngle == -99)
+                    if(lastKnownAngle == -99) // first time
                     {
                         lastKnownAngle = cachedData.points[cacheSize].phi;
                     }
@@ -388,9 +391,6 @@ void MainWindow::TogglePauseScan()
     }
 }
 
-
-
-
 void MainWindow::on_slideScale_valueChanged(int value)
 {
     //nothing
@@ -440,10 +440,7 @@ void MainWindow::on_actionSave_triggered()
         resume = true;
     }
 
-    //ui->File2Path->setText(file2Name);
 }
-
-
 
 pcl_data MainWindow::OpenFileData(std::string filepath)
 {
@@ -519,3 +516,4 @@ void MainWindow::on_actionOpen_triggered()
     }
 
 }
+

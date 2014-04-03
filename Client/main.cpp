@@ -5,17 +5,17 @@
 #include <QVTKWidget.h>
 
 
+boost::asio::io_service io_service;
+receiver r(io_service,
+           boost::asio::ip::address::from_string("0.0.0.0"),
+           boost::asio::ip::address::from_string("239.255.0.1"));
+
 int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
     MainWindow window;
-    boost::asio::io_service io_service;
+    window.mWebThread = boost::thread(boost::bind(&boost::asio::io_service::run, &io_service));
 
-    //TODO: make this killable
-    receiver r(io_service,
-               boost::asio::ip::address::from_string("0.0.0.0"),
-               boost::asio::ip::address::from_string("239.255.0.1"));
-    boost::thread bt(boost::bind(&boost::asio::io_service::run, &io_service));
     sleep(1);
 
     window.show();
