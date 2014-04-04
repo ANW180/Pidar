@@ -120,7 +120,7 @@ int MainWindow::GetCameraRGBValue(IplImage* image, double x, double y){
 MainWindow::MainWindow()
 {
     //Start Webcam Feed
-    mImage.CaptureImage();
+   // mImage.CaptureImage();
 
     mUi = new Ui_MainWindow;
     mPauseScan = false;
@@ -261,8 +261,9 @@ void MainWindow::ShowPointCloud()
                 }
 
                 globMutex.lock();
+
                 mPointCloud = convertPointsToPTR(mDisplayData.points);
-                mPointCount = mDisplayData.points.size();
+                mPointCount = mPointCloud->points.size();//mDisplayData.points.size();
                 PointQueue.clear();
                 visualizer.updatePointCloud(mPointCloud);
                 globMutex.unlock();
@@ -297,7 +298,53 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr MainWindow::convertPointsToPTR
     }
 
     pcl::PointXYZRGB point;
-    IplImage* image = mImage.ObtainImage();
+//    IplImage* image;
+//    if(mImage.IsCameraValid())
+//    {
+//        image = mImage.ObtainImage();
+//    }
+    double maximumvalue_x = 1;
+    double minimumvalue_x = 0;
+    double maximumvalue_y = 1;
+    double minimumvalue_y = 0;
+    double maximumvalue_z = 1;
+    double minimumvalue_z = 0;
+
+    for(unsigned int i = 0; i < points.size(); i++)
+    {
+        double r = points[i].r;
+        double theta = points[i].theta;
+        double phi = DEG2RAD(points[i].phi);
+        double curr_x = r * sin(theta) * cos(phi);
+        double curr_y = r * sin(theta) * sin(phi);
+        double curr_z = r * cos(theta);
+
+        if(maximumvalue_x<std::abs(curr_x))
+            maximumvalue_x = std::abs(curr_x);
+//        if(minimumvalue_x>curr_x)
+//            minimumvalue_x = curr_x;
+
+        if(maximumvalue_y<std::abs(curr_y))
+            maximumvalue_y = std::abs(curr_y);
+//        if(minimumvalue_y>curr_y)
+//            minimumvalue_y = curr_y;
+
+        if(maximumvalue_z<std::abs(curr_z))
+            maximumvalue_z = std::abs(curr_z);
+//        if(minimumvalue_z>curr_z)
+//            minimumvalue_z = curr_z;
+    }
+
+    maximumvalue_x *= 0.1 + double(mUi->horizontalSlider_3->value()/ 100.0);
+    maximumvalue_x+=1.0;
+    maximumvalue_y *= 0.1 + double(mUi->horizontalSlider_4->value()/ 100.0);
+    maximumvalue_y+=1.0;
+    maximumvalue_z *= 0.1 + double(mUi->horizontalSlider_2->value()/ 100.0);
+    maximumvalue_z+=1.0;
+
+   // std::cout<<"Max val X: "<<maximumvalue_x<<std::endl;
+   // std::cout<<"Max val Y: "<<maximumvalue_y<<std::endl;
+   // std::cout<<"Max val Z: "<<maximumvalue_z<<std::endl;
     for(unsigned int i = 0; i < points.size(); i++)
     {
 
@@ -308,6 +355,14 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr MainWindow::convertPointsToPTR
             point.x = r * sin(theta) * cos(phi);
             point.y = r * sin(theta) * sin(phi);
             point.z = r * cos(theta);
+
+            if(point.x > maximumvalue_x || point.x < (-1.0*maximumvalue_x))
+                continue;
+            if(point.y > maximumvalue_y || point.y < (-1.0*maximumvalue_y))
+                continue;
+            if(point.z > maximumvalue_z || point.z < (-1.0*maximumvalue_z))
+                continue;
+
 
             point.rgb = 16777215; //default to white
             if(mUi->radioDispRGB->isChecked())
@@ -326,7 +381,7 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr MainWindow::convertPointsToPTR
                 //assign RGB values
                 if(mImage.IsCameraValid())
                 {
-                    point.rgb = GetCameraRGBValue(image,point.x,point.y);
+                //    point.rgb = GetCameraRGBValue(image,point.x,point.y);
                 }
             }
 

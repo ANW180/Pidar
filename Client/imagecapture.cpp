@@ -61,14 +61,18 @@ int ImageCapture::DisplayImage()
 
 IplImage* ImageCapture::ObtainImage()
 {
-
-    mImage =  cvQueryFrame(  mCapture );
+    if(IsCameraValid())
+    {
+     mImage =  cvQueryFrame(  mCapture );
+    }
     return mImage;
 }
 
 unsigned char* ImageCapture::getColorData(IplImage* image){
-    image = ObtainImage();
-
+    if(IsCameraValid())
+    {
+        image = ObtainImage();
+    }
     // get the pointer to the image buffer
     unsigned char *data= reinterpret_cast<unsigned char *>
                                          (image->imageData);
