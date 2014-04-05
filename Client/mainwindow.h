@@ -15,6 +15,7 @@
 #include <iostream>
 #include <boost/asio.hpp>
 #include "imagecapture.h"
+#include <QDialog>
 
 using boost::asio::ip::udp;
 enum { max_length = 1024 };
@@ -24,6 +25,7 @@ class Ui_MainWindow;
 namespace Ui {
 class MainWindow;
 }
+
 
 class MainWindow : public QMainWindow
 {
@@ -36,6 +38,8 @@ public:
     virtual void StartThread();
     virtual void ShowPointCloud();
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr convertPointsToPTR(std::vector<pcl_point> points);
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr convertPointsToPTR(std::vector<pcl_point> points,
+                                                              double &closestPoint, double &furthestPoint);
     int GetCameraRGBValue(IplImage* image, double x, double y);
     void TogglePauseScan();
     void WritePointsToFile(pcl_data data, std::string filename);
@@ -59,6 +63,8 @@ private slots:
     void on_actionOpen_triggered();
 
     void on_actionExit_triggered();
+
+    void on_btnIPSAVE_clicked();
 
 private:
     vtkSmartPointer<vtkRenderer> mRenderer;

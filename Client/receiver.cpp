@@ -17,9 +17,6 @@
 
 std::vector<pcl_data> Latest_Clouds_;
 std::deque<pcl_data> PointQueue;
-bool lock_write;
-bool lock_clear;
-bool lock_read;
 boost::mutex globMutex;
 const short multicast_port = 30001;
 
@@ -88,7 +85,7 @@ public:
       globMutex.lock();
           PointQueue.push_back(dat);
       globMutex.unlock();
-      }
+    }
 
 
       socket_.async_receive_from(

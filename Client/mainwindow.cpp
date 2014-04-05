@@ -6,6 +6,7 @@ pcl::visualization::PCLVisualizer visualizer("Dont Show", false);
 std::string address = "192.168.1.71";
 std::string port = "10001";
 int normalvalues = 0;
+
 int GetRGBValue(double position, int scaleposition)
 {
     double maxdistance = 30;
@@ -131,6 +132,7 @@ MainWindow::MainWindow()
     visualizer.setShowFPS(false);
     visualizer.setCameraPosition(0,-1,-14,-16,-96,-17);
     visualizer.addPointCloud<pcl::PointXYZRGB>(mPointCloud);
+
     mUi->vtkWidget->SetRenderWindow(visualizer.getRenderWindow());
 }
 
@@ -165,7 +167,7 @@ void MainWindow::ShowPointCloud()
     {
         if(!mPauseScan)
         {
-            mMutex.lock();
+            boost::mutex::scoped_lock lock(mMutex);
             mPointCloud->clear();
             pcl_data temp;
 
@@ -189,7 +191,8 @@ void MainWindow::ShowPointCloud()
                 //Scan Methods
                 if(mUi->radioClearing->isChecked())
                 {
-                    int maxVal = 300000;
+                    int maxVal = 10000;
+                    maxVal = (int) mUi->spinClearing->value();
                     if(mDisplayData.points.size() > maxVal)
                     {
                         pcl_data temp2 = mDisplayData;
@@ -202,53 +205,15 @@ void MainWindow::ShowPointCloud()
                         }
                     }
                 }
+
                 if(mUi->radioContinuous->isChecked())
                 {
                     //do nothing
                 }
+
                 if(mUi->radioSingle->isChecked())
                 {
                     mDisplayData.points.clear();
-                }
-                if(mUi->radioFullScan->isChecked())
-                {
-                    pcl_data cachedData = mDisplayData;
-                    mDisplayData.points.clear();
-                    for(int i = 0;i<temp.points.size();i++)
-                    {
-                        cachedData.points.push_back(temp.points[i]);
-                    }
-
-                    int cacheSize = cachedData.points.size()-1;
-                    pcl_data swap;
-
-                    //Get Last Angle
-                    if(lastKnownAngle == -99) // first time
-                    {
-                        lastKnownAngle = cachedData.points[cacheSize].phi;
-                    }
-
-                    for(int i = cacheSize;i>0;i--)
-                    {
-                        double delta = std::abs(lastKnownAngle - cachedData.points[i].phi);
-                        if(delta > 350)
-                        {
-                            break;
-                        }
-
-                        swap.points.push_back(cachedData.points[i]); //added in reverse
-                    }
-
-                    //set last angle
-                    lastKnownAngle =  cachedData.points[cacheSize].phi;
-
-                   temp.points.clear();
-                   int swapSize = swap.points.size()-1;
-                   for(int i = swapSize;i>0;i--)
-                   {
-                       temp.points.push_back(swap.points[i]);
-                   }
-
                 }
 
                 //Add points to display
@@ -261,19 +226,29 @@ void MainWindow::ShowPointCloud()
                 }
 
                 globMutex.lock();
-
-                mPointCloud = convertPointsToPTR(mDisplayData.points);
-                mPointCount = mPointCloud->points.size();//mDisplayData.points.size();
-                PointQueue.clear();
-                visualizer.updatePointCloud(mPointCloud);
+                 PointQueue.clear();
                 globMutex.unlock();
+
+                double closestPoint = 1;
+                double furthestPoint = 1;
+                mPointCloud = convertPointsToPTR(mDisplayData.points,
+                                                 closestPoint,furthestPoint);
+                mPointCount = mPointCloud->points.size();
+
+                mUi->labelFurthestPoint->setText(QString::number(furthestPoint));
+                mUi->labelClosestPoint->setText(QString::number(closestPoint));
+                visualizer.updatePointCloud(mPointCloud);
+                boost::this_thread::sleep(boost::posix_time::microseconds(1000));
+                mPointCloud->clear();
             }
-            mPointCloud->clear();
+
+
+
             QString label = QString::number(mPointCount);
             mUi->labelPointCount->setText(label);
-            mMutex.unlock();
+            mUi->labelPointCount_2->setText(label);
+
             mUi->vtkWidget->update();
-            //visualizer.updateCamera();
             boost::this_thread::sleep(boost::posix_time::millisec(50));
         }
         else
@@ -284,31 +259,31 @@ void MainWindow::ShowPointCloud()
         }
     }
 }
-
+//Compatible without maximum values
+pcl::PointCloud<pcl::PointXYZRGB>::Ptr MainWindow::convertPointsToPTR(std::vector<pcl_point> points)
+{
+    double closestPoint = 1;
+    double furthestPoint = 1;
+    return convertPointsToPTR(points,closestPoint,furthestPoint);
+}
 
 pcl::PointCloud<pcl::PointXYZRGB>::Ptr MainWindow::convertPointsToPTR
-                                (std::vector<pcl_point> points)
+                                (std::vector<pcl_point> points, double &closestPoint,
+                                 double &furthestPoint)
 {
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr point_cloud_ptr
             (new pcl::PointCloud<pcl::PointXYZRGB>);
 
-    if(mUi->radioDispLive->isChecked())
-    {
-        //Capture data here first and use it in the for loop
-    }
 
     pcl::PointXYZRGB point;
-//    IplImage* image;
-//    if(mImage.IsCameraValid())
-//    {
-//        image = mImage.ObtainImage();
-//    }
+
     double maximumvalue_x = 1;
     double minimumvalue_x = 0;
     double maximumvalue_y = 1;
     double minimumvalue_y = 0;
     double maximumvalue_z = 1;
-    double minimumvalue_z = 0;
+    double minimumvalue_z = 9999999;
+    double min_allowed = 0.1;
 
     for(unsigned int i = 0; i < points.size(); i++)
     {
@@ -321,30 +296,50 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr MainWindow::convertPointsToPTR
 
         if(maximumvalue_x<std::abs(curr_x))
             maximumvalue_x = std::abs(curr_x);
-//        if(minimumvalue_x>curr_x)
-//            minimumvalue_x = curr_x;
+
+        if(minimumvalue_x>std::abs(curr_x) && std::abs(curr_x) > min_allowed)
+            minimumvalue_x = std::abs(curr_x);
 
         if(maximumvalue_y<std::abs(curr_y))
             maximumvalue_y = std::abs(curr_y);
-//        if(minimumvalue_y>curr_y)
-//            minimumvalue_y = curr_y;
+
+        if(minimumvalue_y>std::abs(curr_y) && std::abs(curr_y) > min_allowed)
+            minimumvalue_y = std::abs(curr_y);
 
         if(maximumvalue_z<std::abs(curr_z))
             maximumvalue_z = std::abs(curr_z);
-//        if(minimumvalue_z>curr_z)
-//            minimumvalue_z = curr_z;
+
+        if(minimumvalue_z>std::abs(curr_z) && std::abs(curr_z) > min_allowed)
+            minimumvalue_z = std::abs(curr_z);
+
     }
 
-    maximumvalue_x *= 0.1 + double(mUi->horizontalSlider_3->value()/ 100.0);
-    maximumvalue_x+=1.0;
-    maximumvalue_y *= 0.1 + double(mUi->horizontalSlider_4->value()/ 100.0);
-    maximumvalue_y+=1.0;
-    maximumvalue_z *= 0.1 + double(mUi->horizontalSlider_2->value()/ 100.0);
-    maximumvalue_z+=1.0;
+    maximumvalue_x *= 0.001 + double(mUi->horizontalSlider_3->value()/ 100.0);
+    maximumvalue_y *= 0.001 + double(mUi->horizontalSlider_4->value()/ 100.0);
+    maximumvalue_z *= 0.001 + double(mUi->horizontalSlider_2->value()/ 100.0);
+
+    furthestPoint = 1;
+    closestPoint = 0;
+    //Find overall furthest point
+    if(maximumvalue_x > maximumvalue_y && maximumvalue_x > maximumvalue_z)
+        furthestPoint = maximumvalue_x;
+    else if (maximumvalue_y > maximumvalue_z)
+        furthestPoint = maximumvalue_y;
+    else
+        furthestPoint = maximumvalue_z;
+
+    //find overall closest point
+    if(minimumvalue_x > minimumvalue_y && minimumvalue_x > minimumvalue_z)
+        closestPoint = minimumvalue_x;
+    else if (minimumvalue_y > minimumvalue_z)
+        closestPoint = minimumvalue_y;
+    else
+        closestPoint = minimumvalue_z;
 
    // std::cout<<"Max val X: "<<maximumvalue_x<<std::endl;
    // std::cout<<"Max val Y: "<<maximumvalue_y<<std::endl;
    // std::cout<<"Max val Z: "<<maximumvalue_z<<std::endl;
+
     for(unsigned int i = 0; i < points.size(); i++)
     {
 
@@ -369,20 +364,11 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr MainWindow::convertPointsToPTR
             {
                 point.rgb = GetRGBValue(r,mUi->slideScale->value());
             }
+
             else if(mUi->radioDispSolid->isChecked())
             {
                 //point.rgb = 16777215;
                 point.rgb = GetSolidRGBValue(r,mUi->slideScale->value());
-            }
-            else if(mUi->radioDispLive->isChecked())
-            {
-                point.rgb = 16777215;
-                //go through captured data and
-                //assign RGB values
-                if(mImage.IsCameraValid())
-                {
-                //    point.rgb = GetCameraRGBValue(image,point.x,point.y);
-                }
             }
 
         point_cloud_ptr->points.push_back (point);
@@ -395,11 +381,13 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr MainWindow::convertPointsToPTR
 
 void MainWindow::on_btnClear_clicked()
 {
-
     mMutex.lock();
     mDisplayData.points.clear();
     mPointCloud->clear();
     mUi->labelPointCount->setText("0");
+    mUi->labelPointCount_2->setText("0");
+    mUi->labelClosestPoint->setText("0");
+    mUi->labelFurthestPoint->setText("0");
     mPointCount = 0;
     visualizer.updatePointCloud(mPointCloud);
     mMutex.unlock();
@@ -617,14 +605,33 @@ void MainWindow::on_actionOpen_triggered()
         mPointCloud->clear();
         QString label = QString::number(mPointCount);
         mUi->labelPointCount->setText(label);
+        mUi->labelPointCount_2->setText(label);
         mMutex.unlock();
         mUi->vtkWidget->update();
     }
-
 }
 
 
 void MainWindow::on_actionExit_triggered()
 {
     shutdown();
+}
+
+void MainWindow::on_btnIPSAVE_clicked()
+{
+    QString qIP = mUi->txtIPADDRESS->text();
+    std::string ipAddress = qIP.toStdString();
+    boost::system::error_code ec;
+    boost::asio::ip::address::from_string( ipAddress, ec );
+
+    if(!ec)
+    {
+        address = ipAddress;
+        std::cout<<"IP address set to " << address <<std::endl;
+    }
+    else
+    {
+        std::cout<<"Error entering IP address: "<<ec<<std::endl;
+    }
+
 }

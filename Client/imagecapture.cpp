@@ -20,6 +20,7 @@ bool ImageCapture::CaptureImage(){
     return true;
 
 }
+
 IplImage* ImageCapture::getStoredImage()
 {
     return mImage;
