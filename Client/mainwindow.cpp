@@ -699,11 +699,16 @@ void MainWindow::on_actionOpen_triggered()
     std::string OpenLocation = qs.toUtf8().constData();
     if(OpenLocation!="")
     {
+        for(int i = 0;i<10;i++)
+        {
+            std::string name = boost::lexical_cast<std::string>(i);
+            visualizer.updatePointCloud<pcl::PointXYZRGB>(mPointCloud,name);
+        }
 
         mDisplayData = OpenFileData(OpenLocation);
         mPointCloud = convertPointsToPTR(mDisplayData.points);
         mPointCount = mDisplayData.points.size();
-        visualizer.updatePointCloud(mPointCloud,"display");
+        visualizer.updatePointCloud(mPointCloud,"0");
 
         mPointCloud->clear();
         QString label = QString::number(mPointCount);
