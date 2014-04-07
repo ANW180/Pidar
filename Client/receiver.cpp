@@ -81,10 +81,20 @@ public:
           tmp.phi = *reinterpret_cast<double*>(subdata_phi) ;
           dat.points.push_back(tmp);
       }
+         //Add to Queue & clear old data
+         {
+          boost::mutex::scoped_lock queuelock(globMutex);
+          if(queuelock){
+              if(PointQueue.size()>100)
+              {
+                  PointQueue.clear();
+              }
 
-      globMutex.lock();
-          PointQueue.push_back(dat);
-      globMutex.unlock();
+            PointQueue.push_back(dat);
+          }
+          //if queue is locked, skip
+
+         }
     }
 
 

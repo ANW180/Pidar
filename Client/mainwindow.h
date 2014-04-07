@@ -66,6 +66,8 @@ private slots:
 
     void on_btnIPSAVE_clicked();
 
+    void on_spinDelay_valueChanged(int arg1);
+
 private:
     vtkSmartPointer<vtkRenderer> mRenderer;
     vtkSmartPointer<vtkRenderWindow> mRenderWindow;
