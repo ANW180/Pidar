@@ -350,6 +350,9 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr MainWindow::convertPointsToPTR
     double minimumvalue_y = 0;
     double maximumvalue_z = 1;
     double minimumvalue_z = 9999999;
+    double maximumvalue_r = 0;
+    double minimumvalue_r = 9999999;
+
     double min_allowed = 0.1;
 
     for(unsigned int i = 0; i < points.size(); i++)
@@ -379,29 +382,37 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr MainWindow::convertPointsToPTR
         if(minimumvalue_z>std::abs(curr_z) && std::abs(curr_z) > min_allowed)
             minimumvalue_z = std::abs(curr_z);
 
+        if(maximumvalue_r<std::abs(r))
+            maximumvalue_r = std::abs(r);
+
+        if(minimumvalue_r>std::abs(r) && std::abs(r) > min_allowed)
+            minimumvalue_r = std::abs(r);
     }
 
     maximumvalue_x *= 0.001 + double(mUi->horizontalSlider_3->value()/ 100.0);
     maximumvalue_y *= 0.001 + double(mUi->horizontalSlider_4->value()/ 100.0);
     maximumvalue_z *= 0.001 + double(mUi->horizontalSlider_2->value()/ 100.0);
 
-    furthestPoint = 1;
-    closestPoint = 0;
-    //Find overall furthest point
-    if(maximumvalue_x > maximumvalue_y && maximumvalue_x > maximumvalue_z)
-        furthestPoint = maximumvalue_x;
-    else if (maximumvalue_y > maximumvalue_z)
-        furthestPoint = maximumvalue_y;
-    else
-        furthestPoint = maximumvalue_z;
+    furthestPoint = maximumvalue_r;
+    closestPoint = minimumvalue_r;
+//    furthestPoint = 1;
+//    closestPoint = 0;
 
-    //find overall closest point
-    if(minimumvalue_x > minimumvalue_y && minimumvalue_x > minimumvalue_z)
-        closestPoint = minimumvalue_x;
-    else if (minimumvalue_y > minimumvalue_z)
-        closestPoint = minimumvalue_y;
-    else
-        closestPoint = minimumvalue_z;
+    //Find overall furthest point
+//    if(maximumvalue_x > maximumvalue_y && maximumvalue_x > maximumvalue_z)
+//        furthestPoint = maximumvalue_x;
+//    else if (maximumvalue_y > maximumvalue_z)
+//        furthestPoint = maximumvalue_y;
+//    else
+//        furthestPoint = maximumvalue_z;
+
+//    //find overall closest point
+//    if(minimumvalue_x > minimumvalue_y && minimumvalue_x > minimumvalue_z)
+//        closestPoint = minimumvalue_x;
+//    else if (minimumvalue_y > minimumvalue_z)
+//        closestPoint = minimumvalue_y;
+//    else
+//        closestPoint = minimumvalue_z;
 
    // std::cout<<"Max val X: "<<maximumvalue_x<<std::endl;
    // std::cout<<"Max val Y: "<<maximumvalue_y<<std::endl;
@@ -443,6 +454,23 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr MainWindow::convertPointsToPTR
                 point.rgb = boost::lexical_cast<float>(16777215);
             }
 
+            double proximity_max = std::abs(r-maximumvalue_r);
+            double proximity_min = std::abs(r-minimumvalue_r);
+
+            if(mUi->checkHighlight->isChecked())
+            {
+                if(proximity_max<0.20)
+                {
+                    point.rgb = boost::lexical_cast<float>(13162495);
+                }
+
+                if(proximity_min<0.20)
+                {
+                    point.rgb = boost::lexical_cast<float>(65535);
+                }
+            }
+
+
 
         point_cloud_ptr->points.push_back (point);
 
@@ -462,7 +490,11 @@ void MainWindow::on_btnClear_clicked()
     mUi->labelClosestPoint->setText("0");
     mUi->labelFurthestPoint->setText("0");
     mPointCount = 0;
-    visualizer.updatePointCloud(mPointCloud,"display");
+    for(int i = 0;i<10;i++)
+    {
+        std::string name = boost::lexical_cast<std::string>(i);
+        visualizer.updatePointCloud<pcl::PointXYZRGB>(mPointCloud,name);
+    }
     mMutex.unlock();
     mUi->vtkWidget->update();
 }

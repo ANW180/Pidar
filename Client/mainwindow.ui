@@ -583,7 +583,7 @@
          <rect>
           <x>130</x>
           <y>40</y>
-          <width>471</width>
+          <width>391</width>
           <height>16</height>
          </rect>
         </property>
@@ -640,6 +640,19 @@
           </widget>
          </item>
         </layout>
+       </widget>
+       <widget class="QCheckBox" name="checkHighlight">
+        <property name="geometry">
+         <rect>
+          <x>140</x>
+          <y>10</y>
+          <width>141</width>
+          <height>21</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Highlight Max/Min</string>
+        </property>
        </widget>
       </widget>
       <widget class="QWidget" name="tab">
