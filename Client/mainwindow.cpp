@@ -287,6 +287,10 @@ void MainWindow::ShowPointCloud()
 
                     if(id<9)
                     {
+                        if(id==1)
+                        {
+                            visualizer.updatePointCloud(BlankPTR,"9");
+                        }
                         std::string oldname = boost::lexical_cast<std::string>(id-1);
                         visualizer.updatePointCloud(BlankPTR,oldname);
                         boost::this_thread::sleep(boost::posix_time::millisec(5));
@@ -482,6 +486,15 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr MainWindow::convertPointsToPTR
 
 void MainWindow::on_btnClear_clicked()
 {
+    bool waspaused = false;
+    if(!mPauseScan)
+    {
+    mPauseScan = true;
+    }
+    else
+    {
+        waspaused = true;
+    }
     mMutex.lock();
     mDisplayData.points.clear();
     mPointCloud->clear();
@@ -496,6 +509,14 @@ void MainWindow::on_btnClear_clicked()
         visualizer.updatePointCloud<pcl::PointXYZRGB>(mPointCloud,name);
     }
     mMutex.unlock();
+
+
+    if(!waspaused)
+    {
+    mPauseScan = false;
+    }
+
+
     mUi->vtkWidget->update();
 }
 
