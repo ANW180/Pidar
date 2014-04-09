@@ -276,6 +276,7 @@ void MainWindow::ShowPointCloud()
                     double furthestPoint = 1;
                     mPointCloud = convertPointsToPTR(mDisplayData.points,
                                                      closestPoint,furthestPoint);
+
                     mPointCount = mPointCloud->points.size();
 
                     mUi->labelFurthestPoint->setText(QString::number(furthestPoint));
@@ -737,6 +738,14 @@ void MainWindow::on_actionOpen_triggered()
         mUi->labelPointCount_2->setText(label);
         mMutex.unlock();
         mUi->vtkWidget->update();
+
+        //Mesh
+//        pcl::PolygonMesh mesh;
+//        meshRender render;
+//        mesh = render.CreateMesh(OpenFileData(OpenLocation));
+//        visualizer.addPolygonMesh(mesh);
+//        mUi->vtkWidget->update();
+
     }
 }
 

@@ -25,6 +25,8 @@ LIBS += -LC/usr/lib \
 -lpcl_io \
 -lpcl_io_ply \
 -lpcl_visualization \
+-lpcl_search \
+-lpcl_surface \
 
 #VTK (For PCL)
 LIBS += -LC/usr/lib \
@@ -51,10 +53,12 @@ INCLUDEPATH += /usr/include/boost \
 SOURCES += main.cpp\
         mainwindow.cpp \
         receiver.cpp \
-    imagecapture.cpp
+    imagecapture.cpp \
+    meshrender.cpp
 
 HEADERS  += mainwindow.h \
     receiver.h \
-    imagecapture.h
+    imagecapture.h \
+    meshrender.h
 
 FORMS    += mainwindow.ui

@@ -6,6 +6,7 @@
 #include <boost/thread.hpp>
 #include "opencv2/core/core.hpp"
 
+
 class ImageCapture
 {
 public:
