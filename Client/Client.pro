@@ -27,6 +27,7 @@ LIBS += -LC/usr/lib \
 -lpcl_visualization \
 -lpcl_search \
 -lpcl_surface \
+-lpcl_filters \
 
 #VTK (For PCL)
 LIBS += -LC/usr/lib \

@@ -274,8 +274,11 @@ void MainWindow::ShowPointCloud()
 
                     double closestPoint = 1;
                     double furthestPoint = 1;
+
                     mPointCloud = convertPointsToPTR(mDisplayData.points,
                                                      closestPoint,furthestPoint);
+
+
 
                     mPointCount = mPointCloud->points.size();
 
@@ -458,6 +461,25 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr MainWindow::convertPointsToPTR
         point_cloud_ptr->points.push_back (point);
 
     }
+
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr tempCloudPtr;
+
+
+    // Filtering (with 350,000 point cap)
+    if(!mUi->radioShowAllPoints->isChecked() && point_cloud_ptr->points.size()<350000)
+    {
+        tempCloudPtr = point_cloud_ptr;
+        pcl::StatisticalOutlierRemoval<pcl::PointXYZRGB> sor;
+        sor.setInputCloud (tempCloudPtr);
+        sor.setMeanK (mUi->spinNeighbors->value());
+        sor.setStddevMulThresh (mUi->spinSTDDEV->value());
+        if(mUi->radioShowOnlyOutliers->isChecked())
+        {
+            sor.setNegative(true);
+        }
+        sor.filter (*point_cloud_ptr);
+    }
+
     point_cloud_ptr->width = (int) point_cloud_ptr->points.size ();
     point_cloud_ptr->height = 1;
     return point_cloud_ptr;
