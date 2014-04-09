@@ -286,6 +286,8 @@ void MainWindow::ShowPointCloud()
                                                 (pcl::PointCloud<pcl::PointXYZRGB>::Ptr
                                                          (new pcl::PointCloud<pcl::PointXYZRGB>));
 
+                    //Display clouds labled "1" - "9" in a rotating manner
+                    // This is strictly a workaround method due to segfaults
                     if(id<9)
                     {
                         if(id==1)
@@ -306,9 +308,6 @@ void MainWindow::ShowPointCloud()
                         id = 1;
                     }
                     boost::this_thread::sleep(boost::posix_time::millisec(5));
-
-
-
                     mPointCloud->clear();
             }
             QString label = QString::number(mPointCount);
@@ -331,6 +330,7 @@ void MainWindow::ShowPointCloud()
         }
     }
 }
+
 //Compatible without maximum values
 pcl::PointCloud<pcl::PointXYZRGB>::Ptr MainWindow::convertPointsToPTR(std::vector<pcl_point> points)
 {
@@ -400,28 +400,6 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr MainWindow::convertPointsToPTR
 
     furthestPoint = maximumvalue_r;
     closestPoint = minimumvalue_r;
-//    furthestPoint = 1;
-//    closestPoint = 0;
-
-    //Find overall furthest point
-//    if(maximumvalue_x > maximumvalue_y && maximumvalue_x > maximumvalue_z)
-//        furthestPoint = maximumvalue_x;
-//    else if (maximumvalue_y > maximumvalue_z)
-//        furthestPoint = maximumvalue_y;
-//    else
-//        furthestPoint = maximumvalue_z;
-
-//    //find overall closest point
-//    if(minimumvalue_x > minimumvalue_y && minimumvalue_x > minimumvalue_z)
-//        closestPoint = minimumvalue_x;
-//    else if (minimumvalue_y > minimumvalue_z)
-//        closestPoint = minimumvalue_y;
-//    else
-//        closestPoint = minimumvalue_z;
-
-   // std::cout<<"Max val X: "<<maximumvalue_x<<std::endl;
-   // std::cout<<"Max val Y: "<<maximumvalue_y<<std::endl;
-   // std::cout<<"Max val Z: "<<maximumvalue_z<<std::endl;
 
     for(unsigned int i = 0; i < points.size(); i++)
     {
