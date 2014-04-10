@@ -16,6 +16,8 @@
 #include <boost/asio.hpp>
 #include "imagecapture.h"
 #include <QDialog>
+#include "meshrender.h"
+#include <pcl/filters/statistical_outlier_removal.h>
 
 using boost::asio::ip::udp;
 enum { max_length = 1024 };

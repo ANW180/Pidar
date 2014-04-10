@@ -274,8 +274,12 @@ void MainWindow::ShowPointCloud()
 
                     double closestPoint = 1;
                     double furthestPoint = 1;
+
                     mPointCloud = convertPointsToPTR(mDisplayData.points,
                                                      closestPoint,furthestPoint);
+
+
+
                     mPointCount = mPointCloud->points.size();
 
                     mUi->labelFurthestPoint->setText(QString::number(furthestPoint));
@@ -285,6 +289,8 @@ void MainWindow::ShowPointCloud()
                                                 (pcl::PointCloud<pcl::PointXYZRGB>::Ptr
                                                          (new pcl::PointCloud<pcl::PointXYZRGB>));
 
+                    //Display clouds labled "1" - "9" in a rotating manner
+                    // This is strictly a workaround method due to segfaults
                     if(id<9)
                     {
                         if(id==1)
@@ -305,9 +311,6 @@ void MainWindow::ShowPointCloud()
                         id = 1;
                     }
                     boost::this_thread::sleep(boost::posix_time::millisec(5));
-
-
-
                     mPointCloud->clear();
             }
             QString label = QString::number(mPointCount);
@@ -330,6 +333,7 @@ void MainWindow::ShowPointCloud()
         }
     }
 }
+
 //Compatible without maximum values
 pcl::PointCloud<pcl::PointXYZRGB>::Ptr MainWindow::convertPointsToPTR(std::vector<pcl_point> points)
 {
@@ -399,28 +403,6 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr MainWindow::convertPointsToPTR
 
     furthestPoint = maximumvalue_r;
     closestPoint = minimumvalue_r;
-//    furthestPoint = 1;
-//    closestPoint = 0;
-
-    //Find overall furthest point
-//    if(maximumvalue_x > maximumvalue_y && maximumvalue_x > maximumvalue_z)
-//        furthestPoint = maximumvalue_x;
-//    else if (maximumvalue_y > maximumvalue_z)
-//        furthestPoint = maximumvalue_y;
-//    else
-//        furthestPoint = maximumvalue_z;
-
-//    //find overall closest point
-//    if(minimumvalue_x > minimumvalue_y && minimumvalue_x > minimumvalue_z)
-//        closestPoint = minimumvalue_x;
-//    else if (minimumvalue_y > minimumvalue_z)
-//        closestPoint = minimumvalue_y;
-//    else
-//        closestPoint = minimumvalue_z;
-
-   // std::cout<<"Max val X: "<<maximumvalue_x<<std::endl;
-   // std::cout<<"Max val Y: "<<maximumvalue_y<<std::endl;
-   // std::cout<<"Max val Z: "<<maximumvalue_z<<std::endl;
 
     for(unsigned int i = 0; i < points.size(); i++)
     {
@@ -479,6 +461,25 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr MainWindow::convertPointsToPTR
         point_cloud_ptr->points.push_back (point);
 
     }
+
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr tempCloudPtr;
+
+
+    // Filtering (with 350,000 point cap)
+    if(!mUi->radioShowAllPoints->isChecked() && point_cloud_ptr->points.size()<350000)
+    {
+        tempCloudPtr = point_cloud_ptr;
+        pcl::StatisticalOutlierRemoval<pcl::PointXYZRGB> sor;
+        sor.setInputCloud (tempCloudPtr);
+        sor.setMeanK (mUi->spinNeighbors->value());
+        sor.setStddevMulThresh (mUi->spinSTDDEV->value());
+        if(mUi->radioShowOnlyOutliers->isChecked())
+        {
+            sor.setNegative(true);
+        }
+        sor.filter (*point_cloud_ptr);
+    }
+
     point_cloud_ptr->width = (int) point_cloud_ptr->points.size ();
     point_cloud_ptr->height = 1;
     return point_cloud_ptr;
@@ -737,6 +738,14 @@ void MainWindow::on_actionOpen_triggered()
         mUi->labelPointCount_2->setText(label);
         mMutex.unlock();
         mUi->vtkWidget->update();
+
+        //Mesh
+//        pcl::PolygonMesh mesh;
+//        meshRender render;
+//        mesh = render.CreateMesh(OpenFileData(OpenLocation));
+//        visualizer.addPolygonMesh(mesh);
+//        mUi->vtkWidget->update();
+
     }
 }
 
