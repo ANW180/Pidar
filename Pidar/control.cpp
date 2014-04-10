@@ -228,7 +228,7 @@ bool Control::Initialize()
         double delta_position = 0.0;
         if (previousMotorPosition < currentMotorPosition)
         {
-            delta_position = ((360 - previousMotorPosition) -
+            delta_position = ((360.0 - previousMotorPosition) -
                              currentMotorPosition);
         }
         else
@@ -244,7 +244,7 @@ bool Control::Initialize()
                 pcl_point point;
                 point.r = (laserscan[i]).GetX();
                 point.theta = (laserscan[i]).GetY();
-                point.phi = 360 - (previousMotorPosition +
+                point.phi = 360.0 - (previousMotorPosition +
                                   (i * (delta_position / scancnt)));
                 tmp.points.push_back(point);
             }
