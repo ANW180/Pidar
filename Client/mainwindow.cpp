@@ -367,7 +367,10 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr MainWindow::convertPointsToPTR
     {
         double r = points[i].r;
         double theta = points[i].theta;
-        double phi = DEG2RAD(points[i].phi);
+        double offset = double(mUi->spinRotationOffset->value());
+        double phi = DEG2RAD(fmod(points[i].phi+offset,360.0));
+
+
         double curr_x = r * sin(theta) * cos(phi);
         double curr_y = r * sin(theta) * sin(phi);
         double curr_z = r * cos(theta);
@@ -390,19 +393,14 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr MainWindow::convertPointsToPTR
         if(minimumvalue_z>std::abs(curr_z) && std::abs(curr_z) > min_allowed)
             minimumvalue_z = std::abs(curr_z);
 
-        if(maximumvalue_r<std::abs(r))
-            maximumvalue_r = std::abs(r);
 
-        if(minimumvalue_r>std::abs(r) && std::abs(r) > min_allowed)
-            minimumvalue_r = std::abs(r);
     }
 
     maximumvalue_x *= 0.001 + double(mUi->horizontalSlider_3->value()/ 100.0);
     maximumvalue_y *= 0.001 + double(mUi->horizontalSlider_4->value()/ 100.0);
     maximumvalue_z *= 0.001 + double(mUi->horizontalSlider_2->value()/ 100.0);
 
-    furthestPoint = maximumvalue_r;
-    closestPoint = minimumvalue_r;
+
 
     for(unsigned int i = 0; i < points.size(); i++)
     {
@@ -410,7 +408,9 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr MainWindow::convertPointsToPTR
             //TODO: Convert these to cartesian
             double r = points[i].r;
             double theta = points[i].theta;
-            double phi = DEG2RAD(points[i].phi);
+            //double phi = DEG2RAD(points[i].phi);
+            double offset = double(mUi->spinRotationOffset->value());
+            double phi = DEG2RAD(fmod(points[i].phi+offset,360.0)); //offset
             point.x = r * sin(theta) * cos(phi);
             point.y = r * sin(theta) * sin(phi);
             point.z = r * cos(theta);
@@ -422,6 +422,12 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr MainWindow::convertPointsToPTR
             if(point.z > maximumvalue_z || point.z < (-1.0*maximumvalue_z))
                 continue;
 
+
+            if(maximumvalue_r<std::abs(r))
+                maximumvalue_r = std::abs(r);
+
+            if(minimumvalue_r>std::abs(r) && std::abs(r) > min_allowed)
+                minimumvalue_r = std::abs(r);
 
             point.rgb = 16777215; //default to white
             if(mUi->radioDispRGB->isChecked())
@@ -461,6 +467,9 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr MainWindow::convertPointsToPTR
         point_cloud_ptr->points.push_back (point);
 
     }
+
+    furthestPoint = maximumvalue_r;
+    closestPoint = minimumvalue_r;
 
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr tempCloudPtr;
 
