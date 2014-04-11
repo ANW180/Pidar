@@ -381,7 +381,7 @@ int main()
 {
     maincontrol = new Pidar::Control();
     maincontrol->Initialize();
-    globMotorSpeed = 10;
+    globMotorSpeed = 1;
     int restartCnt = 0;
     maincontrol->StartMotor(globMotorSpeed);
     sleep(1);

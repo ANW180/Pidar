@@ -157,7 +157,10 @@ void Hokuyo::ProcessingThread()
                    mpHokuyoScan[index] <= urg->max_distance) */
                 // Convert to meteres/radians. Save into appropriate data
                 // structure.
-                point.SetX(mpHokuyoScan[index]/1000.0);
+                {
+                    boost::mutex::scoped_lock lock(mMutex);
+                    point.SetX(mpHokuyoScan[index]/1000.0);
+                }
                 point.SetY(-1.0 * urg_step2rad(urg, i));
                 scan.push_back(point);
                 index++;

@@ -17,6 +17,8 @@
 #include <fstream>
 
 #define HOKUYOSYNCPIN 17
+#define LEDPIN 10
+#define SHUTDOWNPIN 4
 
 
 namespace Pidar
