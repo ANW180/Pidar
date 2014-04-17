@@ -586,6 +586,31 @@ void MainWindow::on_slideScale_valueChanged(int value)
     //nothing
 }
 
+void MainWindow::WritePointsToFileFromPTR(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud, std::string filename)
+{
+    std::ofstream outputFile;
+    outputFile.open(filename.c_str());
+    std::string delimit = ",";
+    for(int i = 0;i<cloud->points.size();i++)
+    {
+        int colour = cloud->points[i].rgb;
+        int r = (colour >> 16) & 0xff;
+        int g = (colour >> 8) & 0xff;
+        int b = colour & 0xff;
+
+        outputFile << cloud->points[i].x << delimit
+                   << cloud->points[i].y << delimit
+                   << cloud->points[i].z << delimit
+                   << r << delimit
+                   << g << delimit
+                   << b << endl;
+
+    }
+
+    outputFile.close();
+   // std::cout << "Wrote "<<data->points.size() <<" points, to file: "<<filename<<std::endl;
+}
+
 void MainWindow::WritePointsToFile(pcl_data data, std::string filename)
 {
     std::ofstream outputFile;
@@ -620,7 +645,7 @@ void MainWindow::on_actionSave_triggered()
     }
 
     QString qs = QFileDialog::getSaveFileName(this,tr("Select Save Location"),
-                                              "/home",tr("Raw PointCloud (*.csv);;MeshLabXYZ (*.xyz)"));
+                                              "/home",tr("Raw PointCloud (*.csv);;MeshLabXYZ (*.xyz);;XYZRGB (*.xyzrgb)"));
 
     std::string SaveLocation = qs.toUtf8().constData();
     if(SaveLocation != "")
@@ -643,6 +668,28 @@ void MainWindow::on_actionSave_triggered()
                     Cartesian.points.push_back(tmp);
             }
              WritePointsToFile(Cartesian,SaveLocation);
+
+        }
+        else if(SaveLocation.substr(SaveLocation.find_last_of(".") + 1) == "xyzrgb")
+        {
+            pcl_data Cartesian;
+            for(unsigned int i = 0; i < mDisplayData.points.size(); i++)
+            {
+                pcl_point tmp;
+                    //Convert these to cartesian
+                    double r = mDisplayData.points[i].r;
+                    double theta = mDisplayData.points[i].theta;
+                    double phi = DEG2RAD(mDisplayData.points[i].phi);
+
+                    tmp.r = r * sin(theta) * cos(phi);      //actually X
+                    tmp.theta = r * sin(theta) * sin(phi);  //actually Y
+                    tmp.phi = r * cos(theta);               //actually Z
+
+                    Cartesian.points.push_back(tmp);
+            }
+            pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud = convertPointsToPTR(Cartesian.points);
+
+             WritePointsToFileFromPTR(cloud,SaveLocation);
 
         }
         else

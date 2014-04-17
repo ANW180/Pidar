@@ -42,6 +42,7 @@ public:
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr convertPointsToPTR(std::vector<pcl_point> points);
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr convertPointsToPTR(std::vector<pcl_point> points,
                                                               double &closestPoint, double &furthestPoint);
+    void WritePointsToFileFromPTR(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud, std::string filename);
     int GetCameraRGBValue(IplImage* image, double x, double y);
     void TogglePauseScan();
     void WritePointsToFile(pcl_data data, std::string filename);
