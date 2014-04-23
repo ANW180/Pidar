@@ -15,7 +15,9 @@ int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
     MainWindow window;
-    window.mWebThread = boost::thread(boost::bind(&boost::asio::io_service::run, &io_service));
+    window.mWebThread = boost::thread(
+                        boost::bind(&boost::asio::io_service::run,
+                                    &io_service));
 
     sleep(1);
 

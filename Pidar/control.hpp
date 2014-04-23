@@ -45,13 +45,13 @@ namespace Pidar
     public:
         DynamixelCallback(){}
         ~DynamixelCallback(){}
-        virtual void ProcessServoData(const double& pos,
+        virtual void ProcessServoData(const float& pos,
                                       const timespec& timestamp)
         {
             mMotorAngle = pos;
             mTimeStamp = timestamp;
         }
-        double mMotorAngle;
+        float mMotorAngle;
         timespec mTimeStamp;
     };
 
@@ -74,9 +74,9 @@ namespace Pidar
         ///
         ///  Motor Functions
         ///
-        double GetMotorPositionDegrees();
-        double GetMotorPreviousPositionDegrees();
-        void SetMotorPreviousPositionDegrees(double val);
+        float GetMotorPositionDegrees();
+        float GetMotorPreviousPositionDegrees();
+        void SetMotorPreviousPositionDegrees(float val);
         bool isMotorConnected();
         void StartMotor(int rpm);
         void StopMotor();
@@ -84,7 +84,7 @@ namespace Pidar
         ///
         /// Laser Functions
         ///
-        double GetLaserPositionPolar();
+        float GetLaserPositionPolar();
         std::vector<Point3D> GetLaserScan();
         void StopLaser();
 
@@ -92,8 +92,8 @@ namespace Pidar
         /// Scan Management Functions
         ///
         void AddToScanQueue(std::vector<Point3D> laserscan,
-                                   double currentMotorPosition,
-                                   double previousMotorPosition);
+                                   float currentMotorPosition,
+                                   float previousMotorPosition);
         bool StartISR();
         Laser::Hokuyo* GetLaserPtr()
         {
@@ -106,8 +106,8 @@ namespace Pidar
         std::vector<Point3D> mScan;
         time_t mLaserTimestamp;
         time_t mMotorTimestamp;
-        double mStartScanAngle;
-        double mStopScanAngle;
+        float mStartScanAngle;
+        float mStopScanAngle;
         DynamixelCallback mpMotorcallback;
         LaserCallback mpLasercallback;
         pcl_data mPointCloud;

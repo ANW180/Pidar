@@ -9,8 +9,11 @@
 ////////////////////////////////////////////////////////////////////////////////
 #include "control.hpp"
 #include "global.hpp"
-double current_position;
-double previous_position;
+#include <sys/types.h>
+#include <ifaddrs.h>
+
+float current_position;
+float previous_position;
 std::vector<Point3D> laserscan;
 std::deque<pcl_data> SendPoints;
 int globMotorSpeed = 0;
@@ -53,11 +56,6 @@ void InterruptService(void)
         previous_position = maincontrol->GetMotorPreviousPositionDegrees();
         if(current_position == previous_position)
         {
-//            std::cout.precision(15);
-//            std::cout << "Angle Diff: "
-//                      << fabs(current_position - previous_position)
-//                      << std::endl;
-            return;
         }
         //Update Previous Motor Position
         maincontrol->SetMotorPreviousPositionDegrees(current_position);
@@ -98,19 +96,36 @@ bool Control::Initialize()
     bool enableLaser = true;
     bool enableMotor = true;
     bool enableISR = true;
+    int restartCount = 0;
 
     if(enableLaser)
     {
         laser->RegisterCallback(&mpLasercallback);
-        laser->Initialize();
-    }
 
+        while(!laser->Initialize())
+        {
+            restartCount++;
+            sleep(1);
+            if(restartCount > 3)
+            {
+                return false;
+            }
+        }
+
+    }
     if(enableMotor)
     {
         motor->RegisterCallback(&mpMotorcallback);
-        motor->Initialize();
+        while(!motor->Initialize())
+        {
+            restartCount++;
+            sleep(1);
+            if(restartCount > 3)
+            {
+                return false;
+            }
+        }
     }
-    sleep(1);
     if(enableISR)
     {
         if (wiringPiSetupSys () < 0)
@@ -129,10 +144,8 @@ bool Control::Initialize()
             fprintf (stderr, "Unable to setup ISR: %s\n", strerror (errno));
         }
         // Setup LED pin mode
-        system("gpio export 10 out");
-        sleep(1);
+        //system("gpio export 10 out");
         pinMode(LEDPIN, OUTPUT);
-        sleep(1);
     }
     return true;
 }
@@ -141,17 +154,17 @@ bool Control::Initialize()
 ///
 ///  Motor Functions
 ///
-double Control::GetMotorPositionDegrees()
+float Control::GetMotorPositionDegrees()
 {
     return motor->GetPositionDegrees();
 }
 
-double Control::GetMotorPreviousPositionDegrees()
+float Control::GetMotorPreviousPositionDegrees()
 {
     return motor->GetPreviousPositionDegrees();
 }
 
-void Control::SetMotorPreviousPositionDegrees(double val)
+void Control::SetMotorPreviousPositionDegrees(float val)
 {
     motor->SetPreviousPositionDegrees(val);
 }
@@ -189,13 +202,15 @@ std::vector<Point3D> Control::GetLaserScan()
 
 
 void Control::AddToScanQueue(std::vector<Point3D> laserscan,
-                             double currentMotorPosition,
-                             double previousMotorPosition)
+                             float currentMotorPosition,
+                             float previousMotorPosition)
 {
     int scancnt = laserscan.size();//1080;
+
     //Check for complete scan & get delta
-    double delta_position = 0.0;
-    if(previousMotorPosition < currentMotorPosition)
+    float delta_position = 0.0;
+    if(previousMotorPosition < currentMotorPosition &&
+       fabs(previousMotorPosition - currentMotorPosition) > 25.0)
     {
         delta_position = ((360.0 - previousMotorPosition) -
                          currentMotorPosition);
@@ -213,34 +228,39 @@ void Control::AddToScanQueue(std::vector<Point3D> laserscan,
             pcl_point point;
             point.r = (laserscan[i]).GetX();
             point.theta = (laserscan[i]).GetY();
-            point.phi = 360.0 - double(previousMotorPosition +
+            point.phi = 360.0 - float(previousMotorPosition +
                                 (i * (delta_position / scancnt)));
             tmp.points.push_back(point);
         }
         //Add scan to queue
         SendPoints.push_back(tmp);
-        }
+    }
 }
+
 
 bool Control::StartISR()
 {
     bool result = true;
     if (wiringPiSetupSys () < 0)
     {
-        fprintf (stderr, "Unable to setup wiringPi: %s\n", strerror (errno));
+        fprintf(stderr, "Unable to setup wiringPi: %s\n", strerror (errno));
         result = false;
-        //   return 1;
     }
     // set Pin 17/0 generate an interrupt on low-to-high transitions
     // and attach myInterrupt() to the interrupt
-    if (wiringPiISR (HOKUYOSYNCPIN, INT_EDGE_RISING, InterruptService) < 0)
+    if (wiringPiISR(HOKUYOSYNCPIN, INT_EDGE_RISING, InterruptService) < 0)
     {
-        fprintf (stderr, "Unable to setup ISR: %s\n", strerror (errno));
+        fprintf(stderr, "Unable to setup ISR: %s\n", strerror (errno));
         result = false;
-        //   return 1;
     }
+    if (wiringPiISR(SHUTDOWNPIN, INT_EDGE_RISING, InterruptServiceStop) < 0)
+    {
+        fprintf(stderr, "Unable to setup ISR: %s\n", strerror (errno));
+        result = false;
+    }
+    // Setup LED pin mode
+    //system("gpio export 10 out");
+    pinMode(LEDPIN, OUTPUT);
     return result;
 }
-
-
 /*End of File */

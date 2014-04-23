@@ -131,9 +131,9 @@ void Dynamixel::StopCaptureThread()
 /** Sets speed of motor in RPM given a direction
     \param[in] RPM to set (RX-24: 0~114 RPM, MX-28: 0~54 RPM)
     \param[in] true to move CW, false to move CCW*/
-void Dynamixel::SetSpeedRpm(const double rpm, const bool clockwise)
+void Dynamixel::SetSpeedRpm(const float rpm, const bool clockwise)
 {
-    double val = rpm / MX28_RPM_PER_UNIT;
+    float val = rpm / MX28_RPM_PER_UNIT;
     if(val > 1023.0)
     {
         val = 1023.0;
@@ -151,7 +151,7 @@ void Dynamixel::SetSpeedRpm(const double rpm, const bool clockwise)
 
 /** Get current position of servo
     \returns Position of motor in degrees */
-double Dynamixel::GetPositionDegrees()
+float Dynamixel::GetPositionDegrees()
 {
     boost::mutex::scoped_lock scopedLock(mMutex);
     return mPresentPositionDegrees;
@@ -160,7 +160,7 @@ double Dynamixel::GetPositionDegrees()
 
 /** Get previous position of servo
     \returns Previous position of motor in degrees */
-double Dynamixel::GetPreviousPositionDegrees()
+float Dynamixel::GetPreviousPositionDegrees()
 {
     boost::mutex::scoped_lock scopedLock(mMutex);
     return mPreviousPositionDegrees;
@@ -169,7 +169,7 @@ double Dynamixel::GetPreviousPositionDegrees()
 
 /** Sets previous position of servo at some earlier time.
     \param[in] Previous position of motor in degrees */
-void Dynamixel::SetPreviousPositionDegrees(double val)
+void Dynamixel::SetPreviousPositionDegrees(float val)
 {
     boost::mutex::scoped_lock scopedLock(mMutex);
     mPreviousPositionDegrees = val;

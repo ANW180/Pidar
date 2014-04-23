@@ -33,8 +33,12 @@ const int transmission_delay = 2; //milliseconds
             x.phi = 0.0;
             w.points.push_back(x);
             clouds_.push_back(w);
-        std::cout<<"Sending Data"<<std::endl;
-        std::cout<<"on "<<endpoint_.address()<<":"<<endpoint_.port()<<std::endl;
+        std::cout << "Sending Data"
+                  << std::endl;
+        std::cout << "on "
+                  << endpoint_.address()
+                  << ":" << endpoint_.port()
+                  << std::endl;
         socket_.async_send_to(
             boost::asio::buffer(clouds_), endpoint_,
             boost::bind(&server::handle_send_to, this,
@@ -46,7 +50,8 @@ const int transmission_delay = 2; //milliseconds
         if (!error)
         {
           //wait one millisecond
-          timer_.expires_from_now(boost::posix_time::milliseconds(transmission_delay));
+          timer_.expires_from_now(boost::posix_time::milliseconds(
+                                         transmission_delay));
           timer_.async_wait(
               boost::bind(&server::handle_timeout, this,
                 boost::asio::placeholders::error));
@@ -66,8 +71,6 @@ const int transmission_delay = 2; //milliseconds
           {
               clouds_.push_back(SendPoints.front());
               SendPoints.pop_front();
-//              std::cout<<"Sending Public Scan"<<std::endl;
-//              std::cout<<"on "<<endpoint_.address()<<":"<<endpoint_.port()<<std::endl;
               socket_.async_send_to(
                           boost::asio::buffer(clouds_[0].points), endpoint_,
                   boost::bind(&server::handle_send_to, this,

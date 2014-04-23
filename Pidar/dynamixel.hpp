@@ -38,9 +38,7 @@
 #define P_MOVING_SPEED_H        33
 #define P_TORQUE_LIMIT_L        34
 #define P_TORQUE_LIMIT_H        35
-#define RX24_RPM_PER_UNIT       0.111
 #define MX28_RPM_PER_UNIT       0.053
-#define RX24_DEG_PER_UNIT       0.29
 #define MX28_DEG_PER_UNIT       0.088
 
 namespace Motor
@@ -61,7 +59,7 @@ namespace Motor
         typedef std::set<Callback*> Set;
         /** Function called when new data becomes available from the laser,
             \param[in] Position data. */
-        virtual void ProcessServoData(const double& pos,
+        virtual void ProcessServoData(const float& pos,
                                       const timespec& timestamp) = 0;
     };
     ////////////////////////////////////////////////////////////////////////////
@@ -92,14 +90,14 @@ namespace Motor
         /** Sets speed of motor in RPM given a direction
             \param[in] RPM to set (RX-24: 0~114 RPM, MX-28: 0~54 RPM)
             \param[in] true to move CW, false to move CCW*/
-        virtual void SetSpeedRpm(const double rpm, const bool clockwise);
+        virtual void SetSpeedRpm(const float rpm, const bool clockwise);
         /** Get current position of servo
             \returns Position of motor in degrees*/
-        virtual double GetPositionDegrees();
+        virtual float GetPositionDegrees();
 
-        virtual double GetPreviousPositionDegrees();
+        virtual float GetPreviousPositionDegrees();
 
-        void SetPreviousPositionDegrees(double val);
+        void SetPreviousPositionDegrees(float val);
 
         /** Prints to screen the result of a wirte/read to the dynamixel */
         static void PrintCommStatus(int CommStatus);
@@ -145,8 +143,8 @@ namespace Motor
         Callback::Set mCallbacks;
         boost::mutex mMutex;
         int mCommandSpeedRpm;
-        double mPresentPositionDegrees;
-        double mPreviousPositionDegrees;
+        float mPresentPositionDegrees;
+        float mPreviousPositionDegrees;
         bool mCommandSpeedFlag;
         bool mFirstMotorReadFlag;
         timespec mPrevReadTimeStamp;

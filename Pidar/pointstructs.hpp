@@ -15,9 +15,9 @@
 
 typedef struct pcl_point
 {
-    double r;
-    double theta;
-    double phi;
+    float r;
+    float theta;
+    float phi;
     template <typename Archive>
     void serialize(Archive& ar, const unsigned int version)
     {

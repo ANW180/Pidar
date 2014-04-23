@@ -11,13 +11,13 @@ unsigned int refreshDelay = 100;
 
 int GetRGBValue(double position, int scaleposition)
 {
-    if(position<0)
+    if(position < 0)
     {
         position *= -1;
     }
     double maxdistance = 30;
-    double scale = scaleposition/maxdistance;
-    position *=scale;
+    double scale = scaleposition / maxdistance;
+    position *= scale;
 
     //Don't allow higher than maximum values
     if (position > maxdistance)
@@ -352,42 +352,42 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr MainWindow::convertPointsToPTR
 
     pcl::PointXYZRGB point;
 
-    double maximumvalue_x = 1;
-    double minimumvalue_x = 0;
-    double maximumvalue_y = 1;
-    double minimumvalue_y = 0;
-    double maximumvalue_z = 1;
-    double minimumvalue_z = 9999999;
-    double maximumvalue_r = 0;
-    double minimumvalue_r = 9999999;
+    float maximumvalue_x = 1;
+    float minimumvalue_x = 0;
+    float maximumvalue_y = 1;
+    float minimumvalue_y = 0;
+    float maximumvalue_z = 1;
+    float minimumvalue_z = 9999999;
+    float maximumvalue_r = 0;
+    float minimumvalue_r = 9999999;
 
-    double min_allowed = 0.1;
+    float min_allowed = 0.1;
 
     for(unsigned int i = 0; i < points.size(); i++)
     {
-        double r = points[i].r;
-        double theta = points[i].theta;
-        double offset = double(mUi->spinRotationOffset->value());
-        double phi = DEG2RAD(fmod(points[i].phi+offset,360.0));
+        float r = points[i].r;
+        float theta = points[i].theta;
+        float offset = float(mUi->spinRotationOffset->value());
+        float phi = DEG2RAD(fmod(points[i].phi+offset,360.0));
 
 
-        double curr_x = r * sin(theta) * cos(phi);
-        double curr_y = r * sin(theta) * sin(phi);
-        double curr_z = r * cos(theta);
+        float curr_x = r * sin(theta) * cos(phi);
+        float curr_y = r * sin(theta) * sin(phi);
+        float curr_z = r * cos(theta);
 
-        if(maximumvalue_x<std::abs(curr_x))
+        if(maximumvalue_x < std::abs(curr_x))
             maximumvalue_x = std::abs(curr_x);
 
-        if(minimumvalue_x>std::abs(curr_x) && std::abs(curr_x) > min_allowed)
+        if(minimumvalue_x > std::abs(curr_x) && std::abs(curr_x) > min_allowed)
             minimumvalue_x = std::abs(curr_x);
 
-        if(maximumvalue_y<std::abs(curr_y))
+        if(maximumvalue_y < std::abs(curr_y))
             maximumvalue_y = std::abs(curr_y);
 
-        if(minimumvalue_y>std::abs(curr_y) && std::abs(curr_y) > min_allowed)
+        if(minimumvalue_y > std::abs(curr_y) && std::abs(curr_y) > min_allowed)
             minimumvalue_y = std::abs(curr_y);
 
-        if(maximumvalue_z<std::abs(curr_z))
+        if(maximumvalue_z < std::abs(curr_z))
             maximumvalue_z = std::abs(curr_z);
 
         if(minimumvalue_z>std::abs(curr_z) && std::abs(curr_z) > min_allowed)
@@ -396,9 +396,9 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr MainWindow::convertPointsToPTR
 
     }
 
-    maximumvalue_x *= 0.001 + double(mUi->horizontalSlider_3->value()/ 100.0);
-    maximumvalue_y *= 0.001 + double(mUi->horizontalSlider_4->value()/ 100.0);
-    maximumvalue_z *= 0.001 + double(mUi->horizontalSlider_2->value()/ 100.0);
+    maximumvalue_x *= 0.001 + float(mUi->horizontalSlider_3->value()/ 100.0);
+    maximumvalue_y *= 0.001 + float(mUi->horizontalSlider_4->value()/ 100.0);
+    maximumvalue_z *= 0.001 + float(mUi->horizontalSlider_2->value()/ 100.0);
 
 
 
@@ -406,11 +406,11 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr MainWindow::convertPointsToPTR
     {
 
             //TODO: Convert these to cartesian
-            double r = points[i].r;
-            double theta = points[i].theta;
+            float r = points[i].r;
+            float theta = points[i].theta;
             //double phi = DEG2RAD(points[i].phi);
-            double offset = double(mUi->spinRotationOffset->value());
-            double phi = DEG2RAD(fmod(points[i].phi+offset,360.0)); //offset
+            float offset = float(mUi->spinRotationOffset->value());
+            float phi = DEG2RAD(fmod(points[i].phi+offset,360.0)); //offset
             point.x = r * sin(theta) * cos(phi);
             point.y = r * sin(theta) * sin(phi);
             point.z = r * cos(theta);
@@ -446,8 +446,8 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr MainWindow::convertPointsToPTR
                 point.rgb = boost::lexical_cast<float>(16777215);
             }
 
-            double proximity_max = std::abs(r-maximumvalue_r);
-            double proximity_min = std::abs(r-minimumvalue_r);
+            float proximity_max = std::abs(r-maximumvalue_r);
+            float proximity_min = std::abs(r-minimumvalue_r);
 
             if(mUi->checkHighlight->isChecked())
             {

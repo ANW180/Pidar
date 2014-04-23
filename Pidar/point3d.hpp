@@ -20,17 +20,17 @@ public:
         mZ = 0.0;
     }
     ~Point3D(){}
-    void SetX(double val){ mX = val;}
-    void SetY(double val){ mY = val;}
-    void SetZ(double val){ mZ = val;}
-    double GetX(){return mX;}
-    double GetY(){return mY;}
-    double GetZ(){return mZ;}
+    void SetX(float val){ mX = val;}
+    void SetY(float val){ mY = val;}
+    void SetZ(float val){ mZ = val;}
+    float GetX(){return mX;}
+    float GetY(){return mY;}
+    float GetZ(){return mZ;}
 
 protected:
-    double mX;
-    double mY;
-    double mZ;
+    float mX;
+    float mY;
+    float mZ;
 };
 
 #endif // POINT3D_H
