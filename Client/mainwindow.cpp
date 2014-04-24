@@ -155,8 +155,9 @@ MainWindow::MainWindow()
     mPointCloud = (pcl::PointCloud<pcl::PointXYZRGB>::Ptr
                    (new pcl::PointCloud<pcl::PointXYZRGB>));
     visualizer.setShowFPS(false);
-    visualizer.setCameraPosition(0,-1,-14,-16,-96,-17);
+    visualizer.setCameraPosition(0,0,-0.1,0,0,0);
     visualizer.addPointCloud<pcl::PointXYZRGB>(mPointCloud,"default");
+    //visualizer.spinOnce();
 
     //create a rotating set of 10 point clouds
     //Helps avoid some crashing
@@ -213,7 +214,7 @@ void MainWindow::ShowPointCloud()
                                             scene_sensor_pose,
                                             pcl::RangeImage::CAMERA_FRAME,
                                             0.0f,
-                                            0.0f,
+                                            0.1f,
                                             1);
             rangeImageVisualizer.showRangeImage(rangeImage);
         }
@@ -793,7 +794,7 @@ pcl_data MainWindow::OpenFileData(std::string filepath)
             float theta = Scan.points[i].theta;
             float phi = Scan.points[i].phi;
             float offset = float(mUi->spinRotationOffset->value());
-            phi = DEG2RAD(fmod(phi + (100 - offset), 360.0));
+            phi = DEG2RAD(fmod(phi + (120 - offset), 360.0));
             point.x = r * sin(theta) * cos(phi);
             point.y = r * sin(theta) * sin(phi);
             point.z = r * cos(theta);
