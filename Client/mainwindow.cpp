@@ -199,25 +199,6 @@ void MainWindow::ShowPointCloud()
     int id = 1;
     while(!mThreadQuitFlag)
     {
-        if(rangeImagePointCloud.size() > 0)
-        {
-            scene_sensor_pose = visualizer.getViewerPose();
-//            scene_sensor_pose = Eigen::Affine3f(Eigen::Translation3f(rangeImagePointCloud.sensor_origin_[0],
-//                                                                     rangeImagePointCloud.sensor_origin_[1],
-//                                                                     rangeImagePointCloud.sensor_origin_[2])) *
-//                                                Eigen::Affine3f(rangeImagePointCloud.sensor_orientation_);
-            rangeImage.createFromPointCloud(rangeImagePointCloud,
-                                            0.0044f,    // ~0.25 radians in deg
-                                            0.0044f,
-                                            pcl::deg2rad(120.0f),
-                                            pcl::deg2rad(75.0f),
-                                            scene_sensor_pose,
-                                            pcl::RangeImage::CAMERA_FRAME,
-                                            0.0f,
-                                            0.1f,
-                                            1);
-            rangeImageVisualizer.showRangeImage(rangeImage);
-        }
         if(!mPauseScan)
         {
             boost::mutex::scoped_lock lock(mMutex);
@@ -306,6 +287,22 @@ void MainWindow::ShowPointCloud()
 
 
                     mPointCount = mPointCloud->points.size();
+
+                    if(mPointCloud.get()->size() > 0)
+                    {
+                        scene_sensor_pose = visualizer.getViewerPose();
+                        rangeImage.createFromPointCloud(*mPointCloud.get(),
+                                                        0.0044f,    // ~0.25 radians in deg
+                                                        0.0044f,
+                                                        pcl::deg2rad(120.0f),
+                                                        pcl::deg2rad(75.0f),
+                                                        scene_sensor_pose,
+                                                        pcl::RangeImage::CAMERA_FRAME,
+                                                        0.0f,
+                                                        0.1f,
+                                                        1);
+                        rangeImageVisualizer.showRangeImage(rangeImage);
+                    }
 
                     mUi->labelFurthestPoint->setText(QString::number(furthestPoint));
                     mUi->labelClosestPoint->setText(QString::number(closestPoint));
