@@ -1,5 +1,7 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
+#include "pcl/range_image/range_image.h"
+#include "pcl/visualization/range_image_visualizer.h"
 
 void (*signal (int sig, void (*func)(int)))(int);
 pcl::visualization::PCLVisualizer visualizer("Dont Show", false);
@@ -8,6 +10,11 @@ std::string port = "10001";
 int normalvalues = 0;
 unsigned int refreshDelay = 100;
 
+/** Range image variables */
+pcl::visualization::RangeImageVisualizer rangeImageVisualizer("Range Image");
+pcl::RangeImage rangeImage;
+Eigen::Affine3f scene_sensor_pose (Eigen::Affine3f::Identity());
+pcl::PointCloud<pcl::PointXYZ> rangeImagePointCloud;
 
 int GetRGBValue(double position, int scaleposition)
 {
@@ -188,10 +195,28 @@ void MainWindow::StartThread()
 // Slot for arrival scans.
 void MainWindow::ShowPointCloud()
 {
-    double lastKnownAngle = -99;
     int id = 1;
     while(!mThreadQuitFlag)
     {
+        if(rangeImagePointCloud.size() > 0)
+        {
+            scene_sensor_pose = visualizer.getViewerPose();
+//            scene_sensor_pose = Eigen::Affine3f(Eigen::Translation3f(rangeImagePointCloud.sensor_origin_[0],
+//                                                                     rangeImagePointCloud.sensor_origin_[1],
+//                                                                     rangeImagePointCloud.sensor_origin_[2])) *
+//                                                Eigen::Affine3f(rangeImagePointCloud.sensor_orientation_);
+            rangeImage.createFromPointCloud(rangeImagePointCloud,
+                                            0.0044f,    // ~0.25 radians in deg
+                                            0.0044f,
+                                            pcl::deg2rad(120.0f),
+                                            pcl::deg2rad(75.0f),
+                                            scene_sensor_pose,
+                                            pcl::RangeImage::CAMERA_FRAME,
+                                            0.0f,
+                                            0.0f,
+                                            1);
+            rangeImageVisualizer.showRangeImage(rangeImage);
+        }
         if(!mPauseScan)
         {
             boost::mutex::scoped_lock lock(mMutex);
@@ -277,7 +302,6 @@ void MainWindow::ShowPointCloud()
 
                     mPointCloud = convertPointsToPTR(mDisplayData.points,
                                                      closestPoint,furthestPoint);
-
 
 
                     mPointCount = mPointCloud->points.size();
@@ -761,7 +785,21 @@ pcl_data MainWindow::OpenFileData(std::string filepath)
 
         linecnt++;
     }
-    linecnt;
+    pcl::PointXYZ point;
+    pcl::PointCloud<pcl::PointXYZ> temp;
+    for(unsigned int i = 0; i < Scan.points.size(); i++)
+    {
+            float r = Scan.points[i].r;
+            float theta = Scan.points[i].theta;
+            float phi = Scan.points[i].phi;
+            float offset = float(mUi->spinRotationOffset->value());
+            phi = DEG2RAD(fmod(phi + (100 - offset), 360.0));
+            point.x = r * sin(theta) * cos(phi);
+            point.y = r * sin(theta) * sin(phi);
+            point.z = r * cos(theta);
+        temp.push_back(point);
+    }
+    rangeImagePointCloud = temp;
     return Scan;
 }
 
