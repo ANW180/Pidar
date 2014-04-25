@@ -299,7 +299,7 @@ void MainWindow::ShowPointCloud()
                                                         scene_sensor_pose,
                                                         pcl::RangeImage::CAMERA_FRAME,
                                                         0.0f,
-                                                        0.1f,
+                                                        0.2f,
                                                         1);
                         rangeImageVisualizer.showRangeImage(rangeImage);
                     }
@@ -349,6 +349,23 @@ void MainWindow::ShowPointCloud()
         }
         else
         {
+            boost::mutex::scoped_lock lock(mMutex);
+            if(rangeImagePointCloud.size() > 0)
+            {
+                scene_sensor_pose = visualizer.getViewerPose();
+                rangeImage.createFromPointCloud(rangeImagePointCloud,
+                                                0.0044f,    // ~0.25 radians in deg
+                                                0.0044f,
+                                                pcl::deg2rad(120.0f),
+                                                pcl::deg2rad(75.0f),
+                                                scene_sensor_pose,
+                                                pcl::RangeImage::CAMERA_FRAME,
+                                                0.0f,
+                                                0.2f,
+                                                1);
+                rangeImageVisualizer.showRangeImage(rangeImage);
+            }
+
             boost::mutex::scoped_lock queuelock(globMutex);
             if(queuelock)
              PointQueue.clear();
