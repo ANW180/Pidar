@@ -19,6 +19,7 @@ std::deque<pcl_data> SendPoints;
 int globMotorSpeed = 0;
 bool globFoundUpdate = false;
 bool ISRrunning = true;
+bool stopPidarFlag = false;
 unsigned int ledCount = 0;
 
 
@@ -28,50 +29,58 @@ using namespace PointCloud;
 
 void InterruptServiceStop(void)
 {
+    stopPidarFlag = true;
     maincontrol->StopMotor();
 }
 
 
 void InterruptService(void)
 {
-    if(ledCount == 0)
+    if(!stopPidarFlag)
     {
-        digitalWrite(LEDPIN, 1);
-    }
-    if(ledCount == 1)
-    {
-        digitalWrite(LEDPIN, 0);
-    }
-    ledCount++;
-    if(ledCount == 2)
-    {
-        ledCount = 0;
-    }
-    ISRrunning = true;
-    //Get Current and Previous Positions
-    //isMotorConnected also acts as a keepalive signal
-    if(maincontrol->isMotorConnected())
-    {
-        current_position = maincontrol->GetMotorPositionDegrees();
-        previous_position = maincontrol->GetMotorPreviousPositionDegrees();
-        if(current_position == previous_position)
+        if(ledCount == 0)
         {
+            digitalWrite(LEDPIN, 1);
         }
-        //Update Previous Motor Position
-        maincontrol->SetMotorPreviousPositionDegrees(current_position);
+        if(ledCount == 1)
+        {
+            digitalWrite(LEDPIN, 0);
+        }
+        ledCount++;
+        if(ledCount == 2)
+        {
+            ledCount = 0;
+        }
+        ISRrunning = true;
+        //Get Current and Previous Positions
+        //isMotorConnected also acts as a keepalive signal
+        if(maincontrol->isMotorConnected())
+        {
+            current_position = maincontrol->GetMotorPositionDegrees();
+            previous_position = maincontrol->GetMotorPreviousPositionDegrees();
+            if(current_position == previous_position)
+            {
+            }
+            //Update Previous Motor Position
+            maincontrol->SetMotorPreviousPositionDegrees(current_position);
 
-        //Get Values to send for construction
-        laserscan = maincontrol->GetLaserScan();
+            //Get Values to send for construction
+            laserscan = maincontrol->GetLaserScan();
 
-        //Send values and get newly constructed incompletescan
-        //this will update values as needed
-        maincontrol->AddToScanQueue(laserscan,
-                                    current_position,
-                                    previous_position);
+            //Send values and get newly constructed incompletescan
+            //this will update values as needed
+            maincontrol->AddToScanQueue(laserscan,
+                                        current_position,
+                                        previous_position);
+        }
+        else
+        {
+            std::cout << "Motor is disconnected" << std::endl;
+        }
     }
     else
     {
-        std::cout << "Motor is disconnected" << std::endl;
+        digitalWrite(LEDPIN, 0);
     }
 }
 

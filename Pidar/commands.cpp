@@ -1,6 +1,7 @@
-#include "commands.h"
 #include "pointstructs.hpp"
 #include <boost/lexical_cast.hpp>
+#include <boost/asio.hpp>
+#include <boost/bind.hpp>
 
 #define MAX_RPM 60
 

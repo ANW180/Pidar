@@ -43,8 +43,7 @@ HEADERS += \
     global.hpp \
     dynamixel.hpp \
     pointstructs.hpp \
-    point3d.hpp \
-    commands.h
+    point3d.hpp
 
 SOURCES +=  hokuyo.cpp \
             dynamixel.cpp \
