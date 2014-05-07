@@ -2,6 +2,7 @@
 #include "ui_mainwindow.h"
 #include "pcl/range_image/range_image.h"
 #include "pcl/visualization/range_image_visualizer.h"
+#include <opencv2/core/core.hpp>
 
 void (*signal (int sig, void (*func)(int)))(int);
 pcl::visualization::PCLVisualizer visualizer("Dont Show", false);
@@ -301,9 +302,24 @@ void MainWindow::ShowPointCloud()
                                                         0.0f,
                                                         0.2f,
                                                         1);
-                        rangeImageVisualizer.showRangeImage(rangeImage);
+                        //rangeImageVisualizer.showRangeImage(rangeImage);
+                        int cols = rangeImage.width;
+                        int rows = rangeImage.height;
+                        cv::Mat rangeImageMat(rows, cols, CV_8UC1);
+                        for(int i = 0; i < rows; i++)
+                        {
+                            for(int j = 0; j < cols; j++)
+                            {
+                                pcl::PointWithRange range = rangeImage.getPoint(i * rangeImage.width + j);
+                                if(!isnan(range.range) || !isinf(range.range))
+                                {
+                                    uchar val = fabs(furthestPoint - range.range) / furthestPoint * 255.;
+                                    rangeImageMat.at<uchar>(i, j, CV_8UC1) = val;
+                                }
+                            }
+                        }
+                        cv::imshow("Opencv Range Image", rangeImageMat);
                     }
-
                     mUi->labelFurthestPoint->setText(QString::number(furthestPoint));
                     mUi->labelClosestPoint->setText(QString::number(closestPoint));
 
@@ -364,8 +380,24 @@ void MainWindow::ShowPointCloud()
                                                 0.2f,
                                                 1);
                 rangeImageVisualizer.showRangeImage(rangeImage);
+                rangeImageVisualizer.showRangeImage(rangeImage);
+                int cols = rangeImage.width;
+                int rows = rangeImage.height;
+                cv::Mat rangeImageMat(rows, cols, CV_8UC1);
+                for(int i = 0; i < rows; i++)
+                {
+                    for(int j = 0; j < cols; j++)
+                    {
+                        pcl::PointWithRange range = rangeImage.getPoint(i * rangeImage.width + j);
+                        if(!isnan(range.range) || !isinf(range.range))
+                        {
+                            uchar val = range.range / 30. * 255.;
+                            rangeImageMat.at<uchar>(i, j, CV_8UC1) = val;
+                        }
+                    }
+                }
+                cv::imshow("Opencv Range Image", rangeImageMat);
             }
-
             boost::mutex::scoped_lock queuelock(globMutex);
             if(queuelock)
              PointQueue.clear();
