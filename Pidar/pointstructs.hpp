@@ -18,12 +18,14 @@ typedef struct pcl_point
     float r;
     float theta;
     float phi;
+    float newScan;
     template <typename Archive>
     void serialize(Archive& ar, const unsigned int version)
     {
         ar & r;
         ar & theta;
         ar & phi;
+        ar & newScan;
     }
 }pcl_point;
 

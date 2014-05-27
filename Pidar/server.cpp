@@ -31,6 +31,7 @@ const int transmission_delay = 2; //milliseconds
             x.r = 0.0;
             x.theta = 0.0;
             x.phi = 0.0;
+            x.newScan = false;
             w.points.push_back(x);
             clouds_.push_back(w);
         std::cout << "Sending Data"

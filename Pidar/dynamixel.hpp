@@ -21,6 +21,7 @@
 #include <ctime>
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 #include "dxl/dxl_hal.h"
 #include "dxl/dynamixel.h"
 
@@ -143,8 +144,8 @@ namespace Motor
         Callback::Set mCallbacks;
         boost::mutex mMutex;
         int mCommandSpeedRpm;
-        float mPresentPositionDegrees;
-        float mPreviousPositionDegrees;
+        float mPresentPositionRadians;
+        float mPreviousPositionRadians;
         bool mCommandSpeedFlag;
         bool mFirstMotorReadFlag;
         timespec mPrevReadTimeStamp;

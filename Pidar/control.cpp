@@ -215,18 +215,24 @@ void Control::AddToScanQueue(std::vector<Point3D> laserscan,
                              float previousMotorPosition)
 {
     int scancnt = laserscan.size();//1080;
-
+    bool newScan = false;
     //Check for complete scan & get delta
     float delta_position = 0.0;
     if(previousMotorPosition < currentMotorPosition &&
-       fabs(previousMotorPosition - currentMotorPosition) > 25.0)
+       fabs(previousMotorPosition - currentMotorPosition) > 0.25)
     {
-        delta_position = ((360.0 - previousMotorPosition) -
-                         currentMotorPosition);
+        // Motor has made a full revolution (360 degrees)
+        delta_position = ((M_PI * 2.0 - previousMotorPosition)
+                          - currentMotorPosition);
+        newScan = true;
     }
     else
     {
-        delta_position = fabs(currentMotorPosition - previousMotorPosition);
+        delta_position = previousMotorPosition - currentMotorPosition;
+        if(currentMotorPosition <= M_PI && previousMotorPosition >= M_PI)
+        {
+            newScan = true;
+        }
     }
 
     pcl_data tmp;
@@ -237,8 +243,17 @@ void Control::AddToScanQueue(std::vector<Point3D> laserscan,
             pcl_point point;
             point.r = (laserscan[i]).GetX();
             point.theta = (laserscan[i]).GetY();
-            point.phi = 360.0 - float(previousMotorPosition +
+            point.phi = M_PI * 2.0
+                        - float(previousMotorPosition +
                                 (i * (delta_position / scancnt)));
+            if(i == scancnt && newScan)
+            {
+                point.newScan = 1.0f;
+            }
+            else
+            {
+                point.newScan = 0.0f;
+            }
             tmp.points.push_back(point);
         }
         //Add scan to queue

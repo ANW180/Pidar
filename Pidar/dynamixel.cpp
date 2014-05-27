@@ -22,7 +22,7 @@ Dynamixel::Dynamixel()
     mID = 1;
     mSerialPort = "/dev/ttyUSB0";
     mpDocument = new TiXmlDocument();
-    mCommandSpeedRpm = mPresentPositionDegrees = mPreviousPositionDegrees = 0.0;
+    mCommandSpeedRpm = mPresentPositionRadians = mPreviousPositionRadians = 0.0;
     mBaudRate = 0; // 2Mbps connection, fastest is 3Mbps.
 }
 
@@ -154,7 +154,7 @@ void Dynamixel::SetSpeedRpm(const float rpm, const bool clockwise)
 float Dynamixel::GetPositionDegrees()
 {
     boost::mutex::scoped_lock scopedLock(mMutex);
-    return mPresentPositionDegrees;
+    return mPresentPositionRadians;
 }
 
 
@@ -163,7 +163,7 @@ float Dynamixel::GetPositionDegrees()
 float Dynamixel::GetPreviousPositionDegrees()
 {
     boost::mutex::scoped_lock scopedLock(mMutex);
-    return mPreviousPositionDegrees;
+    return mPreviousPositionRadians;
 }
 
 
@@ -172,7 +172,7 @@ float Dynamixel::GetPreviousPositionDegrees()
 void Dynamixel::SetPreviousPositionDegrees(float val)
 {
     boost::mutex::scoped_lock scopedLock(mMutex);
-    mPreviousPositionDegrees = val;
+    mPreviousPositionRadians = val;
 }
 
 
@@ -243,7 +243,8 @@ void Dynamixel::ProcessingThread()
                 if(CommStatus == COMM_RXSUCCESS)
                 {
                     boost::mutex::scoped_lock lock (mMutex);
-                    mPresentPositionDegrees = recv * MX28_DEG_PER_UNIT;
+                    mPresentPositionRadians = recv * MX28_DEG_PER_UNIT;
+                    mPresentPositionRadians *= M_PI / 180.0;
                     read = true;
                 }
                 // Print reason of unsuccessful read command.
@@ -266,7 +267,7 @@ void Dynamixel::ProcessingThread()
                     callback++)
                 {
                     clock_gettime(CLOCK_REALTIME, &t2);
-                    (*callback)->ProcessServoData(mPresentPositionDegrees,
+                    (*callback)->ProcessServoData(mPresentPositionRadians,
                                                   t2);
                 }
             }
