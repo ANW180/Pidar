@@ -21,23 +21,22 @@
 #include <string>
 
 using namespace std;
-Pidar::Control* maincontrol;
+Pidar::Control* gMainControl;
 
 int main()
 {
-    maincontrol = new Pidar::Control();
-    while(!maincontrol->Initialize())
+    gMainControl = new Pidar::Control();
+    while(!gMainControl->Initialize())
     {
         sleep(1);
     }
-    globMotorSpeed = 1;
+    gMotorSpeed = 1.;
     int restartCnt = 0;
-    maincontrol->StartMotor(globMotorSpeed);
     sleep(1);
 
     //Start Web Server Thread
     boost::asio::io_service io_service;
-    PointCloud::server s(io_service,
+    PointCloud::Server s(io_service,
                          boost::asio::ip::address::from_string("239.255.0.1"));
     boost::thread bt(boost::bind(&boost::asio::io_service::run,
                                  &io_service));
@@ -49,51 +48,44 @@ int main()
                                   &io_service_cmds));
     while(1)
     {
-        if(ISRrunning)
+        if(gISRFlag)
         {
             if(restartCnt > 0)
             {
-                std::cout << "ISR restarted "
-                          << restartCnt
-                          << " times"
-                          << std::endl;
+                //                std::cout << "ISR restarted "
+                //                          << restartCnt
+                //                          << " times"
+                //                          << std::endl;
             }
-            ISRrunning = false;
+            gISRFlag = false;
         }
         else
         {
-            std::cout << "ISR NOT running, restarting "
-                      << restartCnt
-                      << " restart attempts made."
-                      << std::endl;
-            maincontrol->StartISR();
-            boost::this_thread::sleep(
-                        boost::posix_time::millisec(1000));
+            //            std::cout << "ISR NOT running, restarting "
+            //                      << restartCnt
+            //                      << " restart attempts made."
+            //                      << std::endl;
+            gMainControl->StartISR();
             restartCnt++;
         }
         //Check for updates from client
-        if(globFoundUpdate)
+        if(gFoundUpdate)
         {
-            maincontrol->StartMotor(globMotorSpeed);
-            globFoundUpdate = false;
-
-            //If stopping motor, stop whole program
-            if(globMotorSpeed == 0)
-                return 0;
+            gMainControl->mMotor->SetSpeedRpm(gMotorSpeed, true);
+            gFoundUpdate = false;
         }
         // Fix for laser disconnecting on slipring?
         // Shutdown thread and serial connection, sleep, then
-        // restart both to resume data output.
-        if(maincontrol->GetLaserPtr()->GetErrorCount() > 2)
+        // restart to resume data output.
+        if(gMainControl->mLaser->GetErrorCount() > 2)
         {
-            std::cout << "Restarting Laser Connection" << std::endl;
-            maincontrol->GetLaserPtr()->Shutdown();
+            //            std::cout << "Restarting Laser Connection" << std::endl;
+            gMainControl->mLaser->Shutdown();
             sleep(1);
-            maincontrol->GetLaserPtr()->Initialize();
-            sleep(1);
+            gMainControl->mLaser->Initialize();
         }
-        sleep(1);
+        usleep(100000);
     }
-   return 0;
+    return 0;
 }
 /** End of File */

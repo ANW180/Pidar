@@ -1,5 +1,6 @@
 TEMPLATE = app
 CONFIG += console
+CONFIG += c++11
 CONFIG -= qt
 
 target.path=/home/pi/software/deploy
@@ -14,10 +15,6 @@ LIBS += -LC/usr/local/local \
 -lboost_system \
 -lboost_serialization \
 -lpthread
-
-#TinyXML
-LIBS += -LC/usr/lib \
--ltinyxml \
 
 #WiringPi
 LIBS += -LC/usr/lib \
@@ -50,4 +47,4 @@ SOURCES +=  hokuyo.cpp \
             control.cpp \
             main.cpp \
             server.cpp \
-    commands.cpp
+            commands.cpp

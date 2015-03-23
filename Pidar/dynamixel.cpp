@@ -15,14 +15,14 @@
 
 using namespace Motor;
 
+
 Dynamixel::Dynamixel()
 {
     mConnectedFlag = mProcessingThreadFlag = mCommandSpeedFlag =
-    mFirstMotorReadFlag = false;
+            mFirstMotorReadFlag = false;
     mID = 1;
     mSerialPort = "/dev/ttyUSB0";
-    mpDocument = new TiXmlDocument();
-    mCommandSpeedRpm = mPresentPositionRadians = mPreviousPositionRadians = 0.0;
+    mCommandSpeedRpm = mCurrentPositionDeg = mPreviousPositionDeg = 0.0;
     mBaudRate = 0; // 2Mbps connection, fastest is 3Mbps.
 }
 
@@ -33,43 +33,15 @@ Dynamixel::~Dynamixel()
 }
 
 
-/** Allows for loading of connection settings for a Dynamixel servo. */
-bool Dynamixel::LoadSettings(const std::string& settings)
-{
-    if(mpDocument->LoadFile(settings))
-    {
-        TiXmlElement* root = mpDocument->FirstChildElement();
-        if(root)
-        {
-            for(TiXmlElement* elem = root->FirstChildElement();
-                elem != NULL;
-                elem = elem->NextSiblingElement())
-            {
-                std::string elemName = elem->Value();
-                if(elemName == "Motor")
-                {
-                    mSerialPort = elem->Attribute("port");
-                    mBaudRate = atoi(elem->Attribute("baud"));
-                }
-            }
-        }
-        return true;
-    }
-
-    return false;
-}
-
-
-/** Initializes a connection (serial) to a dynamixel servo. */
 bool Dynamixel::Initialize()
 {
     int deviceIndex;
     if(sscanf(mSerialPort.c_str(), "/dev/ttyUSB%d", &deviceIndex) <= 0)
     {
-        std::cout << "Must use /dev/ttyUSB# for enumeration" << std::endl;
+        std::cout << "Must use /dev/ttyUSB# for enumeration"
+                  << std::endl;
         return false;
     }
-
     if(dxl_initialize(deviceIndex, mBaudRate) != 0)
     {
         mConnectedFlag = true;
@@ -89,7 +61,6 @@ bool Dynamixel::Initialize()
 }
 
 
-/** Shuts down connection to the servo (terminates thread). */
 void Dynamixel::Shutdown()
 {
     StopCaptureThread();
@@ -101,25 +72,25 @@ void Dynamixel::Shutdown()
 }
 
 
-/** Starts a thread for continuous capturing of sensor data. */
 bool Dynamixel::StartCaptureThread()
 {
+    // First detach the thread.
     mProcessingThreadFlag = false;
     mProcessingThread.join();
     mProcessingThread.detach();
+
 
     if(IsConnected())
     {
         mProcessingThreadFlag = true;
         mProcessingThread = boost::thread(
-                            boost::bind(&Dynamixel::ProcessingThread, this));
+                    boost::bind(&Dynamixel::ProcessingThread, this));
         return true;
     }
     return false;
 }
 
 
-/** Stops the thread for continuous capturing of sensor data. */
 void Dynamixel::StopCaptureThread()
 {
     mProcessingThreadFlag = false;
@@ -128,9 +99,6 @@ void Dynamixel::StopCaptureThread()
 }
 
 
-/** Sets speed of motor in RPM given a direction
-    \param[in] RPM to set (RX-24: 0~114 RPM, MX-28: 0~54 RPM)
-    \param[in] true to move CW, false to move CCW*/
 void Dynamixel::SetSpeedRpm(const float rpm, const bool clockwise)
 {
     float val = rpm / MX28_RPM_PER_UNIT;
@@ -138,7 +106,7 @@ void Dynamixel::SetSpeedRpm(const float rpm, const bool clockwise)
     {
         val = 1023.0;
     }
-    if (clockwise)
+    if(clockwise)
     {
         val += 1024.0;
     }
@@ -149,34 +117,6 @@ void Dynamixel::SetSpeedRpm(const float rpm, const bool clockwise)
 }
 
 
-/** Get current position of servo
-    \returns Position of motor in degrees */
-float Dynamixel::GetPositionDegrees()
-{
-    boost::mutex::scoped_lock scopedLock(mMutex);
-    return mPresentPositionRadians;
-}
-
-
-/** Get previous position of servo
-    \returns Previous position of motor in degrees */
-float Dynamixel::GetPreviousPositionDegrees()
-{
-    boost::mutex::scoped_lock scopedLock(mMutex);
-    return mPreviousPositionRadians;
-}
-
-
-/** Sets previous position of servo at some earlier time.
-    \param[in] Previous position of motor in degrees */
-void Dynamixel::SetPreviousPositionDegrees(float val)
-{
-    boost::mutex::scoped_lock scopedLock(mMutex);
-    mPreviousPositionRadians = val;
-}
-
-
-/** Prints to screen the result of a wirte/read to the dynamixel */
 void Dynamixel::PrintCommStatus(int CommStatus)
 {
     switch(CommStatus)
@@ -208,7 +148,7 @@ void Dynamixel::PrintCommStatus(int CommStatus)
 
 void Dynamixel::ProcessingThread()
 {
-    timespec t2;
+    timespec time;
     while(mProcessingThreadFlag)
     {
         if(IsConnected())
@@ -216,7 +156,7 @@ void Dynamixel::ProcessingThread()
             int CommStatus = 0;
             // Write target speed (if there is a new speed)
             {
-                boost::mutex::scoped_lock lock (mMutex);
+                boost::mutex::scoped_lock lock(mMutex);
                 if(mCommandSpeedFlag)
                 {
                     dxl_write_word(mID, P_MOVING_SPEED_L, mCommandSpeedRpm);
@@ -224,7 +164,7 @@ void Dynamixel::ProcessingThread()
                     // Print reason of unsuccessful command.
                     if(CommStatus != COMM_RXSUCCESS)
                     {
-                        PrintCommStatus(CommStatus);
+                        //                        PrintCommStatus(CommStatus);
                     }
                     // Reset command flag to false if sending command
                     // succeeded so as to not flood serial commands.
@@ -235,22 +175,22 @@ void Dynamixel::ProcessingThread()
                 }
             }
             // Read present position
-            bool read = false;
+            bool wasRead = false;
             try
             {
                 int recv = dxl_read_word(mID, P_PRESENT_POSITION_L );
                 CommStatus = dxl_get_result();
                 if(CommStatus == COMM_RXSUCCESS)
                 {
-                    boost::mutex::scoped_lock lock (mMutex);
-                    mPresentPositionRadians = recv * MX28_DEG_PER_UNIT;
-                    mPresentPositionRadians *= M_PI / 180.0;
-                    read = true;
+                    boost::mutex::scoped_lock lock(mMutex);
+                    mCurrentPositionDeg = recv * MX28_DEG_PER_UNIT;
+                    mCurrentPositionDeg *= M_PI / 180.0;
+                    wasRead = true;
                 }
                 // Print reason of unsuccessful read command.
                 else
                 {
-//                    PrintCommStatus(CommStatus);
+                    //                    PrintCommStatus(CommStatus);
                 }
             }
             catch(std::exception e)
@@ -258,17 +198,17 @@ void Dynamixel::ProcessingThread()
                 std::cout << e.what() << std::endl;
             }
             // Trigger callbacks (if there is a read)
-            if(read)
+            if(wasRead)
             {
-                boost::mutex::scoped_lock lock (mMutex);
+                boost::mutex::scoped_lock lock(mMutex);
                 Callback::Set::iterator callback;
                 for(callback = mCallbacks.begin();
                     callback != mCallbacks.end();
                     callback++)
                 {
-                    clock_gettime(CLOCK_REALTIME, &t2);
-                    (*callback)->ProcessServoData(mPresentPositionRadians,
-                                                  t2);
+                    clock_gettime(CLOCK_REALTIME, &time);
+                    (*callback)->ProcessServoData(mCurrentPositionDeg,
+                                                  time);
                 }
             }
             else
@@ -276,11 +216,7 @@ void Dynamixel::ProcessingThread()
                 //std::cout << "No Read" << std::endl;
             }
         }
-//        timespec sleep, remaining;
-//        sleep.tv_sec = remaining.tv_sec = 0;
-//        sleep.tv_nsec = 100000L; //100 microseconds
-//        nanosleep(&sleep, &remaining);
-        boost::this_thread::sleep(boost::posix_time::millisec(10));
+        boost::this_thread::sleep(boost::posix_time::microseconds(100));
     }
 }
 

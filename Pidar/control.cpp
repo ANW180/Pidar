@@ -12,15 +12,12 @@
 #include <sys/types.h>
 #include <ifaddrs.h>
 
-float current_position;
-float previous_position;
-std::vector<Point3D> laserscan;
-std::deque<pcl_data> SendPoints;
-int globMotorSpeed = 0;
-bool globFoundUpdate = false;
-bool ISRrunning = true;
-bool stopPidarFlag = false;
-unsigned int ledCount = 0;
+std::deque<pcl_data> gSendPoints;
+bool gFoundUpdate = false;
+bool gISRFlag = true;
+bool gStopFlag = false;
+int gMotorSpeed = 0;
+unsigned short gLEDCount = 0;
 
 
 using namespace Pidar;
@@ -29,49 +26,69 @@ using namespace PointCloud;
 
 void InterruptServiceStop(void)
 {
-    stopPidarFlag = true;
-    maincontrol->StopMotor();
+    gStopFlag = true;
+    gMainControl->mMotor->SetSpeedRpm(0, true);
+    sleep(1);
+    gMainControl->mMotor->Shutdown();
 }
 
 
 void InterruptService(void)
 {
-    if(!stopPidarFlag)
+    static Point3D::List previousList;
+    static Point3D::List currentList;
+    if(!gStopFlag)
     {
-        if(ledCount == 0)
+        // Flash activity (interrupt) light.
+        if(gLEDCount % 3 == 0)
         {
             digitalWrite(LEDPIN, 1);
+            gLEDCount = 0;
         }
-        if(ledCount == 1)
+        else
         {
             digitalWrite(LEDPIN, 0);
         }
-        ledCount++;
-        if(ledCount == 2)
-        {
-            ledCount = 0;
-        }
-        ISRrunning = true;
-        //Get Current and Previous Positions
-        //isMotorConnected also acts as a keepalive signal
-        if(maincontrol->isMotorConnected())
-        {
-            current_position = maincontrol->GetMotorPositionDegrees();
-            previous_position = maincontrol->GetMotorPreviousPositionDegrees();
-            if(current_position == previous_position)
-            {
-            }
-            //Update Previous Motor Position
-            maincontrol->SetMotorPreviousPositionDegrees(current_position);
+        gLEDCount++;
+        gISRFlag = true;
 
-            //Get Values to send for construction
-            laserscan = maincontrol->GetLaserScan();
-
-            //Send values and get newly constructed incompletescan
-            //this will update values as needed
-            maincontrol->AddToScanQueue(laserscan,
-                                        current_position,
-                                        previous_position);
+        // Get all necessary data for 3D data construction.
+        if(gMainControl->mMotor->IsConnected())
+        {
+//            static bool first = true;
+//            if(first)
+//            {
+//                currentList = gMainControl->mLaserScan;
+//                previousList = currentList;
+//                first = false;
+//            }
+//            previousList = currentList;
+//            currentList = gMainControl->mLaserScan;
+//            unsigned int waitCounter = 0;
+//            if(previousList.size() > 0 && currentList.size() > 0)
+//            {
+//            while(fabs(previousList.front().GetX() -
+//                    currentList.front().GetX()) < 0.0001 &&
+//               fabs(previousList.back().GetY() -
+//                    currentList.back().GetY()) < 0.0001)
+//            {
+//                currentList = gMainControl->mLaserScan;
+//                waitCounter++;
+//            }
+//            }
+//            if(waitCounter != 0)
+//            {
+//                std::cout << waitCounter << std::endl;
+//            }
+            gMainControl->AddToScanQueue(gMainControl->mLaserScan,
+                                         gMainControl->mMotorAngle,
+                                         gMainControl->mMotor->
+                                            GetPreviousPositionDegrees());
+            // Update previous motor position as current position.
+            gMainControl->mMotor->
+                    SetPreviousPositionDegrees(gMainControl->
+                                               mMotor->
+                                               GetCurrentPositionDegrees());
         }
         else
         {
@@ -85,19 +102,18 @@ void InterruptService(void)
 }
 
 
-///
-/// Controller Functions
-///
 Control::Control()
 {
-    motor = new Motor::Dynamixel();
-    laser = new Laser::Hokuyo();
+    mMotor = new Motor::Dynamixel();
+    mLaser = new Laser::Hokuyo();
 }
+
 
 Control::~Control()
 {
-    //Shutdown();
+
 }
+
 
 bool Control::Initialize()
 {
@@ -105,13 +121,12 @@ bool Control::Initialize()
     bool enableLaser = true;
     bool enableMotor = true;
     bool enableISR = true;
-    int restartCount = 0;
+    unsigned short restartCount = 0;
 
     if(enableLaser)
     {
-        laser->RegisterCallback(&mpLasercallback);
-
-        while(!laser->Initialize())
+        mLaser->RegisterCallback(this);
+        while(!mLaser->Initialize())
         {
             restartCount++;
             sleep(1);
@@ -120,12 +135,13 @@ bool Control::Initialize()
                 return false;
             }
         }
-
     }
+    restartCount = 0;
+
     if(enableMotor)
     {
-        motor->RegisterCallback(&mpMotorcallback);
-        while(!motor->Initialize())
+        mMotor->RegisterCallback(this);
+        while(!mMotor->Initialize())
         {
             restartCount++;
             sleep(1);
@@ -134,83 +150,37 @@ bool Control::Initialize()
                 return false;
             }
         }
+        mMotor->SetSpeedRpm(1.0, true);
     }
+
+    // Wait for movement/data
+    sleep(1);
+
     if(enableISR)
     {
-        if (wiringPiSetupSys () < 0)
+        if(wiringPiSetupSys () < 0)
         {
-            fprintf (stderr, "Unable to setup wiringPi: %s\n", strerror (errno));
-            //   return 1;
+            fprintf (stderr,
+                     "Unable to setup wiringPi: %s\n", strerror (errno));
         }
-        // set Pin 17/0 generate an interrupt on low-to-high transitions
+        // Pin 17/0 generate an interrupt on low-to-high transitions
         // and attach myInterrupt() to the interrupt
-        if (wiringPiISR(HOKUYOSYNCPIN, INT_EDGE_RISING, InterruptService) < 0)
+        if(wiringPiISR(HOKUYOSYNCPIN, INT_EDGE_RISING, InterruptService) < 0)
         {
             fprintf (stderr, "Unable to setup ISR: %s\n", strerror (errno));
         }
-        if (wiringPiISR(SHUTDOWNPIN, INT_EDGE_RISING, InterruptServiceStop) < 0)
+        if(wiringPiISR(SHUTDOWNPIN, INT_EDGE_RISING, InterruptServiceStop) < 0)
         {
             fprintf (stderr, "Unable to setup ISR: %s\n", strerror (errno));
         }
         // Setup LED pin mode
-        //system("gpio export 10 out");
         pinMode(LEDPIN, OUTPUT);
     }
     return true;
 }
 
 
-///
-///  Motor Functions
-///
-float Control::GetMotorPositionDegrees()
-{
-    return motor->GetPositionDegrees();
-}
-
-float Control::GetMotorPreviousPositionDegrees()
-{
-    return motor->GetPreviousPositionDegrees();
-}
-
-void Control::SetMotorPreviousPositionDegrees(float val)
-{
-    motor->SetPreviousPositionDegrees(val);
-}
-
-bool Control::isMotorConnected()
-{
-    return motor->IsConnected();
-}
-
-void Control::StartMotor(int rpm)
-{
-     Control::motor->SetSpeedRpm(rpm, true);
-}
-
-void Control::StopMotor()
-{
-    Control::motor->SetSpeedRpm(0, true);
-    sleep(1);
-    Control::motor->Shutdown();
-}
-
-
-///
-/// Laser Functions
-///
-void Control::StopLaser()
-{
-    Control::laser->Shutdown();
-}
-
-std::vector<Point3D> Control::GetLaserScan()
-{
-    return Control::mpLasercallback.mLaserScan;
-}
-
-
-void Control::AddToScanQueue(std::vector<Point3D> laserscan,
+void Control::AddToScanQueue(Point3D::List laserscan,
                              float currentMotorPosition,
                              float previousMotorPosition)
 {
@@ -246,6 +216,7 @@ void Control::AddToScanQueue(std::vector<Point3D> laserscan,
             point.phi = M_PI * 2.0
                         - float(previousMotorPosition +
                                 (i * (delta_position / scancnt)));
+            point.intensity = (laserscan[i]).GetIntensity();
             if(i == scancnt && newScan)
             {
                 point.newScan = 1.0f;
@@ -257,7 +228,7 @@ void Control::AddToScanQueue(std::vector<Point3D> laserscan,
             tmp.points.push_back(point);
         }
         //Add scan to queue
-        SendPoints.push_back(tmp);
+        gSendPoints.push_back(tmp);
     }
 }
 

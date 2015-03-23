@@ -7,18 +7,18 @@
 /// Email: watsontandrew@gmail.com
 ///
 ////////////////////////////////////////////////////////////////////////////////
-#ifndef HOKUYO_HPP
-#define HOKUYO_HPP
+#pragma once
 #include <boost/thread.hpp>
+#include <boost/bind.hpp>
 #include "point3d.hpp"
-#include <tinyxml.h>
 #include <urg_utils.h>
 #include <urg_sensor.h>
 #include <iostream>
 #include <string>
 #include <vector>
 #include <set>
-#include <time.h>
+#include <ctime>
+#include <stdio.h>
 
 namespace Laser
 {
@@ -39,8 +39,8 @@ namespace Laser
         /** Function called when new data becomes available from the laser,
             \param[in] Scan data in polar coordinates.
             \param[in] Time stamp in UTC */
-        virtual void ProcessLaserData(const std::vector<Point3D>& scan,
-                                      const time_t& timestamp) = 0;
+        virtual void ProcessLaserData(const Point3D::List& scan,
+                                      const timespec& timestamp) = 0;
     };
     ////////////////////////////////////////////////////////////////////////////
     ///
@@ -55,8 +55,6 @@ namespace Laser
     public:
         Hokuyo();
         ~Hokuyo();
-        /** Allows for loading of connection settings for a Hokuyo lidar. */
-        virtual bool LoadSettings(const std::string& settings);
         /** Initializes a connection (serial only) to a Hokuyo sensor. */
         virtual bool Initialize();
         /** Shuts down connection to the sensor (terminates thread). */
@@ -109,18 +107,15 @@ namespace Laser
         int mBaudRate;
         void* mpDevice;
         long* mpHokuyoScan;
+        unsigned short* mpHokuyoScanIntensity;
         int mHokuyoMinStep;
         int mHokuyoMaxStep;
         int mErrorCount;
         std::string mSerialPort;
         boost::mutex mMutex;
-        TiXmlDocument* mpDocument;
         boost::thread mProcessingThread;
-        std::vector<Point3D> mLaserScan;
+        Point3D::List mLaserScan;
         Callback::Set mCallbacks;
     };
 }
-
-
-#endif // HOKUYO_HPP
 /* End of File */

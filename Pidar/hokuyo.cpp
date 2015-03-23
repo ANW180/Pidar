@@ -18,41 +18,24 @@ Hokuyo::Hokuyo()
     mConnectedFlag = false;
     mProcessingThreadFlag = false;
     mpHokuyoScan = NULL;
+    mpHokuyoScanIntensity = NULL;
     mHokuyoMinStep = mHokuyoMaxStep = mErrorCount = 0;
     mBaudRate = 115200;
     mSerialPort = "/dev/ttyACM0";
-    mpDocument = new TiXmlDocument();
 }
 
 
 Hokuyo::~Hokuyo()
 {
     Shutdown();
-}
-
-
-bool Hokuyo::LoadSettings(const std::string& settings)
-{
-    if(mpDocument->LoadFile(settings))
+    if(mpHokuyoScan)
     {
-        TiXmlElement* root = mpDocument->FirstChildElement();
-        if(root)
-        {
-            for(TiXmlElement* elem = root->FirstChildElement();
-                elem != NULL;
-                elem = elem->NextSiblingElement())
-            {
-                std::string elemName = elem->Value();
-                if(elemName == "Laser")
-                {
-                    mSerialPort = elem->Attribute("port");
-                    mBaudRate = atoi(elem->Attribute("baud"));
-                }
-            }
-        }
-        return true;
+        delete[] mpHokuyoScan;
     }
-    return false;
+    if(mpHokuyoScanIntensity)
+    {
+        delete[] mpHokuyoScanIntensity;
+    }
 }
 
 
@@ -74,9 +57,15 @@ bool Hokuyo::Initialize()
         mpHokuyoScan = NULL;
     }
     mpHokuyoScan = new long[urg_max_data_size(urg)];
+    if(mpHokuyoScanIntensity)
+    {
+        delete[] mpHokuyoScanIntensity;
+        mpHokuyoScanIntensity = NULL;
+    }
+    mpHokuyoScanIntensity = new unsigned short[urg_max_data_size(urg)];
     urg_step_min_max(urg, &mHokuyoMinStep, &mHokuyoMaxStep);
     urg_start_measurement(urg,
-                          URG_DISTANCE,
+                          URG_DISTANCE_INTENSITY,
                           URG_SCAN_INFINITY,
                           0);
     if(!StartCaptureThread())
@@ -103,14 +92,16 @@ void Hokuyo::Shutdown()
 
 bool Hokuyo::StartCaptureThread()
 {
+    // First detach the thread.
     mProcessingThreadFlag = false;
     mProcessingThread.join();
     mProcessingThread.detach();
+
     if(IsConnected())
     {
         mProcessingThreadFlag = true;
         mProcessingThread = boost::thread(
-                            boost::bind(&Hokuyo::ProcessingThread, this));
+                    boost::bind(&Hokuyo::ProcessingThread, this));
         return true;
     }
     return false;
@@ -127,6 +118,7 @@ void Hokuyo::StopCaptureThread()
 
 void Hokuyo::ProcessingThread()
 {
+    timespec time;
     urg_t* urg = (urg_t*)mpDevice;
     while(mProcessingThreadFlag)
     {
@@ -136,9 +128,10 @@ void Hokuyo::ProcessingThread()
             long timestamp = 0;
             int index = 0;
             std::vector<Point3D> scan;
-            int scanCount = urg_get_distance(urg,
-                                             mpHokuyoScan,
-                                             &timestamp);
+            int scanCount = urg_get_distance_intensity(urg,
+                                                       mpHokuyoScan,
+                                                       mpHokuyoScanIntensity,
+                                                       &timestamp);
             if(scanCount <= 0)
             {
                 boost::mutex::scoped_lock lock(mMutex);
@@ -160,6 +153,7 @@ void Hokuyo::ProcessingThread()
                 {
                     boost::mutex::scoped_lock lock(mMutex);
                     point.SetX(mpHokuyoScan[index]/1000.0);
+                    point.SetIntensity(mpHokuyoScanIntensity[index]);
                 }
                 point.SetY(-1.0 * urg_step2rad(urg, i));
                 scan.push_back(point);
@@ -178,7 +172,8 @@ void Hokuyo::ProcessingThread()
                 iter++)
             {
                 boost::mutex::scoped_lock lock(mMutex);
-                (*iter)->ProcessLaserData(mLaserScan, timestamp);
+                clock_gettime(CLOCK_REALTIME, &time);
+                (*iter)->ProcessLaserData(mLaserScan, time);
             }
         }
     }

@@ -1,5 +1,5 @@
 #include "control.hpp"
-extern Pidar::Control* maincontrol;
+extern Pidar::Control* gMainControl;
 
 
 
