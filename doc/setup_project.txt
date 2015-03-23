@@ -1,47 +1,44 @@
 The instructions below should allow you to setup, configure, and run this project under Ubuntu.
 
-Check out this repository to your home/software directory using the following command:
-git clone https://github.com/ANW180/Group27 ~/software
+Check out this repository to your /home/Software directory using the following command:
+git clone https://github.com/ANW180/Pidar ~/Software
 
 1. Copy and paste the following install line in terminal.
-sudo apt-get install ssh subversion build-essential htop git git-core cmake-gui cmake libboost-all-dev libqt4-dev qtcreator libusb-1.0-0-dev libtinyxml-dev libpcl-all-dev libeigen3-dev libvtk5.8-dev libflann-dev
+sudo apt-get install ssh subversion build-essential htop byobu git git-core libboost-all-dev libusb-1.0-0-dev
 
-2. Download and install the latest version of OpenCV
-Go to http://opencv.willowgarage.com/wiki/ and get the Unix version
-Extract to your software folder
-From a terminal, navigate to the opencv folder
-cd ~/software/OpenCV-X.X.X/ Where x is the version number
-Then type:
-mkdir build
-cd build
-cmake ../
-make -jX # Where X is the number of cores for your processor
-sudo make install
+2. Download and install rabbitvcs. Instructions taken from here:
+http://wiki.rabbitvcs.org/wiki/install/ubuntu
+sudo add-apt-repository ppa:rabbitvcs/ppa
+sudo apt-get update
+sudo apt-get install rabbitvcs-nautilus3 rabbitvcs-gedit rabbitvcs-cli
+
+3. Download and install qt. Install using the online installer found here:
+http://www.qt.io/download-open-source/
+After downloading online installer navigate to it in nautilus and do the following:
+right click the run file >> properties >> permissions >> check "Allow executing file as program"
+Close prompt and double click to install latest version of qt. Ensure that qtcreator is set to install with it.
 
 3. Build and install the hokuyo urg library.
 Enter the following into terminal:
-cd ~/software/Group27/ext/urg_library-1.1.2
+cd ~/Software/Pidar/ext/urg_library-1.1.8
 make -jX # Where X is the number of cores for your processor
 sudo make install
 
 4. Build and install the Wiring Pi library
 Enter the following into terminal:
-cd ~/software/Group27/ext/WiringPi
+cd ~/Software/Pidar/ext/WiringPi
 ./build
 
 5. Build and install the Dynamixel DXL library
 Enter the following into terminal:
-cd ~/software/Group27/ext/DXL_SDK_LINUX_v_01
-make -jx (where x is the number of threads available on your pc, run htop to find this)
+cd ~/Software/Pidar/ext/DXL_SDK_LINUX_v_01
+make -jX # Where X is the number of cores for your processor
 sudo make install
 
-6. Do the following to setup qt creator to use xterm.
-Open QtCreator and go to tools>options>Environment>General and set Terminal:[] to "xterm -e"
-
-7. Fix ptrace Debug errors.
-1. sudo gedit /etc/sysctl.d/10-ptrace.conf 
-2. set: kernel.yama.ptrace_scope = 0
-3. close gedit, and run this command in terminal: echo 0 | sudo tee /proc/sys/kernel/yama/ptrace_scope 
+6. Fix ptrace debug errors in qtcreator by doing the following.
+sudo gedit /etc/sysctl.d/10-ptrace.conf 
+set: kernel.yama.ptrace_scope = 0
+close gedit, and run this command in terminal: echo 0 | sudo tee /proc/sys/kernel/yama/ptrace_scope 
 
 You are now ready to open and build/compile the Pidar project. Simply go to file open project in
 Qt Creator and select the Pidar .pro file and select your build paths.
