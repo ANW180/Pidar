@@ -39,12 +39,16 @@ HEADERS += \
     control.hpp \
     global.hpp \
     dynamixel.hpp \
-    pointstructs.hpp \
-    point3d.hpp
+    point_structs.hpp \
+    point3d.hpp \
+    command_receiver.hpp \
+    server.hpp \
 
-SOURCES +=  hokuyo.cpp \
-            dynamixel.cpp \
-            control.cpp \
-            main.cpp \
-            server.cpp \
-            commands.cpp
+SOURCES += \
+    hokuyo.cpp \
+    dynamixel.cpp \
+    control.cpp \
+    main.cpp \
+    server.cpp \
+    command_receiver.cpp \
+
