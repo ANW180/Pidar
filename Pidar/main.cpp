@@ -43,7 +43,7 @@ int main()
 
     //Start Seperate Command Web Server
     boost::asio::io_service io_service_cmds;
-    commandserver cmdsrv(io_service_cmds, 10001);
+    CommandReceiver cmdsrv(io_service_cmds, 10001);
     boost::thread bt2(boost::bind(&boost::asio::io_service::run,
                                   &io_service_cmds));
     while(1)

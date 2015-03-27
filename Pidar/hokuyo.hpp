@@ -8,9 +8,9 @@
 ///
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
+#include "point3d.hpp"
 #include <boost/thread.hpp>
 #include <boost/bind.hpp>
-#include "point3d.hpp"
 #include <urg_utils.h>
 #include <urg_sensor.h>
 #include <iostream>
@@ -19,6 +19,7 @@
 #include <set>
 #include <ctime>
 #include <stdio.h>
+
 
 namespace Laser
 {

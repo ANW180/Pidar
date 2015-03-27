@@ -8,7 +8,7 @@
 ///
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
-#include "commands.cpp"
+#include "command_receiver.hpp"
 #include "server.cpp"
 #include "hokuyo.hpp"
 #include "dynamixel.hpp"
