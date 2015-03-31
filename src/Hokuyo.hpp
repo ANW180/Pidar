@@ -1,14 +1,11 @@
-////////////////////////////////////////////////////////////////////////////////
-///
-/// \file hokuyo.hpp
-/// \brief Interface for connecting to Hokuyo sensors.
-/// Author: Andrew Watson
-/// Created: 1/22/13
-/// Email: watsontandrew@gmail.com
-///
-////////////////////////////////////////////////////////////////////////////////
+/**
+  \file Hokuyo.hpp
+  \brief Interface for connecting to the Hokuyo UTM-30LX Lidar.
+  \authors Jonathan Ulrich (jongulrich@gmail.com), Andrew Watson (watsontandrew@gmail.com
+  \date 2014
+*/
 #pragma once
-#include "point3d.hpp"
+#include "Point3D.hpp"
 #include <boost/thread.hpp>
 #include <boost/bind.hpp>
 #include <urg_utils.h>
@@ -20,103 +17,101 @@
 #include <ctime>
 #include <stdio.h>
 
-
-namespace Laser
+namespace Pidar
 {
-    ////////////////////////////////////////////////////////////////////////////
-    ///
-    /// \class Callback
-    /// \brief Used to generate callbacks for subscribers to laser data.
-    ///        Overload this callback and functions to recieve updated laser
-    ///        scans.
-    ///
-    ////////////////////////////////////////////////////////////////////////////
-    class Callback
+    namespace Laser
     {
-    public:
-        Callback() {}
-        virtual ~Callback() {}
-        typedef std::set<Callback*> Set;
-        /** Function called when new data becomes available from the laser,
-            \param[in] Scan data in polar coordinates.
-            \param[in] Time stamp in UTC */
-        virtual void ProcessLaserData(const Point3D::List& scan,
-                                      const timespec& timestamp) = 0;
-    };
-    ////////////////////////////////////////////////////////////////////////////
-    ///
-    /// \class Hokuyo
-    /// \brief Hokuyo is an interface class used to wrap the urg helper
-    ///        library available on sourceforge. It can connect to
-    ///        Hokuyo LIDARS and generate callbacks for each scan.
-    ///
-    ////////////////////////////////////////////////////////////////////////////
-    class Hokuyo
-    {
-    public:
-        Hokuyo();
-        ~Hokuyo();
-        /** Initializes a connection (serial only) to a Hokuyo sensor. */
-        virtual bool Initialize();
-        /** Shuts down connection to the sensor (terminates thread). */
-        virtual void Shutdown();
-        /** Checks if connection to sensor is established
-            \returns true if connected, false otherwise. */
-        virtual bool IsConnected() const { return mConnectedFlag; }
-        /** Starts a thread for continuous capturing of sensor data. */
-        virtual bool StartCaptureThread();
-        /** Stops the thread for continuous capturing of sensor data. */
-        virtual void StopCaptureThread();
-        /** Method to register callbacks */
-        virtual bool RegisterCallback(Callback* cb)
+        /**
+          \class Callback
+          \brief Used to generate callbacks for subscribers to laser data.
+                 Overload this callback and functions to recieve updated laser
+                 scans.
+        */
+        class Callback
         {
-            //TODO add mutex lock
-            mCallbacks.insert(cb);
-            return true;
-        }
-        /** Method to remove callbacks */
-        virtual bool RemoveCallback(Callback* cb)
+        public:
+            Callback() {}
+            virtual ~Callback() {}
+            typedef std::set<Callback*> Set;
+            /** Function called when new data becomes available from the laser,
+                \param[in] Scan data in polar coordinates.
+                \param[in] Time stamp in UTC */
+            virtual void ProcessLaserData(const Point3D::List& scan,
+                                          const timespec& timestamp) = 0;
+        };
+        /**
+          \class Hokuyo
+          \brief Hokuyo is an interface class used to wrap the urg helper
+                 library available on sourceforge. It can connect to
+                 Hokuyo LIDARS and generate callbacks for each scan.
+        */
+        class Hokuyo
         {
-            //TODO add mutex lock
-            Callback::Set::iterator iter;
-            iter = mCallbacks.find(cb);
-            if(iter != mCallbacks.end())
+        public:
+            Hokuyo();
+            ~Hokuyo();
+            /** Initializes a connection (serial only) to a Hokuyo sensor. */
+            virtual bool Initialize();
+            /** Shuts down connection to the sensor (terminates thread). */
+            virtual void Shutdown();
+            /** Checks if connection to sensor is established
+                \returns true if connected, false otherwise. */
+            virtual bool IsConnected() const { return mConnectedFlag; }
+            /** Starts a thread for continuous capturing of sensor data. */
+            virtual bool StartCaptureThread();
+            /** Stops the thread for continuous capturing of sensor data. */
+            virtual void StopCaptureThread();
+            /** Method to register callbacks */
+            virtual bool RegisterCallback(Callback* cb)
             {
-                mCallbacks.erase(cb);
+                //TODO add mutex lock
+                mCallbacks.insert(cb);
                 return true;
             }
-            return false;
-        }
-        /** Method to clear callbacks */
-        void ClearCallbacks()
-        {
-            //TODO add mutex lock
-            mCallbacks.clear();
-        }
-        /** Returns number of read errors of serial data */
-        int GetErrorCount()
-        {
-            boost::mutex::scoped_lock lock(mMutex);
-            return mErrorCount;
-        }
+            /** Method to remove callbacks */
+            virtual bool RemoveCallback(Callback* cb)
+            {
+                //TODO add mutex lock
+                Callback::Set::iterator iter;
+                iter = mCallbacks.find(cb);
+                if(iter != mCallbacks.end())
+                {
+                    mCallbacks.erase(cb);
+                    return true;
+                }
+                return false;
+            }
+            /** Method to clear callbacks */
+            void ClearCallbacks()
+            {
+                //TODO add mutex lock
+                mCallbacks.clear();
+            }
+            /** Returns number of read errors of serial data */
+            int GetErrorCount()
+            {
+                boost::mutex::scoped_lock lock(mMutex);
+                return mErrorCount;
+            }
 
-    protected:
-        virtual void ProcessingThread();
+        protected:
+            virtual void ProcessingThread();
 
-        bool mConnectedFlag;
-        bool mProcessingThreadFlag;
-        int mBaudRate;
-        void* mpDevice;
-        long* mpHokuyoScan;
-        unsigned short* mpHokuyoScanIntensity;
-        int mHokuyoMinStep;
-        int mHokuyoMaxStep;
-        int mErrorCount;
-        std::string mSerialPort;
-        boost::mutex mMutex;
-        boost::thread mProcessingThread;
-        Point3D::List mLaserScan;
-        Callback::Set mCallbacks;
-    };
+            bool mConnectedFlag;
+            bool mProcessingThreadFlag;
+            int mBaudRate;
+            void* mpDevice;
+            long* mpHokuyoScan;
+            unsigned short* mpHokuyoScanIntensity;
+            int mHokuyoMinStep;
+            int mHokuyoMaxStep;
+            int mErrorCount;
+            std::string mSerialPort;
+            boost::mutex mMutex;
+            boost::thread mProcessingThread;
+            Point3D::List mLaserScan;
+            Callback::Set mCallbacks;
+        };
+    }
 }
 /* End of File */

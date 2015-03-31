@@ -1,14 +1,12 @@
-////////////////////////////////////////////////////////////////////////////////
-///
-/// \file hokuyo.cpp
-/// \brief Interface for connecting to Hokuyo sensors.
-/// Author: Andrew Watson
-/// Created: 1/22/13
-/// Email: watsontandrew@gmail.com
-///
-////////////////////////////////////////////////////////////////////////////////
-#include "hokuyo.hpp"
+/**
+  \file Hokuyo.cpp
+  \brief Interface for connecting to the Hokuyo UTM-30LX Lidar.
+  \authors Jonathan Ulrich (jongulrich@gmail.com), Andrew Watson (watsontandrew@gmail.com
+  \date 2014
+*/
+#include "Hokuyo.hpp"
 
+using namespace Pidar;
 using namespace Laser;
 
 

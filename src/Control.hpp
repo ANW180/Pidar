@@ -1,17 +1,14 @@
-////////////////////////////////////////////////////////////////////////////////
-///
-/// \file control.hpp
-/// \brief Control the Pidar
-/// Author: Jonathan Ulrich, Andrew Watson
-/// Created: 3/1/14
-/// Email: jongulrich@gmail.com, watsontandrew@gmail.com
-///
-////////////////////////////////////////////////////////////////////////////////
+/**
+  \file Control.hpp
+  \brief Class for managing control of the Pidar components.
+  \authors Jonathan Ulrich (jongulrich@gmail.com), Andrew Watson (watsontandrew@gmail.com
+  \date 2014
+*/
 #pragma once
-#include "command_receiver.hpp"
-#include "server.cpp"
-#include "hokuyo.hpp"
-#include "dynamixel.hpp"
+#include "CommandReceiver.hpp"
+#include "Server.hpp"
+#include "Hokuyo.hpp"
+#include "Dynamixel.hpp"
 #include "wiringPi.h"
 #include <fstream>
 
@@ -22,12 +19,10 @@
 
 namespace Pidar
 {
-    ////////////////////////////////////////////////////////////////////////////
-    ///
-    /// \class Control
-    /// \brief Used to handle control of all PIDAR components
-    ///
-    ////////////////////////////////////////////////////////////////////////////
+    /**
+      \class Control
+      \brief Handles control of all Pidar components.
+    **/
     class Control : public Laser::Callback,
                            Motor::Callback
     {

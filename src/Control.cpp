@@ -1,27 +1,15 @@
-////////////////////////////////////////////////////////////////////////////////
-///
-/// \file control.cpp
-/// \brief Control the Pidar
-/// Author: Jonathan Ulrich, Andrew Watson
-/// Created: 3/1/14
-/// Email: jongulrich@gmail.com, watsontandrew@gmail.com
-///
-////////////////////////////////////////////////////////////////////////////////
-#include "control.hpp"
-#include "global.hpp"
+/**
+  \file Control.cpp
+  \brief Class for managing control of the Pidar components.
+  \authors Jonathan Ulrich (jongulrich@gmail.com), Andrew Watson (watsontandrew@gmail.com
+  \date 2014
+*/
+#include "Control.hpp"
+#include "Global.hpp"
 #include <sys/types.h>
 #include <ifaddrs.h>
 
-std::deque<pcl_data> gSendPoints;
-bool gFoundUpdate = false;
-bool gISRFlag = true;
-bool gStopFlag = false;
-int gMotorSpeed = 0;
-unsigned short gLEDCount = 0;
-
-
 using namespace Pidar;
-using namespace PointCloud;
 
 
 void InterruptServiceStop(void)

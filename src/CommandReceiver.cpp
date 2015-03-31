@@ -1,6 +1,14 @@
-#include "command_receiver.hpp"
+/**
+  \file CommandReceiver.cpp
+  \brief UDP interface for controlling the Pidar parameters.
+  \authors Jonathan Ulrich (jongulrich@gmail.com), Andrew Watson (watsontandrew@gmail.com
+  \date 2014
+*/
+#include "CommandReceiver.hpp"
+#include "Global.hpp"
 
 using boost::asio::ip::udp;
+using namespace Pidar;
 
 
 CommandReceiver::CommandReceiver(boost::asio::io_service& ioService, short port)

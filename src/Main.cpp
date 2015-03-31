@@ -1,17 +1,13 @@
-////////////////////////////////////////////////////////////////////////////////
-///
-/// \file main.cpp
-/// \brief Main file for testing different system classes
-///        and functionality.
-/// Author: Andrew Watson, Jonathan Ulrich
-/// Created: 1/22/13
-/// Email: watsontandrew@gmail.com, JonGUlrich@gmail.com
-///
-////////////////////////////////////////////////////////////////////////////////
-#include "hokuyo.hpp"
-#include "dynamixel.hpp"
-#include "control.hpp"
-#include "global.hpp"
+/**
+  \file Main.cpp
+  \brief Main file for running the Pidar program.
+  \authors Jonathan Ulrich (jongulrich@gmail.com), Andrew Watson (watsontandrew@gmail.com
+  \date 2014
+*/
+#include "Hokuyo.hpp"
+#include "Dynamixel.hpp"
+#include "Control.hpp"
+#include "Global.hpp"
 #include <wiringPi.h>
 #include <boost/asio.hpp>
 #include <boost/thread/thread.hpp>
@@ -21,7 +17,11 @@
 #include <string>
 
 using namespace std;
+using namespace Pidar;
+
+
 Pidar::Control* gMainControl;
+
 
 int main()
 {
@@ -36,8 +36,8 @@ int main()
 
     //Start Web Server Thread
     boost::asio::io_service io_service;
-    PointCloud::Server s(io_service,
-                         boost::asio::ip::address::from_string("239.255.0.1"));
+    Server s(io_service,
+             boost::asio::ip::address::from_string("239.255.0.1"));
     boost::thread bt(boost::bind(&boost::asio::io_service::run,
                                  &io_service));
 
