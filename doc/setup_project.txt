@@ -4,15 +4,9 @@ Check out this repository to your /home/Software directory using the following c
 git clone https://github.com/ANW180/Pidar ~/Software
 
 1. Copy and paste the following install line in terminal.
-sudo apt-get install ssh subversion build-essential htop byobu git git-core libboost-all-dev libusb-1.0-0-dev
+sudo apt-get install ssh subversion build-essential htop byobu git git-core libboost-all-dev libusb-1.0-0-dev rabbitvcs-nautilus3 rabbitvcs-gedit rabbitvcs-cli
 
-2. Download and install rabbitvcs. Instructions taken from here:
-http://wiki.rabbitvcs.org/wiki/install/ubuntu
-sudo add-apt-repository ppa:rabbitvcs/ppa
-sudo apt-get update
-sudo apt-get install rabbitvcs-nautilus3 rabbitvcs-gedit rabbitvcs-cli
-
-3. Download and install qt. Install using the online installer found here:
+2. Download and install qt. Install using the online installer found here:
 http://www.qt.io/download-open-source/
 After downloading online installer navigate to it in nautilus and do the following:
 right click the run file >> properties >> permissions >> check "Allow executing file as program"

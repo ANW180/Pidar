@@ -1,7 +1,8 @@
 /**
   \file Point3D.hpp
   \brief Point3D class for storing LIDAR points.
-  \authors Jonathan Ulrich (jongulrich@gmail.com), Andrew Watson (watsontandrew@gmail.com
+  \author Jonathan Ulrich (jongulrich@gmail.com)
+  \author Andrew Watson (watsontandrew@gmail.com)
   \date 2014
 */
 #pragma once
@@ -10,18 +11,18 @@
 
 namespace Pidar
 {
+    /**
+     * @brief The Point3D class is a basic template for
+     * storing 3D points.
+     */
     class Point3D
     {
     public:
         typedef std::vector<Point3D> List;
         Point3D()
         {
-            mX = 0.0;
-            mY = 0.0;
-            mZ = 0.0;
-            mIntensity = 0.0;
+            mX = mY = mZ = mIntensity = 0.0;
         }
-        ~Point3D(){}
         void SetX(float val){ mX = val;}
         void SetY(float val){ mY = val;}
         void SetZ(float val){ mZ = val;}

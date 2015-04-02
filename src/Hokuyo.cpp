@@ -1,7 +1,8 @@
 /**
   \file Hokuyo.cpp
   \brief Interface for connecting to the Hokuyo UTM-30LX Lidar.
-  \authors Jonathan Ulrich (jongulrich@gmail.com), Andrew Watson (watsontandrew@gmail.com
+  \author Jonathan Ulrich (jongulrich@gmail.com)
+  \author Andrew Watson (watsontandrew@gmail.com)
   \date 2014
 */
 #include "Hokuyo.hpp"

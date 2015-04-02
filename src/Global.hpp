@@ -1,7 +1,8 @@
 /**
   \file Global.hpp
   \brief Global include file for global variables.
-  \authors Jonathan Ulrich (jongulrich@gmail.com), Andrew Watson (watsontandrew@gmail.com
+  \author Jonathan Ulrich (jongulrich@gmail.com)
+  \author Andrew Watson (watsontandrew@gmail.com)
   \date 2014
 */
 #pragma once

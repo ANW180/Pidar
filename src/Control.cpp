@@ -1,7 +1,8 @@
 /**
   \file Control.cpp
   \brief Class for managing control of the Pidar components.
-  \authors Jonathan Ulrich (jongulrich@gmail.com), Andrew Watson (watsontandrew@gmail.com
+  \author Jonathan Ulrich (jongulrich@gmail.com)
+  \author Andrew Watson (watsontandrew@gmail.com)
   \date 2014
 */
 #include "Control.hpp"
@@ -12,94 +13,10 @@
 using namespace Pidar;
 
 
-void InterruptServiceStop(void)
-{
-    gStopFlag = true;
-    gMainControl->mMotor->SetSpeedRpm(0, true);
-    sleep(1);
-    gMainControl->mMotor->Shutdown();
-}
-
-
-void InterruptService(void)
-{
-    static Point3D::List previousList;
-    static Point3D::List currentList;
-    if(!gStopFlag)
-    {
-        // Flash activity (interrupt) light.
-        if(gLEDCount % 3 == 0)
-        {
-            digitalWrite(LEDPIN, 1);
-            gLEDCount = 0;
-        }
-        else
-        {
-            digitalWrite(LEDPIN, 0);
-        }
-        gLEDCount++;
-        gISRFlag = true;
-
-        // Get all necessary data for 3D data construction.
-        if(gMainControl->mMotor->IsConnected())
-        {
-//            static bool first = true;
-//            if(first)
-//            {
-//                currentList = gMainControl->mLaserScan;
-//                previousList = currentList;
-//                first = false;
-//            }
-//            previousList = currentList;
-//            currentList = gMainControl->mLaserScan;
-//            unsigned int waitCounter = 0;
-//            if(previousList.size() > 0 && currentList.size() > 0)
-//            {
-//            while(fabs(previousList.front().GetX() -
-//                    currentList.front().GetX()) < 0.0001 &&
-//               fabs(previousList.back().GetY() -
-//                    currentList.back().GetY()) < 0.0001)
-//            {
-//                currentList = gMainControl->mLaserScan;
-//                waitCounter++;
-//            }
-//            }
-//            if(waitCounter != 0)
-//            {
-//                std::cout << waitCounter << std::endl;
-//            }
-            gMainControl->AddToScanQueue(gMainControl->mLaserScan,
-                                         gMainControl->mMotorAngle,
-                                         gMainControl->mMotor->
-                                            GetPreviousPositionDegrees());
-            // Update previous motor position as current position.
-            gMainControl->mMotor->
-                    SetPreviousPositionDegrees(gMainControl->
-                                               mMotor->
-                                               GetCurrentPositionDegrees());
-        }
-        else
-        {
-            std::cout << "Motor is disconnected" << std::endl;
-        }
-    }
-    else
-    {
-        digitalWrite(LEDPIN, 0);
-    }
-}
-
-
 Control::Control()
 {
-    mMotor = new Motor::Dynamixel();
-    mLaser = new Laser::Hokuyo();
-}
-
-
-Control::~Control()
-{
-
+    mpMotor = new Motor::Dynamixel();
+    mpLaser = new Laser::Hokuyo();
 }
 
 
@@ -113,8 +30,8 @@ bool Control::Initialize()
 
     if(enableLaser)
     {
-        mLaser->RegisterCallback(this);
-        while(!mLaser->Initialize())
+        mpLaser->RegisterCallback(this);
+        while(!mpLaser->Initialize())
         {
             restartCount++;
             sleep(1);
@@ -128,8 +45,8 @@ bool Control::Initialize()
 
     if(enableMotor)
     {
-        mMotor->RegisterCallback(this);
-        while(!mMotor->Initialize())
+        mpMotor->RegisterCallback(this);
+        while(!mpMotor->Initialize())
         {
             restartCount++;
             sleep(1);
@@ -138,7 +55,7 @@ bool Control::Initialize()
                 return false;
             }
         }
-        mMotor->SetSpeedRpm(1.0, true);
+        mpMotor->SetSpeedRpm(1.0, true);
     }
 
     // Wait for movement/data
@@ -153,11 +70,15 @@ bool Control::Initialize()
         }
         // Pin 17/0 generate an interrupt on low-to-high transitions
         // and attach myInterrupt() to the interrupt
-        if(wiringPiISR(HOKUYOSYNCPIN, INT_EDGE_RISING, InterruptService) < 0)
+        if(wiringPiISR(HOKUYOSYNCPIN,
+                       INT_EDGE_RISING,
+                       InterruptService) < 0)
         {
             fprintf (stderr, "Unable to setup ISR: %s\n", strerror (errno));
         }
-        if(wiringPiISR(SHUTDOWNPIN, INT_EDGE_RISING, InterruptServiceStop) < 0)
+        if(wiringPiISR(SHUTDOWNBUTTONPIN,
+                       INT_EDGE_RISING,
+                       InterruptServiceStop) < 0)
         {
             fprintf (stderr, "Unable to setup ISR: %s\n", strerror (errno));
         }
@@ -165,6 +86,42 @@ bool Control::Initialize()
         pinMode(LEDPIN, OUTPUT);
     }
     return true;
+}
+
+
+bool Control::SetupWiringPi()
+{
+    bool result = true;
+    if(wiringPiSetupSys () < 0)
+    {
+#ifdef DEBUG
+        std::cout<< "Unable to setup wiringPi: "<< strerror(errno) << std::endl;
+#endif
+        result = false;
+    }
+    // set Pin 17/0 generate an interrupt on low-to-high transitions
+    // and attach myInterrupt() to the interrupt
+    if(wiringPiISR(HOKUYOSYNCPIN,
+                   INT_EDGE_RISING,
+                   InterruptService) < 0)
+    {
+#ifdef DEBUG
+        std::cout<< "Unable to setup ISR: "<< strerror(errno) << std::endl;
+#endif
+        result = false;
+    }
+    if(wiringPiISR(SHUTDOWNBUTTONPIN,
+                   INT_EDGE_RISING,
+                   InterruptServiceStop) < 0)
+    {
+#ifdef DEBUG
+        std::cout<< "Unable to setup ISR: "<< strerror(errno) << std::endl;
+#endif
+        result = false;
+    }
+    // Setup LED pin mode
+    pinMode(LEDPIN, OUTPUT);
+    return result;
 }
 
 
@@ -177,7 +134,7 @@ void Control::AddToScanQueue(Point3D::List laserscan,
     //Check for complete scan & get delta
     float delta_position = 0.0;
     if(previousMotorPosition < currentMotorPosition &&
-       fabs(previousMotorPosition - currentMotorPosition) > 0.25)
+            fabs(previousMotorPosition - currentMotorPosition) > 0.25)
     {
         // Motor has made a full revolution (360 degrees)
         delta_position = ((M_PI * 2.0 - previousMotorPosition)
@@ -202,8 +159,8 @@ void Control::AddToScanQueue(Point3D::List laserscan,
             point.r = (laserscan[i]).GetX();
             point.theta = (laserscan[i]).GetY();
             point.phi = M_PI * 2.0
-                        - float(previousMotorPosition +
-                                (i * (delta_position / scancnt)));
+                    - float(previousMotorPosition +
+                            (i * (delta_position / scancnt)));
             point.intensity = (laserscan[i]).GetIntensity();
             if(i == scancnt && newScan)
             {
@@ -221,29 +178,98 @@ void Control::AddToScanQueue(Point3D::List laserscan,
 }
 
 
-bool Control::StartISR()
+void Control::ProcessLaserData(const Point3D::List& polarScan,
+                               const timespec& timestampUTC)
 {
-    bool result = true;
-    if (wiringPiSetupSys () < 0)
+    mLaserScan = polarScan;
+    mLaserTimestamp = timestampUTC;
+}
+
+
+void Control::ProcessServoData(const float &positionRadians,
+                               const timespec &timestampUTC)
+{
+    mMotorAngle = positionRadians;
+    mMotorTimestamp = timestampUTC;
+}
+
+
+void InterruptServiceStop(void)
+{
+    gStopFlag = true;
+    gMainControl->mpMotor->SetSpeedRpm(0.0, true);
+    sleep(1);
+    gMainControl->mpMotor->Shutdown();
+}
+
+
+void InterruptService(void)
+{
+    static Point3D::List previousList;
+    static Point3D::List currentList;
+    if(!gStopFlag)
     {
-        fprintf(stderr, "Unable to setup wiringPi: %s\n", strerror (errno));
-        result = false;
+        // Flash activity (interrupt) light.
+        if(gLEDCount % 3 == 0)
+        {
+            digitalWrite(LEDPIN, 1);
+            gLEDCount = 0;
+        }
+        else
+        {
+            digitalWrite(LEDPIN, 0);
+        }
+        gLEDCount++;
+        gISRFlag = true;
+
+        // Get all necessary data for 3D data construction.
+        if(gMainControl->mpMotor->IsConnected())
+        {
+            //            static bool first = true;
+            //            if(first)
+            //            {
+            //                currentList = gMainControl->mpLaserScan;
+            //                previousList = currentList;
+            //                first = false;
+            //            }
+            //            previousList = currentList;
+            //            currentList = gMainControl->mpLaserScan;
+            //            unsigned int waitCounter = 0;
+            //            if(previousList.size() > 0 && currentList.size() > 0)
+            //            {
+            //            while(fabs(previousList.front().GetX() -
+            //                    currentList.front().GetX()) < 0.0001 &&
+            //               fabs(previousList.back().GetY() -
+            //                    currentList.back().GetY()) < 0.0001)
+            //            {
+            //                currentList = gMainControl->mpLaserScan;
+            //                waitCounter++;
+            //            }
+            //            }
+            //            if(waitCounter != 0)
+            //            {
+            //                std::cout << waitCounter << std::endl;
+            //            }
+            gMainControl->AddToScanQueue(gMainControl->mpLaserScan,
+                                         gMainControl->mpMotorAngle,
+                                         gMainControl->mpMotor->
+                                         GetPreviousPositionDegrees());
+            // Update previous motor position as current position.
+            gMainControl->mpMotor->
+                    SetPreviousPositionDegrees(gMainControl->
+                                               mpMotor->
+                                               GetCurrentPositionDegrees());
+        }
+        else
+        {
+#ifdef DEBUG
+            std::cout << "Motor is disconnected" << std::endl;
+#endif
+        }
     }
-    // set Pin 17/0 generate an interrupt on low-to-high transitions
-    // and attach myInterrupt() to the interrupt
-    if (wiringPiISR(HOKUYOSYNCPIN, INT_EDGE_RISING, InterruptService) < 0)
+    else
     {
-        fprintf(stderr, "Unable to setup ISR: %s\n", strerror (errno));
-        result = false;
+        digitalWrite(LEDPIN, 0);
     }
-    if (wiringPiISR(SHUTDOWNPIN, INT_EDGE_RISING, InterruptServiceStop) < 0)
-    {
-        fprintf(stderr, "Unable to setup ISR: %s\n", strerror (errno));
-        result = false;
-    }
-    // Setup LED pin mode
-    //system("gpio export 10 out");
-    pinMode(LEDPIN, OUTPUT);
-    return result;
 }
 /*End of File */

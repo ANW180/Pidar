@@ -1,7 +1,8 @@
 /**
   \file PointStructs.hpp
   \brief C data sturctures for packaging of data in UDP server
-  \authors Jonathan Ulrich (jongulrich@gmail.com), Andrew Watson (watsontandrew@gmail.com
+  \author Jonathan Ulrich (jongulrich@gmail.com)
+  \author Andrew Watson (watsontandrew@gmail.com)
   \date 2014
 */
 #pragma once

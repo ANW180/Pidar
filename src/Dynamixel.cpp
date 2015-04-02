@@ -2,7 +2,8 @@
   \file Dynamixel.cpp
   \brief Interface for connecting to Dynamixel Motors. Wraps Dynamixel DXL SDK
         available here: http://support.robotis.com/en/software/dynamixelsdk.html
-  \authors Jonathan Ulrich (jongulrich@gmail.com), Andrew Watson (watsontandrew@gmail.com
+  \author Jonathan Ulrich (jongulrich@gmail.com)
+  \author Andrew Watson (watsontandrew@gmail.com)
   \date 2014
 */
 #include "Dynamixel.hpp"
@@ -17,8 +18,8 @@ Dynamixel::Dynamixel()
             mFirstMotorReadFlag = false;
     mID = 1;
     mSerialPort = "/dev/ttyUSB0";
-    mCommandSpeedRpm = mCurrentPositionDeg = mPreviousPositionDeg = 0.0;
-    mBaudRate = 0; // 2Mbps connection, fastest is 3Mbps.
+    mCommandSpeedRpm = mCurrentPositionRad = mPreviousPositionRad = 0.0;
+    mBaudRate = 0; // 1Mbps connection
 }
 
 
@@ -33,8 +34,9 @@ bool Dynamixel::Initialize()
     int deviceIndex;
     if(sscanf(mSerialPort.c_str(), "/dev/ttyUSB%d", &deviceIndex) <= 0)
     {
-        std::cout << "Must use /dev/ttyUSB# for enumeration"
-                  << std::endl;
+#ifdef DEBUG
+        std::cout << "Must use /dev/ttyUSB# for enumeration" << std::endl;
+#endif
         return false;
     }
     if(dxl_initialize(deviceIndex, mBaudRate) != 0)
@@ -43,15 +45,21 @@ bool Dynamixel::Initialize()
     }
     else
     {
+#ifdef DEBUG
         std::cout << "Failed to connect to Dynamixel" << std::endl;
+#endif
         return false;
     }
     if(!StartCaptureThread())
     {
+#ifdef DEBUG
         std::cout << "Failed to start capture thread" << std::endl;
+#endif
         return false;
     }
+#ifdef DEBUG
     std::cout << "Connected to Dynamixel Successfully" << std::endl;
+#endif
     return true;
 }
 
@@ -96,17 +104,33 @@ void Dynamixel::StopCaptureThread()
 
 void Dynamixel::SetSpeedRpm(const float rpm, const bool clockwise)
 {
-    float val = rpm / MX28_RPM_PER_UNIT;
+    // Threshold speed to within max allowed speed.
+    float val = rpm;
+    if(val > MAX_SPEED_RPM)
+    {
+        val = MAX_SPEED_RPM / MX28_RPM_PER_UNIT;
+    }
+    // Set to 0 if less than 0 (avoid divide by 0)
+    else if(val <= 0.0)
+    {
+        val = 0.0;
+    }
+    else
+    {
+        val /= MX28_RPM_PER_UNIT;
+    }
+    // Ensure range is valid.
     if(val > 1023.0)
     {
         val = 1023.0;
     }
+    // Add 1024 to offset for desired direction.
     if(clockwise)
     {
         val += 1024.0;
     }
     mMutex.lock();
-    mCommandSpeedRpm = val;
+    mCommandSpeedRpm = (int)val;
     mCommandSpeedFlag = true;
     mMutex.unlock();
 }
@@ -154,12 +178,14 @@ void Dynamixel::ProcessingThread()
                 boost::mutex::scoped_lock lock(mMutex);
                 if(mCommandSpeedFlag)
                 {
-                    dxl_write_word(mID, P_MOVING_SPEED_L, mCommandSpeedRpm);
+                    dxl_write_word(mID, MOVING_SPEED_L, mCommandSpeedRpm);
                     CommStatus = dxl_get_result();
                     // Print reason of unsuccessful command.
                     if(CommStatus != COMM_RXSUCCESS)
                     {
-                        //                        PrintCommStatus(CommStatus);
+#ifdef DEBUG
+                        PrintCommStatus(CommStatus);
+#endif
                     }
                     // Reset command flag to false if sending command
                     // succeeded so as to not flood serial commands.
@@ -173,19 +199,20 @@ void Dynamixel::ProcessingThread()
             bool wasRead = false;
             try
             {
-                int recv = dxl_read_word(mID, P_PRESENT_POSITION_L );
+                int recv = dxl_read_word(mID, PRESENT_POSITION_L );
                 CommStatus = dxl_get_result();
                 if(CommStatus == COMM_RXSUCCESS)
                 {
                     boost::mutex::scoped_lock lock(mMutex);
-                    mCurrentPositionDeg = recv * MX28_DEG_PER_UNIT;
-                    mCurrentPositionDeg *= M_PI / 180.0;
+                    mCurrentPositionRad = recv * MX28_RAD_PER_UNIT;
                     wasRead = true;
                 }
                 // Print reason of unsuccessful read command.
                 else
                 {
-                    //                    PrintCommStatus(CommStatus);
+#ifdef DEBUG
+                    PrintCommStatus(CommStatus);
+#endif
                 }
             }
             catch(std::exception e)
@@ -202,17 +229,17 @@ void Dynamixel::ProcessingThread()
                     callback++)
                 {
                     clock_gettime(CLOCK_REALTIME, &time);
-                    (*callback)->ProcessServoData(mCurrentPositionDeg,
-                                                  time);
+                    (*callback)->ProcessServoData(mCurrentPositionRad, time);
                 }
             }
             else
             {
-                //std::cout << "No Read" << std::endl;
+#ifdef DEBUG
+                std::cout << "No Read" << std::endl;
+#endif
             }
         }
         boost::this_thread::sleep(boost::posix_time::microseconds(100));
     }
 }
-
 /* End of File */

@@ -1,7 +1,8 @@
 /**
   \file Main.cpp
   \brief Main file for running the Pidar program.
-  \authors Jonathan Ulrich (jongulrich@gmail.com), Andrew Watson (watsontandrew@gmail.com
+  \author Jonathan Ulrich (jongulrich@gmail.com)
+  \author Andrew Watson (watsontandrew@gmail.com)
   \date 2014
 */
 #include "Hokuyo.hpp"
@@ -15,6 +16,7 @@
 #include <ctime>
 #include <iostream>
 #include <string>
+
 
 using namespace std;
 using namespace Pidar;
@@ -65,24 +67,24 @@ int main()
             //                      << restartCnt
             //                      << " restart attempts made."
             //                      << std::endl;
-            gMainControl->StartISR();
+            gMainControl->SetupWiringPi();
             restartCnt++;
         }
         //Check for updates from client
         if(gFoundUpdate)
         {
-            gMainControl->mMotor->SetSpeedRpm(gMotorSpeed, true);
+            gMainControl->mpMotor->SetSpeedRpm(gMotorSpeed, true);
             gFoundUpdate = false;
         }
         // Fix for laser disconnecting on slipring?
         // Shutdown thread and serial connection, sleep, then
         // restart to resume data output.
-        if(gMainControl->mLaser->GetErrorCount() > 2)
+        if(gMainControl->mpLaser->GetErrorCount() > 2)
         {
             //            std::cout << "Restarting Laser Connection" << std::endl;
-            gMainControl->mLaser->Shutdown();
+            gMainControl->mpLaser->Shutdown();
             sleep(1);
-            gMainControl->mLaser->Initialize();
+            gMainControl->mpLaser->Initialize();
         }
         usleep(100000);
     }

@@ -2,7 +2,8 @@
   \file Dynamixel.hpp
   \brief Interface for connecting to Dynamixel Motors. Wraps Dynamixel DXL SDK
         available here: http://support.robotis.com/en/software/dynamixelsdk.html
-  \authors Jonathan Ulrich (jongulrich@gmail.com), Andrew Watson (watsontandrew@gmail.com
+  \author Jonathan Ulrich (jongulrich@gmail.com)
+  \author Andrew Watson (watsontandrew@gmail.com)
   \date 2014
 */
 #pragma once
@@ -19,22 +20,25 @@
 #include <stdlib.h>
 #include <math.h>
 
-// 8 Bit RAM Addresses
-#define P_CW_ANGLE_LIMIT_L      6
-#define P_CW_ANGLE_LIMIT_H      7
-#define P_CCW_ANGLE_LIMIT_L     8
-#define P_CCW_ANGLE_LIMIT_H     9
-#define P_GOAL_POSITION_L       30
-#define P_GOAL_POSITION_H       31
-#define P_PRESENT_POSITION_L    36
-#define P_PRESENT_POSITION_H    37
-#define P_MOVING                46
-#define P_MOVING_SPEED_L        32
-#define P_MOVING_SPEED_H        33
-#define P_TORQUE_LIMIT_L        34
-#define P_TORQUE_LIMIT_H        35
-#define MX28_RPM_PER_UNIT       0.053
-#define MX28_DEG_PER_UNIT       0.088
+// 8 Bit EEPROM Hex Addresses
+#define CW_ANGLE_LIMIT_L      6
+#define CW_ANGLE_LIMIT_H      7
+#define CCW_ANGLE_LIMIT_L     8
+#define CCW_ANGLE_LIMIT_H     9
+// 8 Bit RAM Hex Addresses
+#define GOAL_POSITION_L       30
+#define GOAL_POSITION_H       31
+#define PRESENT_POSITION_L    36
+#define PRESENT_POSITION_H    37
+#define MOVING                46
+#define MOVING_SPEED_L        32
+#define MOVING_SPEED_H        33
+#define TORQUE_LIMIT_L        34
+#define TORQUE_LIMIT_H        35
+// Motor definitions
+#define MX28_RPM_PER_UNIT       0.0572166665 // [0 - 1023] (0.114437928 rpm / 2)
+#define MX28_RAD_PER_UNIT       0.00153398079
+#define MAX_SPEED_RPM           25.0
 
 
 namespace Pidar
@@ -42,99 +46,141 @@ namespace Pidar
     namespace Motor
     {
         /**
-          \class Callback
-          \brief Used to generate callbacks for subscribers to servo data.
-                 Overload this callback and functions to recieve updated motor
-                 position values.
-        */
+         * @brief The Callback class generates callbacks for subscribers to
+         * motor data. Overload this class and corresponding functions to
+         * recieve appropraite motor stats.
+         */
         class Callback
         {
         public:
-            Callback() {}
-            virtual ~Callback() {}
             typedef std::set<Callback*> Set;
-            /** Function called when new data becomes available from the laser,
-                \param[in] Position data.
-                \param{in] Time stamp in UTC */
-            virtual void ProcessServoData(const float& pos,
-                                          const timespec& timestamp) = 0;
+            /**
+             * @brief ProcessServoData Called when new servo position data is
+             * available.
+             * @param positionRadians
+             * @param timestampUTC
+             */
+            virtual void ProcessServoData(const float& positionRadians,
+                                          const timespec& timestampUTC) = 0;
         };
         /**
-          \class Dynamixel
-          \brief Used to connect to the Dynamixel motors using a serial interface.
-        */
+         * @brief The Dynamixel class is used to interface with Dynamixel servo
+         * motors via a RS485 interface.
+         */
         class Dynamixel
         {
         public:
             Dynamixel();
             ~Dynamixel();
-            /** Initializes a connection (serial) to a dynamixel servo. */
+            /**
+             * @brief Initialize Starts a serial connection to a dynamixel.
+             * @returns Ture on success, false otherwise.
+             */
             virtual bool Initialize();
-            /** Shuts down connection to the servo (terminates thread). */
+            /**
+             * @brief Shutdown Releases serial connection with the servo.
+             */
             virtual void Shutdown();
-            /** Checks if connection to sensor is established
-                \returns true if connected, false otherwise. */
+            /**
+             * @brief IsConnected
+             * @returns True if connected, false otherwise.
+             */
             virtual bool IsConnected() const { return mConnectedFlag; }
-            /** Starts a thread for continuous capturing of sensor data. */
+            /**
+             * @brief StartCaptureThread
+             * @returns Ture on start of servo IO thread, false otherwise.
+             */
             virtual bool StartCaptureThread();
-            /** Stops the thread for continuous capturing of sensor data. */
+            /**
+             * @brief StopCaptureThread Stops the serial IO thread.
+             */
             virtual void StopCaptureThread();
-            /** Sets speed of motor in RPM given a direction
-                \param[in] RPM to set (RX-24: 0~114 RPM, MX-28: 0~54 RPM)
-                \param[in] true to move CW, false to move CCW*/
-            virtual void SetSpeedRpm(const float rpm, const bool clockwise);
-            /** Prints to screen the result of a wirte/read to the dynamixel */
+            /**
+             * @brief SetSpeedRpm Sets speed of Dynamixel in RPM.
+             * @param desiredRPM desired speed of Dynamixel.
+             * @param clockwise True if desired rotation is clockwise.
+             */
+            virtual void SetSpeedRpm(const float desiredRPM,
+                                     const bool clockwise);
+            /**
+             * @brief PrintCommStatus Prints the result of a write/read command.
+             * @param CommStatus
+             */
             static void PrintCommStatus(int CommStatus);
-            /** Get current position of servo
-                \returns Position of motor in degrees*/
-            virtual float GetCurrentPositionDegrees()
+            /**
+             * @brief GetCurrentPositionDegrees
+             * @return Current position value of Dynamixel in radians.
+             */
+            virtual float GetCurrentPositionRadians()
             {
                 boost::mutex::scoped_lock lock(mMutex);
-                return mCurrentPositionDeg;
+                return mCurrentPositionRad;
             }
-            /** Get previous position of servo
-                \returns Previous position of motor in degrees */
-            virtual float GetPreviousPositionDegrees()
+            /**
+             * @brief GetPreviousPositionDegrees
+             * @return Previous set position of the motor in radians.
+             */
+            virtual float GetPreviousPositionRadians()
             {
                 boost::mutex::scoped_lock lock(mMutex);
-                return mPreviousPositionDeg;
+                return mPreviousPositionRad;
             }
-            /** Sets previous position of servo at some earlier time.
-                \param[in] Previous position of motor in degrees */
-            void SetPreviousPositionDegrees(float val)
+            /**
+             * @brief SetPreviousPositionDegrees
+             * @param position The desired previous motor position to set (rad).
+             */
+            void SetPreviousPositionDegrees(float positionRad)
             {
                 boost::mutex::scoped_lock lock(mMutex);
-                mPreviousPositionDeg = val;
+                mPreviousPositionRad = positionRad;
             }
-            /** Method to register callbacks */
-            virtual bool RegisterCallback(Callback* cb)
+            /**
+             * @brief RegisterCallback
+             * @param callback Callback to be registered.
+             * @returns True on success, false otherwise.
+             */
+            virtual bool RegisterCallback(Callback* callback)
             {
-                //TODO add mutex lock
-                mCallbacks.insert(cb);
-                return true;
-            }
-            /** Method to remove callbacks */
-            virtual bool RemoveCallback(Callback* cb)
-            {
-                //TODO add mutex lock
-                Callback::Set::iterator iter;
-                iter = mCallbacks.find(cb);
-                if(iter != mCallbacks.end())
+                if(callback)
                 {
-                    mCallbacks.erase(cb);
+                    mCallbacks.insert(callback);
                     return true;
                 }
                 return false;
             }
-            /** Method to clear callbacks */
+            /**
+             * @brief RemoveCallback
+             * @param callback Callback to be removed.
+             * @returns True on success, false otherwise.
+             */
+            virtual bool RemoveCallback(Callback* callback)
+            {
+                if(callback)
+                {
+                    Callback::Set::iterator iter;
+                    iter = mCallbacks.find(callback);
+                    if(iter != mCallbacks.end())
+                    {
+                        mCallbacks.erase(callback);
+                        return true;
+                    }
+                    return false;
+                }
+                return false;
+            }
+            /**
+             * @brief ClearCallbacks
+             */
             void ClearCallbacks()
             {
-                //TODO add mutex lock
                 mCallbacks.clear();
             }
 
 
         protected:
+            /**
+             * @brief ProcessingThread Serial IO thread function.
+             */
             virtual void ProcessingThread();
 
             bool mConnectedFlag;
@@ -146,8 +192,8 @@ namespace Pidar
             boost::mutex mMutex;
             Callback::Set mCallbacks;
             int mCommandSpeedRpm;
-            float mCurrentPositionDeg;
-            float mPreviousPositionDeg;
+            float mCurrentPositionRad;
+            float mPreviousPositionRad;
             bool mCommandSpeedFlag;
             bool mFirstMotorReadFlag;
         };

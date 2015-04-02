@@ -2,6 +2,7 @@ TEMPLATE = app
 CONFIG += console
 CONFIG += c++11
 CONFIG -= qt
+CONFIG(debug, release|debug):DEFINES += DEBUG
 
 target.path=/home/pi/software/deploy
 INSTALLS+=target

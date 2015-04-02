@@ -1,7 +1,8 @@
 /**
   \file Server.hpp
   \brief UDP server interface class for connecting to the Pidar.
-  \authors Jonathan Ulrich (jongulrich@gmail.com), Andrew Watson (watsontandrew@gmail.com
+  \author Jonathan Ulrich (jongulrich@gmail.com)
+  \author Andrew Watson (watsontandrew@gmail.com)
   \date 2014
 */
 #pragma once
@@ -23,6 +24,10 @@ namespace Pidar
     const int max_message_count = 1000;
     const int transmission_delay_ms = 1; //milliseconds
 
+    /**
+     * @brief The Server class implements the boost UDP interface to enable
+     * broadcasting of collected 3D scan data.
+     */
     class Server
     {
     public:

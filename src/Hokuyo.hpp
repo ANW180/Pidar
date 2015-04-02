@@ -1,7 +1,8 @@
 /**
   \file Hokuyo.hpp
   \brief Interface for connecting to the Hokuyo UTM-30LX Lidar.
-  \authors Jonathan Ulrich (jongulrich@gmail.com), Andrew Watson (watsontandrew@gmail.com
+  \author Jonathan Ulrich (jongulrich@gmail.com)
+  \author Andrew Watson (watsontandrew@gmail.com)
   \date 2014
 */
 #pragma once
@@ -22,22 +23,22 @@ namespace Pidar
     namespace Laser
     {
         /**
-          \class Callback
-          \brief Used to generate callbacks for subscribers to laser data.
-                 Overload this callback and functions to recieve updated laser
-                 scans.
-        */
+         * @brief The Callback class generates callbacks for subscribers of
+         * laser data. Overload this class and corresponding functions to
+         * receive appropriate laser data.
+         */
         class Callback
         {
         public:
-            Callback() {}
-            virtual ~Callback() {}
             typedef std::set<Callback*> Set;
-            /** Function called when new data becomes available from the laser,
-                \param[in] Scan data in polar coordinates.
-                \param[in] Time stamp in UTC */
-            virtual void ProcessLaserData(const Point3D::List& scan,
-                                          const timespec& timestamp) = 0;
+            /**
+             * @brief ProcessLaserData Invoked when new data becomes available
+             * from the laser.
+             * @param polarScan The captured scan in polar coordinates.
+             * @param timestampUTC The UTC time the scan was captured.
+             */
+            virtual void ProcessLaserData(const Point3D::List& polarScan,
+                                          const timespec& timestampUTC) = 0;
         };
         /**
           \class Hokuyo
@@ -45,49 +46,83 @@ namespace Pidar
                  library available on sourceforge. It can connect to
                  Hokuyo LIDARS and generate callbacks for each scan.
         */
+        /**
+         * @brief The Hokuyo class is used to interface with Hokuyo LIDARs via
+         * a USB nterface.
+         */
         class Hokuyo
         {
         public:
             Hokuyo();
             ~Hokuyo();
-            /** Initializes a connection (serial only) to a Hokuyo sensor. */
+            /**
+             * @brief Initialize Starts a serial connection to a Hokuyo.
+             * @returns True on success, false otherwise.
+             */
             virtual bool Initialize();
-            /** Shuts down connection to the sensor (terminates thread). */
+            /**
+             * @brief Shutdown Releases serial connection with the Hokuyo.
+             */
             virtual void Shutdown();
-            /** Checks if connection to sensor is established
-                \returns true if connected, false otherwise. */
+            /**
+             * @brief IsConnected
+             * @returns True if connected, false otherwise.
+             */
             virtual bool IsConnected() const { return mConnectedFlag; }
-            /** Starts a thread for continuous capturing of sensor data. */
+            /**
+             * @brief StartCaptureThread
+             * @returns True on start of Hokuyo IO thread, false otherwise.
+             */
             virtual bool StartCaptureThread();
-            /** Stops the thread for continuous capturing of sensor data. */
+            /**
+             * @brief StopCaptureThread Stops the serial IO thread.
+             */
             virtual void StopCaptureThread();
-            /** Method to register callbacks */
-            virtual bool RegisterCallback(Callback* cb)
+            /**
+             * @brief RegisterCallback
+             * @param callback Callback to be registered.
+             * @returns True on success, false otherwise.
+             */
+            virtual bool RegisterCallback(Callback* callback)
             {
-                //TODO add mutex lock
-                mCallbacks.insert(cb);
-                return true;
-            }
-            /** Method to remove callbacks */
-            virtual bool RemoveCallback(Callback* cb)
-            {
-                //TODO add mutex lock
-                Callback::Set::iterator iter;
-                iter = mCallbacks.find(cb);
-                if(iter != mCallbacks.end())
+                if(callback)
                 {
-                    mCallbacks.erase(cb);
+                    mCallbacks.insert(callback);
                     return true;
                 }
                 return false;
             }
-            /** Method to clear callbacks */
+            /**
+             * @brief RemoveCallback
+             * @param callback Callback to be removed.
+             * @returns True on success, false otherwise.
+             */
+            virtual bool RemoveCallback(Callback* callback)
+            {
+                if(callback)
+                {
+                    Callback::Set::iterator iter;
+                    iter = mCallbacks.find(callback);
+                    if(iter != mCallbacks.end())
+                    {
+                        mCallbacks.erase(callback);
+                        return true;
+                    }
+                }
+                return false;
+            }
+            /**
+             * @brief ClearCallbacks
+             */
             void ClearCallbacks()
             {
                 //TODO add mutex lock
                 mCallbacks.clear();
             }
-            /** Returns number of read errors of serial data */
+            /**
+             * @brief GetErrorCount
+             * @returns Number of read errors of serial data.
+             */
             int GetErrorCount()
             {
                 boost::mutex::scoped_lock lock(mMutex);
@@ -95,6 +130,9 @@ namespace Pidar
             }
 
         protected:
+            /**
+             * @brief ProcessingThread Serial IO tread function.
+             */
             virtual void ProcessingThread();
 
             bool mConnectedFlag;
