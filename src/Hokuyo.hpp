@@ -10,7 +10,6 @@
 #include <boost/thread.hpp>
 #include <boost/bind.hpp>
 #include <urg_utils.h>
-#include <urg_sensor.h>
 #include <iostream>
 #include <string>
 #include <vector>

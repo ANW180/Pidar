@@ -9,8 +9,56 @@
 #include "Global.hpp"
 #include <sys/types.h>
 #include <ifaddrs.h>
+#include <time.h>
 
 using namespace Pidar;
+
+
+//timespec t1, t2, t3;
+//std::vector<double> tme;
+
+//timespec diff(timespec start, timespec end)
+//{
+//    timespec temp;
+//    if((end.tv_nsec - start.tv_nsec) < 0)
+//    {
+//        temp.tv_sec = end.tv_sec - start.tv_sec - 1;
+//        temp.tv_nsec = 1000000000L + end.tv_nsec - start.tv_nsec;
+//    }
+//    else
+//    {
+//        temp.tv_sec = end.tv_sec - start.tv_sec;
+//        temp.tv_nsec = end.tv_nsec - start.tv_nsec;
+//    }
+//    return temp;
+//}
+
+
+//void computeAvg()
+//{
+//    clock_gettime(CLOCK_MONOTONIC, &t2);
+//    double t = diff(t1, t2).tv_sec + diff(t1, t2).tv_nsec * 1e-9;
+//    tme.push_back(t);
+//    double s = diff(t3, t2).tv_sec + diff(t3, t2).tv_nsec * 1e-9;
+//    if(s > 1.0 && tme.size() > 0)
+//    {
+//        std::vector<double>::const_iterator it;
+//        double total = 0.0;
+//        for(it = tme.begin();
+//            it != tme.end();
+//            it++)
+//        {
+//            total += (*it);
+//        }
+//        total /= tme.size();
+//        std::cout << "Avg Delay: "
+//                  << total
+//                  << " s"
+//                  << std::endl;
+//        clock_gettime(CLOCK_MONOTONIC, &t3);
+//        tme.clear();
+//    }
+//}
 
 
 Control::Control()
@@ -22,68 +70,31 @@ Control::Control()
 
 bool Control::Initialize()
 {
-    //Test Switches
-    bool enableLaser = true;
-    bool enableMotor = true;
-    bool enableISR = true;
     unsigned short restartCount = 0;
-
-    if(enableLaser)
+    while(!mpMotor->Initialize())
     {
-        mpLaser->RegisterCallback(this);
-        while(!mpLaser->Initialize())
+        restartCount++;
+        sleep(1);
+        if(restartCount > 3)
         {
-            restartCount++;
-            sleep(1);
-            if(restartCount > 3)
-            {
-                return false;
-            }
+            return false;
         }
     }
+    mpMotor->SetSpeedRpm(0.0);
     restartCount = 0;
-
-    if(enableMotor)
+    mpLaser->RegisterCallback(this);
+    while(!mpLaser->Initialize())
     {
-        mpMotor->RegisterCallback(this);
-        while(!mpMotor->Initialize())
+        restartCount++;
+        sleep(1);
+        if(restartCount > 3)
         {
-            restartCount++;
-            sleep(1);
-            if(restartCount > 3)
-            {
-                return false;
-            }
+            return false;
         }
-        mpMotor->SetSpeedRpm(1.0, true);
     }
-
-    // Wait for movement/data
-    sleep(1);
-
-    if(enableISR)
+    if(!Control::Instance()->SetupWiringPi())
     {
-        if(wiringPiSetupSys () < 0)
-        {
-            fprintf (stderr,
-                     "Unable to setup wiringPi: %s\n", strerror (errno));
-        }
-        // Pin 17/0 generate an interrupt on low-to-high transitions
-        // and attach myInterrupt() to the interrupt
-        if(wiringPiISR(HOKUYOSYNCPIN,
-                       INT_EDGE_RISING,
-                       InterruptService) < 0)
-        {
-            fprintf (stderr, "Unable to setup ISR: %s\n", strerror (errno));
-        }
-        if(wiringPiISR(SHUTDOWNBUTTONPIN,
-                       INT_EDGE_RISING,
-                       InterruptServiceStop) < 0)
-        {
-            fprintf (stderr, "Unable to setup ISR: %s\n", strerror (errno));
-        }
-        // Setup LED pin mode
-        pinMode(LEDPIN, OUTPUT);
+        return false;
     }
     return true;
 }
@@ -121,6 +132,7 @@ bool Control::SetupWiringPi()
     }
     // Setup LED pin mode
     pinMode(LEDPIN, OUTPUT);
+    //clock_gettime(CLOCK_MONOTONIC, &t3);
     return result;
 }
 
@@ -129,21 +141,21 @@ void Control::AddToScanQueue(Point3D::List laserscan,
                              float currentMotorPosition,
                              float previousMotorPosition)
 {
-    int scancnt = laserscan.size();//1080;
+    int scanCount = laserscan.size(); // 1080 steps
     bool newScan = false;
-    //Check for complete scan & get delta
-    float delta_position = 0.0;
+    float deltaPosition = 0.0;
+    // Check for complete scan & get delta
     if(previousMotorPosition < currentMotorPosition &&
             fabs(previousMotorPosition - currentMotorPosition) > 0.25)
     {
         // Motor has made a full revolution (360 degrees)
-        delta_position = ((M_PI * 2.0 - previousMotorPosition)
-                          - currentMotorPosition);
+        deltaPosition = ((M_PI * 2.0 - previousMotorPosition)
+                         - currentMotorPosition);
         newScan = true;
     }
     else
     {
-        delta_position = previousMotorPosition - currentMotorPosition;
+        deltaPosition = previousMotorPosition - currentMotorPosition;
         if(currentMotorPosition <= M_PI && previousMotorPosition >= M_PI)
         {
             newScan = true;
@@ -153,16 +165,22 @@ void Control::AddToScanQueue(Point3D::List laserscan,
     pcl_data tmp;
     if(laserscan.size() > 0)
     {
-        for(int i = 0; i <= scancnt; i++)
+        float changePerStep = deltaPosition / scanCount;
+        if(changePerStep < 0.)
+        {
+#ifdef DEBUG
+            std::cout << "Platform moving backwards!" << std::endl;
+#endif
+        }
+        for(int i = 0; i <= scanCount; i++)
         {
             pcl_point point;
             point.r = (laserscan[i]).GetX();
             point.theta = (laserscan[i]).GetY();
-            point.phi = M_PI * 2.0
-                    - float(previousMotorPosition +
-                            (i * (delta_position / scancnt)));
+            point.phi = M_PI * 2.0 - float(previousMotorPosition +
+                                           (i * (changePerStep)));
             point.intensity = (laserscan[i]).GetIntensity();
-            if(i == scancnt && newScan)
+            if(i == scanCount && newScan)
             {
                 point.newScan = 1.0f;
             }
@@ -186,27 +204,19 @@ void Control::ProcessLaserData(const Point3D::List& polarScan,
 }
 
 
-void Control::ProcessServoData(const float &positionRadians,
-                               const timespec &timestampUTC)
+Control* Control::Instance()
 {
-    mMotorAngle = positionRadians;
-    mMotorTimestamp = timestampUTC;
+    if(!mpInstance)
+    {
+        mpInstance = new Control;
+    }
+    return mpInstance;
 }
 
 
-void InterruptServiceStop(void)
+// Called every 20 - 25 ms on average.
+void Pidar::InterruptService(void)
 {
-    gStopFlag = true;
-    gMainControl->mpMotor->SetSpeedRpm(0.0, true);
-    sleep(1);
-    gMainControl->mpMotor->Shutdown();
-}
-
-
-void InterruptService(void)
-{
-    static Point3D::List previousList;
-    static Point3D::List currentList;
     if(!gStopFlag)
     {
         // Flash activity (interrupt) light.
@@ -222,43 +232,23 @@ void InterruptService(void)
         gLEDCount++;
         gISRFlag = true;
 
-        // Get all necessary data for 3D data construction.
-        if(gMainControl->mpMotor->IsConnected())
+        // Get all necessary data for 3D data construction if devices are ready.
+        if(Control::Instance()->mpMotor->IsConnected() &&
+                Control::Instance()->mpLaser->IsConnected())
         {
-            //            static bool first = true;
-            //            if(first)
-            //            {
-            //                currentList = gMainControl->mpLaserScan;
-            //                previousList = currentList;
-            //                first = false;
-            //            }
-            //            previousList = currentList;
-            //            currentList = gMainControl->mpLaserScan;
-            //            unsigned int waitCounter = 0;
-            //            if(previousList.size() > 0 && currentList.size() > 0)
-            //            {
-            //            while(fabs(previousList.front().GetX() -
-            //                    currentList.front().GetX()) < 0.0001 &&
-            //               fabs(previousList.back().GetY() -
-            //                    currentList.back().GetY()) < 0.0001)
-            //            {
-            //                currentList = gMainControl->mpLaserScan;
-            //                waitCounter++;
-            //            }
-            //            }
-            //            if(waitCounter != 0)
-            //            {
-            //                std::cout << waitCounter << std::endl;
-            //            }
-            gMainControl->AddToScanQueue(gMainControl->mpLaserScan,
-                                         gMainControl->mpMotorAngle,
-                                         gMainControl->mpMotor->
-                                         GetPreviousPositionDegrees());
+            float currMotorPosition =
+                    Control::Instance()->mpMotor->GetCurrentPositionRadians();
+            //clock_gettime(CLOCK_MONOTONIC, &t1);
+            //computeAvg();
+            //clock_gettime(CLOCK_MONOTONIC, &t1);
+            Control::Instance()->AddToScanQueue(Control::Instance()->mLaserScan,
+                                                Control::Instance()->mMotorAngle,
+                                                Control::Instance()->mMotorAngle);
             // Update previous motor position as current position.
-            gMainControl->mpMotor->
-                    SetPreviousPositionDegrees(gMainControl->
-                                               mpMotor->
-                                               GetCurrentPositionDegrees());
+            //            Control::Instance()->mpMotor->
+            //                    SetPreviousPositionRadians(Control::Instance()->
+            //                                               mpMotor->
+            //                                               GetCurrentPositionRadians());
         }
         else
         {
@@ -271,5 +261,12 @@ void InterruptService(void)
     {
         digitalWrite(LEDPIN, 0);
     }
+}
+
+
+void Pidar::InterruptServiceStop(void)
+{
+    gStopFlag = true;
+    Control::Instance()->mpMotor->SetSpeedRpm(0.0);
 }
 /*End of File */

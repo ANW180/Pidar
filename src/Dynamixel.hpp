@@ -46,24 +46,6 @@ namespace Pidar
     namespace Motor
     {
         /**
-         * @brief The Callback class generates callbacks for subscribers to
-         * motor data. Overload this class and corresponding functions to
-         * recieve appropraite motor stats.
-         */
-        class Callback
-        {
-        public:
-            typedef std::set<Callback*> Set;
-            /**
-             * @brief ProcessServoData Called when new servo position data is
-             * available.
-             * @param positionRadians
-             * @param timestampUTC
-             */
-            virtual void ProcessServoData(const float& positionRadians,
-                                          const timespec& timestampUTC) = 0;
-        };
-        /**
          * @brief The Dynamixel class is used to interface with Dynamixel servo
          * motors via a RS485 interface.
          */
@@ -85,117 +67,29 @@ namespace Pidar
              * @brief IsConnected
              * @returns True if connected, false otherwise.
              */
-            virtual bool IsConnected() const { return mConnectedFlag; }
-            /**
-             * @brief StartCaptureThread
-             * @returns Ture on start of servo IO thread, false otherwise.
-             */
-            virtual bool StartCaptureThread();
-            /**
-             * @brief StopCaptureThread Stops the serial IO thread.
-             */
-            virtual void StopCaptureThread();
+            virtual bool IsConnected();
             /**
              * @brief SetSpeedRpm Sets speed of Dynamixel in RPM.
              * @param desiredRPM desired speed of Dynamixel.
-             * @param clockwise True if desired rotation is clockwise.
              */
-            virtual void SetSpeedRpm(const float desiredRPM,
-                                     const bool clockwise);
+            virtual void SetSpeedRpm(const float desiredRPM);
+            /**
+             * @brief GetCurrentPositionDegrees
+             * @return Current position value of Dynamixel in radians [0, 2Pi].
+             */
+            virtual float GetCurrentPositionRadians();
             /**
              * @brief PrintCommStatus Prints the result of a write/read command.
              * @param CommStatus
              */
-            static void PrintCommStatus(int CommStatus);
-            /**
-             * @brief GetCurrentPositionDegrees
-             * @return Current position value of Dynamixel in radians.
-             */
-            virtual float GetCurrentPositionRadians()
-            {
-                boost::mutex::scoped_lock lock(mMutex);
-                return mCurrentPositionRad;
-            }
-            /**
-             * @brief GetPreviousPositionDegrees
-             * @return Previous set position of the motor in radians.
-             */
-            virtual float GetPreviousPositionRadians()
-            {
-                boost::mutex::scoped_lock lock(mMutex);
-                return mPreviousPositionRad;
-            }
-            /**
-             * @brief SetPreviousPositionDegrees
-             * @param position The desired previous motor position to set (rad).
-             */
-            void SetPreviousPositionDegrees(float positionRad)
-            {
-                boost::mutex::scoped_lock lock(mMutex);
-                mPreviousPositionRad = positionRad;
-            }
-            /**
-             * @brief RegisterCallback
-             * @param callback Callback to be registered.
-             * @returns True on success, false otherwise.
-             */
-            virtual bool RegisterCallback(Callback* callback)
-            {
-                if(callback)
-                {
-                    mCallbacks.insert(callback);
-                    return true;
-                }
-                return false;
-            }
-            /**
-             * @brief RemoveCallback
-             * @param callback Callback to be removed.
-             * @returns True on success, false otherwise.
-             */
-            virtual bool RemoveCallback(Callback* callback)
-            {
-                if(callback)
-                {
-                    Callback::Set::iterator iter;
-                    iter = mCallbacks.find(callback);
-                    if(iter != mCallbacks.end())
-                    {
-                        mCallbacks.erase(callback);
-                        return true;
-                    }
-                    return false;
-                }
-                return false;
-            }
-            /**
-             * @brief ClearCallbacks
-             */
-            void ClearCallbacks()
-            {
-                mCallbacks.clear();
-            }
-
-
+            virtual void PrintCommStatus(int CommStatus);
         protected:
-            /**
-             * @brief ProcessingThread Serial IO thread function.
-             */
-            virtual void ProcessingThread();
-
-            bool mConnectedFlag;
-            bool mProcessingThreadFlag;
-            int mBaudRate;
             int mID;
-            std::string mSerialPort;
-            boost::thread mProcessingThread;
-            boost::mutex mMutex;
-            Callback::Set mCallbacks;
+            int mBaudRate;
             int mCommandSpeedRpm;
+            std::string mSerialPort;
             float mCurrentPositionRad;
-            float mPreviousPositionRad;
-            bool mCommandSpeedFlag;
-            bool mFirstMotorReadFlag;
+            bool mConnectedFlag;
         };
     }
 }

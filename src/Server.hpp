@@ -8,8 +8,6 @@
 #pragma once
 #include "PointStructs.hpp"
 #include "Point3D.hpp"
-#include "Control.hpp"
-#include "Global.hpp"
 #include <boost/asio.hpp>
 #include <boost/bind.hpp>
 #include <boost/lexical_cast.hpp>
@@ -20,10 +18,6 @@
 
 namespace Pidar
 {
-    const short multicast_port = 30001;
-    const int max_message_count = 1000;
-    const int transmission_delay_ms = 1; //milliseconds
-
     /**
      * @brief The Server class implements the boost UDP interface to enable
      * broadcasting of collected 3D scan data.
@@ -31,10 +25,12 @@ namespace Pidar
     class Server
     {
     public:
-        Server(boost::asio::io_service& io_service,
-               const boost::asio::ip::address& multicast_address);
-        void handle_send_to(const boost::system::error_code& error);
-        void handle_timeout(const boost::system::error_code& error);
+        static const short mMulticastPort;
+        static const int mTransmissionDelayMs;
+        Server(boost::asio::io_service& ioService,
+               const boost::asio::ip::address& multicastAddress);
+        void HandleSend(const boost::system::error_code& error);
+        void HandleTimeout(const boost::system::error_code& error);
 
     private:
         boost::asio::ip::udp::endpoint mEndpoint;

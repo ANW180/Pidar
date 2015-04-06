@@ -16,77 +16,83 @@
 #include <ctime>
 #include <iostream>
 #include <string>
+#include <math.h>
 
+
+#define MULTICASTGROUP "239.255.0.1"
+
+// Allocating and initializing the globals.
+Pidar::Control* Pidar::Control::mpInstance = 0;
+std::deque<Pidar::pcl_data> gSendPoints;
+int gMotorSpeed = 1.0;
+unsigned short gLEDCount = 0;
+bool gStopFlag = false;
+bool gISRFlag = false;
 
 using namespace std;
 using namespace Pidar;
 
 
-Pidar::Control* gMainControl;
-
-
 int main()
 {
-    gMainControl = new Pidar::Control();
-    while(!gMainControl->Initialize())
+    while(!Control::Instance()->Initialize())
     {
         sleep(1);
     }
-    gMotorSpeed = 1.;
-    int restartCnt = 0;
+    unsigned int restartCnt = 0;
     sleep(1);
 
-    //Start Web Server Thread
-    boost::asio::io_service io_service;
-    Server s(io_service,
-             boost::asio::ip::address::from_string("239.255.0.1"));
-    boost::thread bt(boost::bind(&boost::asio::io_service::run,
-                                 &io_service));
+    // Start the UDP server
+    boost::asio::io_service ioService;
+    Server s(ioService,
+             boost::asio::ip::address::from_string(MULTICASTGROUP));
+    boost::thread serverThread(boost::bind(&boost::asio::io_service::run,
+                                 &ioService));
 
-    //Start Seperate Command Web Server
-    boost::asio::io_service io_service_cmds;
-    CommandReceiver cmdsrv(io_service_cmds, 10001);
-    boost::thread bt2(boost::bind(&boost::asio::io_service::run,
-                                  &io_service_cmds));
+    // Start the UDP command server
+    boost::asio::io_service ioServiceCommands;
+    CommandServer cmdsrv(ioServiceCommands, 10001);
+    boost::thread commandThread(boost::bind(&boost::asio::io_service::run,
+                                  &ioServiceCommands));
     while(1)
     {
         if(gISRFlag)
         {
             if(restartCnt > 0)
             {
-                //                std::cout << "ISR restarted "
-                //                          << restartCnt
-                //                          << " times"
-                //                          << std::endl;
+#ifdef DEBUG
+                std::cout << "ISR restarted "
+                          << restartCnt
+                          << " times"
+                          << std::endl;
+#endif
             }
             gISRFlag = false;
         }
         else
         {
-            //            std::cout << "ISR NOT running, restarting "
-            //                      << restartCnt
-            //                      << " restart attempts made."
-            //                      << std::endl;
-            gMainControl->SetupWiringPi();
+#ifdef DEBUG
+            std::cout << "ISR NOT running, restarting "
+                      << restartCnt
+                      << " restart attempts made."
+                      << std::endl;
+#endif
+            Control::Instance()->SetupWiringPi();
             restartCnt++;
-        }
-        //Check for updates from client
-        if(gFoundUpdate)
-        {
-            gMainControl->mpMotor->SetSpeedRpm(gMotorSpeed, true);
-            gFoundUpdate = false;
         }
         // Fix for laser disconnecting on slipring?
         // Shutdown thread and serial connection, sleep, then
         // restart to resume data output.
-        if(gMainControl->mpLaser->GetErrorCount() > 2)
+        if(Control::Instance()->mpLaser->GetErrorCount() > 2)
         {
-            //            std::cout << "Restarting Laser Connection" << std::endl;
-            gMainControl->mpLaser->Shutdown();
+#ifdef DEBUG
+            std::cout << "Restarting Laser Connection" << std::endl;
+#endif
+            Control::Instance()->mpLaser->Shutdown();
             sleep(1);
-            gMainControl->mpLaser->Initialize();
+            Control::Instance()->mpLaser->Initialize();
         }
-        usleep(100000);
+        boost::this_thread::sleep(boost::posix_time::milliseconds(50));
     }
     return 0;
 }

@@ -1,5 +1,5 @@
 /**
-  \file CommandReceiver.hpp
+  \file CommandServer.hpp
   \brief UDP interface for controlling the Pidar parameters.
   \author Jonathan Ulrich (jongulrich@gmail.com)
   \author Andrew Watson (watsontandrew@gmail.com)
@@ -12,24 +12,25 @@
 #include <boost/asio.hpp>
 #include <boost/bind.hpp>
 
-#define MAX_LENGTH 1024
+#define MAX_LENGTH 63507
 
 
 namespace Pidar
 {
     /**
-     * @brief The CommandReceiver class implements boost UDP services to handle
+     * @brief The CommandServer class implements boost UDP services to handle
      * receiving commands to control the Pidar.
      */
-    class CommandReceiver
+    class CommandServer
     {
     public:
         /**
-         * @brief CommandReceiver Constructor
+         * @brief CommandServer Constructor
          * @param ioService
          * @param port
          */
-        CommandReceiver(boost::asio::io_service& ioService, short port);
+        CommandServer(boost::asio::io_service& ioService, short port);
+        ~CommandServer();
         /**
          * @brief HandleCommands Handles UDP packet interpretation.
          * @param data
@@ -51,7 +52,7 @@ namespace Pidar
                         size_t /*bytes_sent*/);
 
     private:
-        boost::asio::io_service& mIOService;
+        boost::asio::io_service& mrIOService;
         boost::asio::ip::udp::socket mSocket;
         boost::asio::ip::udp::endpoint mEndpoint;
         char mpData[MAX_LENGTH];

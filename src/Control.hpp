@@ -6,7 +6,7 @@
   \date 2014
 */
 #pragma once
-#include "CommandReceiver.hpp"
+#include "CommandServer.hpp"
 #include "Server.hpp"
 #include "Hokuyo.hpp"
 #include "Dynamixel.hpp"
@@ -31,18 +31,18 @@ namespace Pidar
      */
     void InterruptServiceStop(void);
 
-
     /**
      * @brief The Control class manages acces to Pidar resources for generating
-     * accurate 3D scans.
+     * accurate 3D scans. Control class is implemented as a singleton.
      */
-    class Control : public Laser::Callback, Motor::Callback
+    class Control : public Laser::Callback
     {
-    public:
+    protected:
         /**
          * @brief Control
          */
         Control();
+    public:
         /**
          * @brief Initialize
          * @returns True on success, false on failure.
@@ -71,13 +71,10 @@ namespace Pidar
         virtual void ProcessLaserData(const Point3D::List& polarScan,
                                       const timespec& timestampUTC);
         /**
-         * @brief ProcessServoData
-         * @param positionRadians
-         * @param timestampUTC
+         * @brief Instance
+         * @returns Pointer to the instance of the control class.
          */
-        virtual void ProcessServoData(const float& positionRadians,
-                                      const timespec& timestampUTC);
-
+        static Control* Instance();
 
         Motor::Dynamixel* mpMotor;      // Pointer to the Dynamixel motor.
         Laser::Hokuyo* mpLaser;         // Pointer to the Hokuyo lidar.
@@ -85,7 +82,8 @@ namespace Pidar
         timespec mLaserTimestamp;       // Current laser scan timestamp.
         timespec mMotorTimestamp;       // Current motor position timestamp.
         float mMotorAngle;              // Current motor angle.
+    private:
+        static Control* mpInstance;     // Single instance of the control class.
     };
-
 }
 /* End of File */

@@ -42,7 +42,7 @@ HEADERS += \
     Dynamixel.hpp \
     PointStructs.hpp \
     Point3D.hpp \
-    CommandReceiver.hpp \
+    CommandServer.hpp \
     Server.hpp \
 
 SOURCES += \
@@ -51,5 +51,5 @@ SOURCES += \
     Control.cpp \
     Main.cpp \
     Server.cpp \
-    CommandReceiver.cpp \
+    CommandServer.cpp \
 

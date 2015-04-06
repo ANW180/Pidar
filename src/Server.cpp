@@ -5,24 +5,20 @@
   \author Andrew Watson (watsontandrew@gmail.com)
   \date 2014
 */
-#include "PointStructs.hpp"
-#include "Point3D.hpp"
+#include "Server.hpp"
+#include "Global.hpp"
 #include "Control.hpp"
-#include <boost/asio.hpp>
-#include <boost/bind.hpp>
-#include <boost/lexical_cast.hpp>
-#include <boost/serialization/vector.hpp>
-#include <vector>
-#include <iostream>
 
 using namespace Pidar;
 
+const short Server::mMulticastPort = 30001;
+const int Server::mTransmissionDelayMs = 1;
 
-Server::Server(boost::asio::io_service& io_service,
-               const boost::asio::ip::address& multicast_address)
-    : mEndpoint(multicast_address, multicast_port),
-      mSocket(io_service, mEndpoint.protocol()),
-      mDeadlineTimer(io_service)
+Server::Server(boost::asio::io_service& ioService,
+               const boost::asio::ip::address& multicastAddress)
+    : mEndpoint(multicastAddress, mMulticastPort),
+      mSocket(ioService, mEndpoint.protocol()),
+      mDeadlineTimer(ioService)
 {
     mPointClouds.clear();
     pcl_data w;
@@ -34,33 +30,35 @@ Server::Server(boost::asio::io_service& io_service,
     x.newScan = false;
     w.points.push_back(x);
     mPointClouds.push_back(w);
+#ifdef DEBUG
     std::cout << "Sending Data"
               << std::endl;
     std::cout << "on "
               << mEndpoint.address()
               << ":" << mEndpoint.port()
               << std::endl;
+#endif
     mSocket.async_send_to(
                 boost::asio::buffer(mPointClouds), mEndpoint,
-                boost::bind(&Server::handle_send_to, this,
+                boost::bind(&Server::HandleSend, this,
                             boost::asio::placeholders::error));
 }
 
 
-void Server::handle_send_to(const boost::system::error_code& error)
+void Server::HandleSend(const boost::system::error_code& error)
 {
     if(!error)
     {
         mDeadlineTimer.expires_from_now
-                (boost::posix_time::milliseconds(transmission_delay_ms));
+                (boost::posix_time::milliseconds(mTransmissionDelayMs));
         mDeadlineTimer.async_wait(
-                    boost::bind(&Server::handle_timeout, this,
+                    boost::bind(&Server::HandleTimeout, this,
                                 boost::asio::placeholders::error));
     }
 }
 
 
-void Server::handle_timeout(const boost::system::error_code& error)
+void Server::HandleTimeout(const boost::system::error_code& error)
 {
     if(!error)
     {
@@ -76,13 +74,13 @@ void Server::handle_timeout(const boost::system::error_code& error)
             mSocket.async_send_to(
                         boost::asio::buffer(mPointClouds[0].points),
                     mEndpoint,
-                    boost::bind(&Server::handle_send_to,
+                    boost::bind(&Server::HandleSend,
                                 this,
                                 boost::asio::placeholders::error));
         }
         else
         {
-            handle_send_to(error);
+            HandleSend(error);
         }
     }
 }

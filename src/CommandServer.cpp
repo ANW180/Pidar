@@ -1,29 +1,41 @@
 /**
-  \file CommandReceiver.cpp
+  \file CommandServer.cpp
   \brief UDP interface for controlling the Pidar parameters.
   \author Jonathan Ulrich (jongulrich@gmail.com)
   \author Andrew Watson (watsontandrew@gmail.com)
   \date 2014
 */
-#include "CommandReceiver.hpp"
 #include "Global.hpp"
+#include "CommandServer.hpp"
+#include "Control.hpp"
 
-using boost::asio::ip::udp;
 using namespace Pidar;
 
 
-CommandReceiver::CommandReceiver(boost::asio::io_service& ioService, short port)
-    : mIOService(ioService), mSocket(ioService, udp::endpoint(udp::v4(), port))
+using boost::asio::ip::udp;
+
+
+CommandServer::CommandServer(boost::asio::io_service& ioService, short port)
+    : mrIOService(ioService), mSocket(ioService, udp::endpoint(udp::v4(), port))
 {
     mSocket.async_receive_from(
                 boost::asio::buffer(mpData, MAX_LENGTH), mEndpoint,
-                boost::bind(&CommandReceiver::HandleReceieve, this,
+                boost::bind(&CommandServer::HandleReceieve, this,
                             boost::asio::placeholders::error,
                             boost::asio::placeholders::bytes_transferred));
 }
 
 
-std::string CommandReceiver::HandleCommands(char data[], size_t bytes_received)
+CommandServer::~CommandServer()
+{
+    if(mpData)
+    {
+        delete[] mpData;
+    }
+}
+
+
+std::string CommandServer::HandleCommands(char data[], size_t bytes_received)
 {
 #ifdef DEBUG
     //Print out received data if debugging
@@ -39,33 +51,16 @@ std::string CommandReceiver::HandleCommands(char data[], size_t bytes_received)
             (isdigit(data[2]) && isdigit(data[3])))
     {
         //..[C][S][4][5][]... = 45
-        int spd = boost::lexical_cast<int>(data[2]) * 10;
-        spd += boost::lexical_cast<int>(data[3]);
-        // Do not set over max speed
-        if(spd > MAX_SPEED_RPM)
-        {
-            spd = MAX_SPEED_RPM;
-        }
+        int speed = boost::lexical_cast<int>(data[2]) * 10;
+        speed += boost::lexical_cast<int>(data[3]);
         // Asssign speed and set change flag to true
-        gMotorSpeed = spd;
-        gFoundUpdate = true;
-        response = "OK";
+        Control::Instance()->mpMotor->SetSpeedRpm((float)speed);
     }
-    // Get Speed Requested
-    if(data[0]=='G' && data[1]=='S')
-    {
-        // return motor speed
-        response = "SPEED=";
-        response.append(boost::lexical_cast<std::string>(gMotorSpeed));
-    }
-#ifdef DEBUG
-    std::cout << "Returning response: " << response << std::endl;
-#endif
     return response;
 }
 
 
-void CommandReceiver::HandleReceieve(const boost::system::error_code& error,
+void CommandServer::HandleReceieve(const boost::system::error_code& error,
                                      size_t bytesReceived)
 {
     if(!error && bytesReceived > 0)
@@ -80,7 +75,7 @@ void CommandReceiver::HandleReceieve(const boost::system::error_code& error,
                                         response.size()),
                     mEndpoint,
                     boost::bind(
-                        &CommandReceiver::HandleSend,
+                        &CommandServer::HandleSend,
                         this,
                         boost::asio::placeholders::error,
                         boost::asio::placeholders::bytes_transferred));
@@ -89,7 +84,7 @@ void CommandReceiver::HandleReceieve(const boost::system::error_code& error,
     {
         mSocket.async_receive_from(
                     boost::asio::buffer(mpData, MAX_LENGTH), mEndpoint,
-                    boost::bind(&CommandReceiver::HandleReceieve,
+                    boost::bind(&CommandServer::HandleReceieve,
                                 this,
                                 boost::asio::placeholders::error,
                                 boost::asio::placeholders::bytes_transferred));
@@ -97,12 +92,12 @@ void CommandReceiver::HandleReceieve(const boost::system::error_code& error,
 }
 
 
-void CommandReceiver::HandleSend(const boost::system::error_code& /*error*/,
+void CommandServer::HandleSend(const boost::system::error_code& /*error*/,
                                  size_t /*bytes_sent*/)
 {
     mSocket.async_receive_from(
                 boost::asio::buffer(mpData, MAX_LENGTH), mEndpoint,
-                boost::bind(&CommandReceiver::HandleReceieve, this,
+                boost::bind(&CommandServer::HandleReceieve, this,
                             boost::asio::placeholders::error,
                             boost::asio::placeholders::bytes_transferred));
 }

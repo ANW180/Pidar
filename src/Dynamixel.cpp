@@ -7,18 +7,64 @@
   \date 2014
 */
 #include "Dynamixel.hpp"
+#include "Global.hpp"
 
 using namespace Pidar;
 using namespace Motor;
 
+//timespec t1, t2, t3;
+//std::vector<double> tme;
+
+//timespec diff(timespec start, timespec end)
+//{
+//    timespec temp;
+//    if((end.tv_nsec - start.tv_nsec) < 0)
+//    {
+//        temp.tv_sec = end.tv_sec - start.tv_sec - 1;
+//        temp.tv_nsec = 1000000000L + end.tv_nsec - start.tv_nsec;
+//    }
+//    else
+//    {
+//        temp.tv_sec = end.tv_sec - start.tv_sec;
+//        temp.tv_nsec = end.tv_nsec - start.tv_nsec;
+//    }
+//    return temp;
+//}
+
+
+//void computeAvg()
+//{
+//    clock_gettime(CLOCK_MONOTONIC, &t2);
+//    double t = diff(t1, t2).tv_sec + diff(t1, t2).tv_nsec * 1e-9;
+//    tme.push_back(t);
+//    double s = diff(t3, t2).tv_sec + diff(t3, t2).tv_nsec * 1e-9;
+//    if(s > 1.0 && tme.size() > 0)
+//    {
+//        std::vector<double>::const_iterator it;
+//        double total = 0.0;
+//        for(it = tme.begin();
+//            it != tme.end();
+//            it++)
+//        {
+//            total += (*it);
+//        }
+//        total /= tme.size();
+//        std::cout << "Avg Delay: "
+//                  << total
+//                  << " s"
+//                  << std::endl;
+//        clock_gettime(CLOCK_MONOTONIC, &t3);
+//        tme.clear();
+//    }
+//}
+
 
 Dynamixel::Dynamixel()
 {
-    mConnectedFlag = mProcessingThreadFlag = mCommandSpeedFlag =
-            mFirstMotorReadFlag = false;
+    mConnectedFlag = false;
     mID = 1;
     mSerialPort = "/dev/ttyUSB0";
-    mCommandSpeedRpm = mCurrentPositionRad = mPreviousPositionRad = 0.0;
+    mCommandSpeedRpm = mCurrentPositionRad = 0.0;
     mBaudRate = 0; // 1Mbps connection
 }
 
@@ -50,23 +96,16 @@ bool Dynamixel::Initialize()
 #endif
         return false;
     }
-    if(!StartCaptureThread())
-    {
-#ifdef DEBUG
-        std::cout << "Failed to start capture thread" << std::endl;
-#endif
-        return false;
-    }
 #ifdef DEBUG
     std::cout << "Connected to Dynamixel Successfully" << std::endl;
 #endif
+    //clock_gettime(CLOCK_MONOTONIC, &t3);
     return true;
 }
 
 
 void Dynamixel::Shutdown()
 {
-    StopCaptureThread();
     if(IsConnected())
     {
         dxl_terminate();
@@ -75,36 +114,16 @@ void Dynamixel::Shutdown()
 }
 
 
-bool Dynamixel::StartCaptureThread()
+bool Dynamixel::IsConnected()
 {
-    // First detach the thread.
-    mProcessingThreadFlag = false;
-    mProcessingThread.join();
-    mProcessingThread.detach();
-
-
-    if(IsConnected())
-    {
-        mProcessingThreadFlag = true;
-        mProcessingThread = boost::thread(
-                    boost::bind(&Dynamixel::ProcessingThread, this));
-        return true;
-    }
-    return false;
+    return mConnectedFlag;
 }
 
 
-void Dynamixel::StopCaptureThread()
-{
-    mProcessingThreadFlag = false;
-    mProcessingThread.join();
-    mProcessingThread.detach();
-}
-
-
-void Dynamixel::SetSpeedRpm(const float rpm, const bool clockwise)
+void Dynamixel::SetSpeedRpm(const float rpm)
 {
     // Threshold speed to within max allowed speed.
+    mCommandSpeedRpm = rpm;
     float val = rpm;
     if(val > MAX_SPEED_RPM)
     {
@@ -124,15 +143,51 @@ void Dynamixel::SetSpeedRpm(const float rpm, const bool clockwise)
     {
         val = 1023.0;
     }
-    // Add 1024 to offset for desired direction.
-    if(clockwise)
+    // Add 1024 to offset for desired direction (clockwise).
+    val += 1024.0;
+    int CommStatus = COMM_RXFAIL;
+    int loopCount = 0;
+    while(CommStatus != COMM_RXSUCCESS)
     {
-        val += 1024.0;
+        dxl_write_word(mID, MOVING_SPEED_L, val);
+        CommStatus = dxl_get_result();
+        loopCount++;
     }
-    mMutex.lock();
-    mCommandSpeedRpm = (int)val;
-    mCommandSpeedFlag = true;
-    mMutex.unlock();
+    if(loopCount > 1)
+    {
+#ifdef DEBUG
+        std::cout << "Dynamixel Write Cnt: "
+                  << loopCount
+                  << std::endl;
+#endif
+    }
+}
+
+
+// Average read delay time is 1 - 1.5 ms.
+float Dynamixel::GetCurrentPositionRadians()
+{
+    //clock_gettime(CLOCK_MONOTONIC, &t1);
+    int CommStatus = COMM_RXFAIL;
+    int recv;
+    int loopCount = 0;
+    while(CommStatus != COMM_RXSUCCESS)
+    {
+        recv = dxl_read_word(mID, PRESENT_POSITION_L);
+        CommStatus = dxl_get_result();
+        loopCount++;
+    }
+    if(loopCount > 1)
+    {
+#ifdef DEBUG
+        std::cout << "Dynamixel Read Cnt: "
+                  << loopCount
+                  << std::endl;
+#endif
+    }
+    mCurrentPositionRad = recv * MX28_RAD_PER_UNIT;
+    //computeAvg();
+    return mCurrentPositionRad;
 }
 
 
@@ -161,85 +216,6 @@ void Dynamixel::PrintCommStatus(int CommStatus)
     default:
         std::cout << "Unknown Error" << std::endl;
         break;
-    }
-}
-
-
-void Dynamixel::ProcessingThread()
-{
-    timespec time;
-    while(mProcessingThreadFlag)
-    {
-        if(IsConnected())
-        {
-            int CommStatus = 0;
-            // Write target speed (if there is a new speed)
-            {
-                boost::mutex::scoped_lock lock(mMutex);
-                if(mCommandSpeedFlag)
-                {
-                    dxl_write_word(mID, MOVING_SPEED_L, mCommandSpeedRpm);
-                    CommStatus = dxl_get_result();
-                    // Print reason of unsuccessful command.
-                    if(CommStatus != COMM_RXSUCCESS)
-                    {
-#ifdef DEBUG
-                        PrintCommStatus(CommStatus);
-#endif
-                    }
-                    // Reset command flag to false if sending command
-                    // succeeded so as to not flood serial commands.
-                    else
-                    {
-                        mCommandSpeedFlag = false;
-                    }
-                }
-            }
-            // Read present position
-            bool wasRead = false;
-            try
-            {
-                int recv = dxl_read_word(mID, PRESENT_POSITION_L );
-                CommStatus = dxl_get_result();
-                if(CommStatus == COMM_RXSUCCESS)
-                {
-                    boost::mutex::scoped_lock lock(mMutex);
-                    mCurrentPositionRad = recv * MX28_RAD_PER_UNIT;
-                    wasRead = true;
-                }
-                // Print reason of unsuccessful read command.
-                else
-                {
-#ifdef DEBUG
-                    PrintCommStatus(CommStatus);
-#endif
-                }
-            }
-            catch(std::exception e)
-            {
-                std::cout << e.what() << std::endl;
-            }
-            // Trigger callbacks (if there is a read)
-            if(wasRead)
-            {
-                boost::mutex::scoped_lock lock(mMutex);
-                Callback::Set::iterator callback;
-                for(callback = mCallbacks.begin();
-                    callback != mCallbacks.end();
-                    callback++)
-                {
-                    clock_gettime(CLOCK_REALTIME, &time);
-                    (*callback)->ProcessServoData(mCurrentPositionRad, time);
-                }
-            }
-            else
-            {
-#ifdef DEBUG
-                std::cout << "No Read" << std::endl;
-#endif
-            }
-        }
-        boost::this_thread::sleep(boost::posix_time::microseconds(100));
     }
 }
 /* End of File */
