@@ -13,9 +13,15 @@
 #include "wiringPi.h"
 #include <fstream>
 
-#define HOKUYOSYNCPIN 17
-#define LEDPIN 10
-#define SHUTDOWNBUTTONPIN 4
+// GPIO Pin definitions.
+#define HOKUYO_SYNC_PIN 17
+#define LED_PIN 10
+#define SHUTDOWN_BUTTON_PIN 4
+
+// Average I/O delay times in ms.
+#define HOKUYO_COMM_DELAY_MS 1.0
+#define DYNAMIXEL_COMM_DELAY_MS 1.0
+#define INTERRUPT_DELAY_MS 0.025
 
 
 namespace Pidar
@@ -69,7 +75,7 @@ namespace Pidar
          * @param timestampUTC
          */
         virtual void ProcessLaserData(const Point3D::List& polarScan,
-                                      const timespec& timestampUTC);
+                                      const long timestamp);
         /**
          * @brief Instance
          * @returns Pointer to the instance of the control class.
@@ -79,7 +85,7 @@ namespace Pidar
         Motor::Dynamixel* mpMotor;      // Pointer to the Dynamixel motor.
         Laser::Hokuyo* mpLaser;         // Pointer to the Hokuyo lidar.
         Point3D::List mLaserScan;       // A single 2D scan from the Hokuyo.
-        timespec mLaserTimestamp;       // Current laser scan timestamp.
+        long mLaserTimestamp;           // Current laser scan timestamp.
         timespec mMotorTimestamp;       // Current motor position timestamp.
         float mMotorAngle;              // Current motor angle.
     private:

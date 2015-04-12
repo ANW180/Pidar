@@ -6,12 +6,9 @@
   \date 2014
 */
 #include "Hokuyo.hpp"
-#include <time.h>
 
 using namespace Pidar;
 using namespace Laser;
-
-long time_stamp_offset;
 
 
 //timespec t1, t2, t3;
@@ -68,7 +65,7 @@ Hokuyo::Hokuyo()
     mProcessingThreadFlag = false;
     mpHokuyoScan = NULL;
     mpHokuyoScanIntensity = NULL;
-    mHokuyoMinStep = mErrorCount = 0;
+    mHokuyoMinStep = mErrorCount = mTimeStamp = mTimeStampOffset = 0;
     mHokuyoMaxStep = 1080;
     mBaudRate = 115200;
     mSerialPort = "/dev/ttyACM0";
@@ -89,55 +86,35 @@ Hokuyo::~Hokuyo()
 }
 
 
-static int pc_msec_time(void)
+static long print_time_stamp(urg_t *urg, long timestampOffset)
 {
-    static int is_initialized = 0;
-    static struct timeval first_time;
-    struct timeval current_time;
-
-    long msec_time;
-    if (!is_initialized)
-    {
-        gettimeofday(&first_time, NULL);
-        is_initialized = 1;
-    }
-    gettimeofday(&current_time, NULL);
-    msec_time =
-            ((current_time.tv_sec - first_time.tv_sec) * 1000) +
-            ((current_time.tv_usec - first_time.tv_usec) / 1000);
-
-    return msec_time;
-}
-
-
-static long print_time_stamp(urg_t *urg, long time_stamp_offset)
-{
-    long sensor_time_stamp;
-    long pc_time_stamp;
-    long before_pc_time_stamp;
-    long after_pc_time_stamp;
+    long hokuyoTimestamp;
+    long pcTimestamp;
+    long beforePCTimestamp;
+    long afterPCTimestamp;
     long delay;
+
     urg_start_time_stamp_mode(urg);
-    before_pc_time_stamp = pc_msec_time();
+    beforePCTimestamp = TimeMs();
     //clock_gettime(CLOCK_MONOTONIC, &t1);
-    sensor_time_stamp = urg_time_stamp(urg);    // delay of ~ 1ms.
+    hokuyoTimestamp = urg_time_stamp(urg);    // delay of ~ 1ms.
     //computeAvg();
-    after_pc_time_stamp = pc_msec_time();
-    delay = (after_pc_time_stamp - before_pc_time_stamp) / 2;
-    if (sensor_time_stamp < 0)
+    afterPCTimestamp = TimeMs();
+    delay = (afterPCTimestamp - beforePCTimestamp) / 2;
+    if (hokuyoTimestamp < 0)
     {
         std::cout << "urg_time_stamp: " << urg_error(urg) << std::endl;
         return -1;
     }
-    sensor_time_stamp -= time_stamp_offset;
-    pc_time_stamp = pc_msec_time();
+    hokuyoTimestamp -= timestampOffset;
+    pcTimestamp = TimeMs();
     urg_stop_time_stamp_mode(urg);
     std::cout << "PC: "
-              << pc_time_stamp
+              << pcTimestamp
               << " SENSOR: "
-              << sensor_time_stamp
+              << hokuyoTimestamp
               << std::endl;
-    return sensor_time_stamp - (pc_time_stamp - delay);
+    return hokuyoTimestamp - (pcTimestamp - delay);
 }
 
 
@@ -152,11 +129,6 @@ bool Hokuyo::Initialize()
         std::cout << "Connection Error: " << urg_error(urg) << std::endl;
         return false;
     }
-    time_stamp_offset = print_time_stamp(urg, 0);
-//    for(int i = 0; i < 5; ++i)
-//    {
-//        print_time_stamp(urg, time_stamp_offset);
-//    }
     mConnectedFlag = true;
     if(mpHokuyoScan)
     {
@@ -170,6 +142,11 @@ bool Hokuyo::Initialize()
         mpHokuyoScanIntensity = NULL;
     }
     mpHokuyoScanIntensity = new unsigned short[urg_max_data_size(urg)];
+    mTimeStampOffset = print_time_stamp(urg, 0);
+    //    for(int i = 0; i < 5; ++i)
+    //    {
+    //        print_time_stamp(urg, mTimeStampOffset);
+    //    }
     urg_step_min_max(urg, &mHokuyoMinStep, &mHokuyoMaxStep);
     urg_start_measurement(urg,
                           URG_DISTANCE_INTENSITY,
@@ -225,7 +202,6 @@ void Hokuyo::StopCaptureThread()
 
 void Hokuyo::ProcessingThread()
 {
-    timespec time;
     urg_t* urg = (urg_t*)mpDevice;
     //clock_gettime(CLOCK_MONOTONIC, &t3);
     while(mProcessingThreadFlag)
@@ -234,14 +210,12 @@ void Hokuyo::ProcessingThread()
         if(IsConnected())
         {
             Point3D point;
-            long timestamp = 0;
-            int index = 0;
             std::vector<Point3D> scan;
             int scanCount = urg_get_distance_intensity(urg,
                                                        mpHokuyoScan,
                                                        mpHokuyoScanIntensity,
-                                                       &timestamp);
-            std::cout << timestamp - time_stamp_offset << std::endl;
+                                                       &mTimeStamp);
+            std::cout << mTimeStamp - mTimeStampOffset << std::endl;
             if(scanCount <= 0)
             {
                 std::cout << "Scanning Error: " << urg_error(urg) << std::endl;
@@ -257,12 +231,11 @@ void Hokuyo::ProcessingThread()
                 // structure.
                 {
                     boost::mutex::scoped_lock lock(mMutex);
-                    point.SetX(mpHokuyoScan[index] / 1000.0); // Meters
-                    point.SetIntensity(mpHokuyoScanIntensity[index]);
+                    point.SetX(mpHokuyoScan[i] / 1000.0); // Meters
+                    point.SetIntensity(mpHokuyoScanIntensity[i]);
                 }
                 point.SetY(-1.0 * urg_step2rad(urg, i)); // Radians
                 scan.push_back(point);
-                index++;
             }
             // Size of a full scan in 3D data structure is 553472 bytes.
             {
@@ -279,8 +252,7 @@ void Hokuyo::ProcessingThread()
                 iter++)
             {
                 boost::mutex::scoped_lock lock(mMutex);
-                clock_gettime(CLOCK_REALTIME, &time);
-                (*iter)->ProcessLaserData(mLaserScan, time);
+                (*iter)->ProcessLaserData(mLaserScan, mTimeStamp);
             }
         }
     }

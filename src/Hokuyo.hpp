@@ -7,6 +7,7 @@
 */
 #pragma once
 #include "Point3D.hpp"
+#include "Global.hpp"
 #include <boost/thread.hpp>
 #include <boost/bind.hpp>
 #include <urg_utils.h>
@@ -34,10 +35,10 @@ namespace Pidar
              * @brief ProcessLaserData Invoked when new data becomes available
              * from the laser.
              * @param polarScan The captured scan in polar coordinates.
-             * @param timestampUTC The UTC time the scan was captured.
+             * @param timestamp The time the scan was captured.
              */
             virtual void ProcessLaserData(const Point3D::List& polarScan,
-                                          const timespec& timestampUTC) = 0;
+                                          const long timeStamp) = 0;
         };
         /**
           \class Hokuyo
@@ -113,20 +114,12 @@ namespace Pidar
             /**
              * @brief ClearCallbacks
              */
-            void ClearCallbacks()
-            {
-                //TODO add mutex lock
-                mCallbacks.clear();
-            }
+            void ClearCallbacks() { mCallbacks.clear(); }
             /**
              * @brief GetErrorCount
              * @returns Number of read errors of serial data.
              */
-            int GetErrorCount()
-            {
-                boost::mutex::scoped_lock lock(mMutex);
-                return mErrorCount;
-            }
+            int GetErrorCount() { return mErrorCount; }
 
         protected:
             /**
@@ -142,7 +135,9 @@ namespace Pidar
             unsigned short* mpHokuyoScanIntensity;
             int mHokuyoMinStep;
             int mHokuyoMaxStep;
-            int mErrorCount;
+            volatile int mErrorCount;
+            long mTimeStamp;
+            long mTimeStampOffset;
             std::string mSerialPort;
             boost::mutex mMutex;
             boost::thread mProcessingThread;

@@ -71,6 +71,10 @@ Control::Control()
 bool Control::Initialize()
 {
     unsigned short restartCount = 0;
+    if(!Control::Instance()->SetupWiringPi())
+    {
+        return false;
+    }
     while(!mpMotor->Initialize())
     {
         restartCount++;
@@ -92,10 +96,6 @@ bool Control::Initialize()
             return false;
         }
     }
-    if(!Control::Instance()->SetupWiringPi())
-    {
-        return false;
-    }
     return true;
 }
 
@@ -103,16 +103,9 @@ bool Control::Initialize()
 bool Control::SetupWiringPi()
 {
     bool result = true;
-    if(wiringPiSetupSys () < 0)
-    {
-#ifdef DEBUG
-        std::cout<< "Unable to setup wiringPi: "<< strerror(errno) << std::endl;
-#endif
-        result = false;
-    }
     // set Pin 17/0 generate an interrupt on low-to-high transitions
     // and attach myInterrupt() to the interrupt
-    if(wiringPiISR(HOKUYOSYNCPIN,
+    if(wiringPiISR(HOKUYO_SYNC_PIN,
                    INT_EDGE_RISING,
                    InterruptService) < 0)
     {
@@ -121,7 +114,7 @@ bool Control::SetupWiringPi()
 #endif
         result = false;
     }
-    if(wiringPiISR(SHUTDOWNBUTTONPIN,
+    if(wiringPiISR(SHUTDOWN_BUTTON_PIN,
                    INT_EDGE_RISING,
                    InterruptServiceStop) < 0)
     {
@@ -131,7 +124,7 @@ bool Control::SetupWiringPi()
         result = false;
     }
     // Setup LED pin mode
-    pinMode(LEDPIN, OUTPUT);
+    pinMode(LED_PIN, OUTPUT);
     //clock_gettime(CLOCK_MONOTONIC, &t3);
     return result;
 }
@@ -197,10 +190,10 @@ void Control::AddToScanQueue(Point3D::List laserscan,
 
 
 void Control::ProcessLaserData(const Point3D::List& polarScan,
-                               const timespec& timestampUTC)
+                               const long timestamp)
 {
     mLaserScan = polarScan;
-    mLaserTimestamp = timestampUTC;
+    mLaserTimestamp = timestamp;
 }
 
 
@@ -222,12 +215,12 @@ void Pidar::InterruptService(void)
         // Flash activity (interrupt) light.
         if(gLEDCount % 3 == 0)
         {
-            digitalWrite(LEDPIN, 1);
+            digitalWrite(LED_PIN, 1);
             gLEDCount = 0;
         }
         else
         {
-            digitalWrite(LEDPIN, 0);
+            digitalWrite(LED_PIN, 0);
         }
         gLEDCount++;
         gISRFlag = true;
@@ -259,7 +252,7 @@ void Pidar::InterruptService(void)
     }
     else
     {
-        digitalWrite(LEDPIN, 0);
+        digitalWrite(LED_PIN, 0);
     }
 }
 

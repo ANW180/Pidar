@@ -24,7 +24,6 @@
 // Allocating and initializing the globals.
 Pidar::Control* Pidar::Control::mpInstance = 0;
 std::deque<Pidar::pcl_data> gSendPoints;
-int gMotorSpeed = 1.0;
 unsigned short gLEDCount = 0;
 bool gStopFlag = false;
 bool gISRFlag = false;
@@ -35,6 +34,13 @@ using namespace Pidar;
 
 int main()
 {
+    if(wiringPiSetupSys() < 0)
+    {
+#ifdef DEBUG
+        std::cout<< "Unable to setup wiringPi: "<< strerror(errno) << std::endl;
+#endif
+        return -1;
+    }
     while(!Control::Instance()->Initialize())
     {
         sleep(1);

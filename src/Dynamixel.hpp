@@ -86,9 +86,9 @@ namespace Pidar
         protected:
             int mID;
             int mBaudRate;
-            int mCommandSpeedRpm;
+            volatile int mCommandSpeedRpm;
             std::string mSerialPort;
-            float mCurrentPositionRad;
+            volatile float mCurrentPositionRad;
             bool mConnectedFlag;
         };
     }
